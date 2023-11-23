@@ -45,12 +45,19 @@ function buildTreeData(xmlStructure) {
     }));
 }
 
-// Initialize jstree with XML structure
-function initializeTree(xmlStructure) {
+
+function initializeTree(xmlStructure, treeElement) {
+    // Destroy any existing tree to avoid conflicts
+    if ( domElements.xmlStructureTree.jstree(true)) {
+        domElements.xmlStructureTree.jstree("destroy");
+    }
+
     domElements.xmlStructureTree.jstree({
         core: {
-            data: buildTreeData(xmlStructure)
-        }
+            data: buildTreeData(xmlStructure),
+            check_callback: true // Allow all modifications
+        },
+        plugins: ["wholerow"] // Optional: to highlight the entire row when selected
     });
 }
 
@@ -89,50 +96,6 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
 }
 
 
-function buildTreeStructure(xmlStructure) {
-    let tree = {};
-    xmlStructure.forEach(node => {
-        // If node has a parentId, add it to the tree under the parentId
-        if (node.parentId) {
-            if (!tree[node.parentId]) {
-                tree[node.parentId] = [];
-            }
-            tree[node.parentId].push(node);
-        } else {
-            // If node does not have a parentId, it is a root node
-            tree[node.id] = tree[node.id] || [];
-        }
-    });
-    return tree;
-}
-
-function buildHierarchy(xmlStructure) {
-    let hierarchy = {};
-    let root = null;
-
-    // First, find the root node
-    xmlStructure.forEach(node => {
-        if (!node.parentId) {
-            root = node; // Assume there is only one root in the structure
-            hierarchy[node.id] = { ...node, children: [] };
-        }
-    });
-
-    // Then, build the hierarchy
-    xmlStructure.forEach(node => {
-        if (node.parentId) {
-            if (!hierarchy[node.parentId]) {
-                hierarchy[node.parentId] = { children: [] };
-            }
-            let childNode = { ...node, children: [] };
-            hierarchy[node.parentId].children.push(childNode);
-            hierarchy[node.id] = childNode;
-        }
-    });
-
-    return { root, hierarchy };
-}
-
 function compareXMLStructures(oldXmlStructure, newXmlStructure) {
     let comparisonResults = [];
 
@@ -159,6 +122,7 @@ function compareXMLStructures(oldXmlStructure, newXmlStructure) {
         }
         // 'Unchanged' nodes are already handled in the previous loop
     });
+    console.log( { comparisonResults })
 
     return comparisonResults;
 }
