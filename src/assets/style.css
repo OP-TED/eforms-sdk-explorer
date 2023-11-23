@@ -14,3 +14,42 @@
     100% { transform: rotate(360deg); }
 }
 
+.navbar-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.navbar-brand {
+    padding-right: 0.5rem; 
+}
+
+.custom-select {
+    min-width: 150px;
+    max-width: 100%;
+}
+
+.navbar {
+    min-height: 70px;
+}
+
+.version-text {
+    white-space: nowrap;
+    min-width: max-content;
+    color: white; 
+}
+
+.comparison-text {
+    white-space: nowrap;
+    color: white;
+}
+
+.custom-select {
+    min-width: 150px;
+    max-width: 100%;
+}
+
+.ml-auto {
+    display: flex;
+    flex-wrap: nowrap; 
+}
