@@ -35,18 +35,23 @@ function clearApiStatus() {
 
 // Build tree data for jstree from XML structure
 function buildTreeData(xmlStructure) {
-    return xmlStructure.map(node => ({
+    debugger
+    const t = xmlStructure.map(node => ({
         id: node.id,
         parent: node.parentId || "#",
         text: node.id,
         state: {
             opened: true
-        }
+        },
+        li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } : node.nodeChange === 'added' ? { class: 'added-node' } : {}
     }));
+
+    debugger
+    return t
 }
 
 
-function initializeTree(xmlStructure, treeElement) {
+function initializeTree(xmlStructure) {
     // Destroy any existing tree to avoid conflicts
     if ( domElements.xmlStructureTree.jstree(true)) {
         domElements.xmlStructureTree.jstree("destroy");
@@ -59,6 +64,10 @@ function initializeTree(xmlStructure, treeElement) {
         },
         plugins: ["wholerow"] // Optional: to highlight the entire row when selected
     });
+    console.log(' domElements.xmlStructureTree',  domElements.xmlStructureTree)
+    domElements.xmlStructureTree.find('.removed-node').each(function() {
+        $(this).children('a').css('background-color', 'red');
+    });
 }
 
 // Fetch and display fields content
@@ -67,21 +76,29 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     clearApiStatus();
     
     const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;
+    console.log(url)
     
     try {
         const response = await $.ajax({ url, dataType: 'json' });
         const fieldsData = response;
+        console.log('url',fieldsData)
+
         
         if (isTagsDropdown) {
+            console.log('fieldsData',)
             appState.versionData = fieldsData.xmlStructure;
             fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
 
         } else {
+            console.log('comparisonData')
+
             fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
             appState.comparisonData = fieldsData.xmlStructure;
             if (appState.versionData && appState.comparisonData) {
+                console.log('appState.comparisonData',appState.comparisonData)
+                console.log('appState.versionData',appState.versionData)
+
                 const treeData = compareXMLStructures(appState.comparisonData, appState.versionData);
-                console.log('treeData',treeData)
                 initializeTree(treeData);
             }
         }
@@ -179,14 +196,10 @@ $(document).ready(() => {
 // Event handlers for dropdown changes
 domElements.tagsDropdown.change(async function() {
     const selectedTagName = $(this).val();
-    const comparisonTagName = domElements.comparisonDropdown.val();
     await fetchAndDisplayFieldsContent(selectedTagName, true);
-    await fetchAndDisplayFieldsContent(comparisonTagName, false);
 });
 
 domElements.comparisonDropdown.change(async function() {
-    const selectedTagName = $(this).val();
-    const comparisonTagName = domElements.comparisonDropdown.val();
-    await fetchAndDisplayFieldsContent(selectedTagName, true);
-    await fetchAndDisplayFieldsContent(comparisonTagName, false);
+    const selectedComparisonTagName = $(this).val();
+    await fetchAndDisplayFieldsContent(selectedComparisonTagName, false);
 });

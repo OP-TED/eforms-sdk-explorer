@@ -53,3 +53,11 @@
     display: flex;
     flex-wrap: nowrap; 
 }
+
+.removed-node > a {
+    background-color: red !important;  
+}
+
+.added-node > a {
+    background-color: green !important;
+}
