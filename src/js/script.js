@@ -34,24 +34,43 @@ function clearApiStatus() {
 }
 
 // Build tree data for jstree from XML structure
-function buildTreeData(xmlStructure) {
-    debugger
-    const t = xmlStructure.map(node => ({
+function buildTreeData(xmlStructure, fieldsComparisonResults) {
+    
+    // Create the map for all nodes, including the root and intermediate nodes
+    const treeDataMap = new Map(xmlStructure.map(node => [node.id, {
         id: node.id,
         parent: node.parentId || "#",
-        text: node.id,
+        text: node.name || node.id,
         state: {
             opened: true
         },
-        li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } : node.nodeChange === 'added' ? { class: 'added-node' } : {}
-    }));
+        li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
+                 node.nodeChange === 'added' ? { class: 'added-node' } : {}
+    }]));
 
-    debugger
-    return t
+    // Add field nodes to the map, ensuring they're in the flat format
+    fieldsComparisonResults.forEach(field => {
+        // Assuming field.parentNodeId is the ID of the existing parent node in xmlStructure
+        treeDataMap.set(field.id, {
+            id: field.id,
+            parent: field.parentNodeId,
+            text: field.name || field.id,
+            icon: 'jstree-file',
+            state: {
+                opened: true
+            },
+            li_attr: field.nodeChange === 'removed' ? { class: 'removed-node' } :
+                     field.nodeChange === 'added' ? { class: 'added-node' } : {}
+        });
+    });
+
+    // Convert the map values to an array to be compatible with jstree
+    return Array.from(treeDataMap.values());
 }
 
 
-function initializeTree(xmlStructure) {
+
+function initializeTree(xmlStructure, fieldsComparisonResults) {
     // Destroy any existing tree to avoid conflicts
     if ( domElements.xmlStructureTree.jstree(true)) {
         domElements.xmlStructureTree.jstree("destroy");
@@ -59,14 +78,10 @@ function initializeTree(xmlStructure) {
 
     domElements.xmlStructureTree.jstree({
         core: {
-            data: buildTreeData(xmlStructure),
+            data: buildTreeData(xmlStructure, fieldsComparisonResults),
             check_callback: true // Allow all modifications
         },
         plugins: ["wholerow"] // Optional: to highlight the entire row when selected
-    });
-    console.log(' domElements.xmlStructureTree',  domElements.xmlStructureTree)
-    domElements.xmlStructureTree.find('.removed-node').each(function() {
-        $(this).children('a').css('background-color', 'red');
     });
 }
 
@@ -75,31 +90,26 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     toggleLoadingSpinner(true);
     clearApiStatus();
     
-    const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;
-    console.log(url)
-    
+    const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;    
     try {
         const response = await $.ajax({ url, dataType: 'json' });
-        const fieldsData = response;
-        console.log('url',fieldsData)
-
+        const fieldsData = response;       
         
         if (isTagsDropdown) {
-            console.log('fieldsData',)
             appState.versionData = fieldsData.xmlStructure;
+            appState.versionDataFields = fieldsData.fields;
             fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
 
         } else {
-            console.log('comparisonData')
-
             fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
             appState.comparisonData = fieldsData.xmlStructure;
+            appState.comparisonDataFields = fieldsData.fields;
             if (appState.versionData && appState.comparisonData) {
-                console.log('appState.comparisonData',appState.comparisonData)
-                console.log('appState.versionData',appState.versionData)
 
-                const treeData = compareXMLStructures(appState.comparisonData, appState.versionData);
-                initializeTree(treeData);
+                const xmlComparisonResults = compareXMLStructures(appState.comparisonData, appState.versionData);
+                const fieldsComparisonResults = compareXMLStructures(appState.comparisonDataFields, appState.versionDataFields);
+                initializeTree(xmlComparisonResults, fieldsComparisonResults);
+                
             }
         }
 
@@ -137,9 +147,7 @@ function compareXMLStructures(oldXmlStructure, newXmlStructure) {
             // Node only exists in new structure
             comparisonResults.push({ ...newNode, nodeChange: 'added' });
         }
-        // 'Unchanged' nodes are already handled in the previous loop
     });
-    console.log( { comparisonResults })
 
     return comparisonResults;
 }
