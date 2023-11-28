@@ -1,0 +1,63 @@
+/* style.css */
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #3498db;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    animation: spin 2s linear infinite;
+    display: none; 
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.navbar-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.navbar-brand {
+    padding-right: 0.5rem; 
+}
+
+.custom-select {
+    min-width: 150px;
+    max-width: 100%;
+}
+
+.navbar {
+    min-height: 70px;
+}
+
+.version-text {
+    white-space: nowrap;
+    min-width: max-content;
+    color: white; 
+}
+
+.comparison-text {
+    white-space: nowrap;
+    color: white;
+}
+
+.custom-select {
+    min-width: 150px;
+    max-width: 100%;
+}
+
+.ml-auto {
+    display: flex;
+    flex-wrap: nowrap; 
+}
+
+.removed-node > a {
+    background-color: red !important;  
+}
+
+.added-node > a {
+    background-color: green !important;
+}
