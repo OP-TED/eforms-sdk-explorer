@@ -1,4 +1,3 @@
-// App state and configuration
 const appConfig = {
     tagsBaseUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK',
     fieldsBaseUrl: 'https://raw.githubusercontent.com/OP-TED/eForms-SDK'
@@ -10,7 +9,6 @@ const appState = {
     comparisonData: []
 };
 
-// DOM elements cache
 const domElements = {
     loadingSpinner: $('#loadingSpinner'),
     apiStatus: $('#apiStatus'),
@@ -19,7 +17,6 @@ const domElements = {
     comparisonDropdown: $('#comparisonDropdown')
 };
 
-// Show and hide loading spinner
 function toggleLoadingSpinner(show) {
     if (show) {
         domElements.loadingSpinner.show();
@@ -28,15 +25,12 @@ function toggleLoadingSpinner(show) {
     }
 }
 
-// Clear API status text
 function clearApiStatus() {
     domElements.apiStatus.text('');
 }
 
-// Build tree data for jstree from XML structure
 function buildTreeData(xmlStructure, fieldsComparisonResults) {
-    
-    // Create the map for all nodes, including the root and intermediate nodes
+
     const treeDataMap = new Map(xmlStructure.map(node => [node.id, {
         id: node.id,
         parent: node.parentId || "#",
@@ -45,12 +39,10 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
             opened: true
         },
         li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
-                 node.nodeChange === 'added' ? { class: 'added-node' } : {}
+            node.nodeChange === 'added' ? { class: 'added-node' } : {}
     }]));
 
-    // Add field nodes to the map, ensuring they're in the flat format
     fieldsComparisonResults.forEach(field => {
-        // Assuming field.parentNodeId is the ID of the existing parent node in xmlStructure
         treeDataMap.set(field.id, {
             id: field.id,
             parent: field.parentNodeId,
@@ -60,48 +52,103 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
                 opened: true
             },
             li_attr: field.nodeChange === 'removed' ? { class: 'removed-node' } :
-                     field.nodeChange === 'added' ? { class: 'added-node' } : {}
+                field.nodeChange === 'added' ? { class: 'added-node' } : {}
         });
     });
 
-    // Convert the map values to an array to be compatible with jstree
     return Array.from(treeDataMap.values());
 }
 
 
 
 function initializeTree(xmlStructure, fieldsComparisonResults) {
-    // Destroy any existing tree to avoid conflicts
-    if ( domElements.xmlStructureTree.jstree(true)) {
+    if (domElements.xmlStructureTree.jstree(true)) {
         domElements.xmlStructureTree.jstree("destroy");
     }
 
     domElements.xmlStructureTree.jstree({
         core: {
             data: buildTreeData(xmlStructure, fieldsComparisonResults),
-            check_callback: true // Allow all modifications
+            check_callback: true
         },
-        plugins: ["wholerow"] // Optional: to highlight the entire row when selected
+        plugins: ["wholerow"]
+    })
+
+    domElements.xmlStructureTree.on("select_node.jstree", function (e, data) {
+        const selectedFieldId = data.node.id;
+        const fieldDetails = fieldsComparisonResults.find(field => field.id === selectedFieldId);
+        if (fieldDetails) {
+            displayFieldDetails(fieldDetails);
+        }
     });
 }
 
-// Fetch and display fields content
+function displayFieldDetails(details) {
+    function createAccordion(key, value, uniqueId) {
+        return $(`
+            <div class="accordion" id="${uniqueId}">
+                <div class="card">
+                    <div class="card-header p-0" id="heading-${uniqueId}">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse-${uniqueId}" aria-expanded="true" aria-controls="collapse-${uniqueId}">
+                                ${key} (click to expand)
+                            </button>
+                        </h2>
+                    </div>
+                    <div id="collapse-${uniqueId}" class="collapse" aria-labelledby="heading-${uniqueId}" data-parent="#${uniqueId}">
+                        <div class="card-body">
+                            ${value.join(', ')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    function createTree(obj, parentKey = '') {
+        const $ul = $('<ul class="list-group">');
+        Object.entries(obj).forEach(([key, value], index) => {
+            const $li = $('<li class="list-group-item">');
+            const uniqueId = 'accordion-' + parentKey + key + '-' + index;
+
+            if ($.isPlainObject(value) || Array.isArray(value)) {
+                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
+
+                if (Array.isArray(value) && key === 'noticeTypes') {
+                    $li.append($keySpan).append(createAccordion(key, value, uniqueId));
+                } else {
+                    $li.append($keySpan).append(createTree(value, key));
+                }
+            } else {
+                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
+                const $valueSpan = $('<span>').text(value);
+                $li.append($keySpan).append($valueSpan);
+            }
+            $ul.append($li);
+        });
+        return $ul;
+    }
+
+    $('#detailsContent').empty().append(createTree(details));
+}
+
+
 async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     toggleLoadingSpinner(true);
     clearApiStatus();
-    
-    const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;    
+
+    const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;
     try {
         const response = await $.ajax({ url, dataType: 'json' });
-        const fieldsData = response;       
-        
+        const fieldsData = response;
+
         if (isTagsDropdown) {
             appState.versionData = fieldsData.xmlStructure;
             appState.versionDataFields = fieldsData.fields;
-            fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
+            fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
 
         } else {
-            fieldsData.xmlStructure[0].version =fieldsData.sdkVersion;
+            fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
             appState.comparisonData = fieldsData.xmlStructure;
             appState.comparisonDataFields = fieldsData.fields;
             if (appState.versionData && appState.comparisonData) {
@@ -109,13 +156,12 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
                 const xmlComparisonResults = compareXMLStructures(appState.comparisonData, appState.versionData);
                 const fieldsComparisonResults = compareXMLStructures(appState.comparisonDataFields, appState.versionDataFields);
                 initializeTree(xmlComparisonResults, fieldsComparisonResults);
-                
+
             }
         }
-
-        domElements.apiStatus.text(`API call succeeded for file version "${tagName}"`);
+        updateApiStatus(`API call succeeded for file version "${tagName}"`, true);
     } catch (error) {
-        domElements.apiStatus.text(`API call failed for file version "${tagName}"`);
+        updateApiStatus(`API call succeeded for file version "${tagName}"`, false);
         console.error('Error fetching and displaying fields content:', error);
     } finally {
         toggleLoadingSpinner(false);
@@ -126,25 +172,19 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
 function compareXMLStructures(oldXmlStructure, newXmlStructure) {
     let comparisonResults = [];
 
-    // Create maps for quick lookups by id
     let oldMap = new Map(oldXmlStructure.map(node => [node.id, node]));
     let newMap = new Map(newXmlStructure.map(node => [node.id, node]));
 
-    // Check for removed and unchanged nodes
     oldXmlStructure.forEach(oldNode => {
         if (newMap.has(oldNode.id)) {
-            // Node exists in both structures
             comparisonResults.push({ ...oldNode, nodeChange: 'unchanged' });
         } else {
-            // Node only exists in old structure
             comparisonResults.push({ ...oldNode, nodeChange: 'removed' });
         }
     });
 
-    // Check for added nodes
     newXmlStructure.forEach(newNode => {
         if (!oldMap.has(newNode.id)) {
-            // Node only exists in new structure
             comparisonResults.push({ ...newNode, nodeChange: 'added' });
         }
     });
@@ -155,17 +195,16 @@ function compareXMLStructures(oldXmlStructure, newXmlStructure) {
 
 
 function findIndexByVersion(versionName) {
-    return sortedData.findIndex(function(item) {
+    return sortedData.findIndex(function (item) {
         return item.name === versionName;
     });
 }
 
 
-// Populate dropdowns with tags
 async function populateDropdown() {
     toggleLoadingSpinner(true);
     clearApiStatus();
-    
+
     try {
         const response = await $.ajax({
             url: `${appConfig.tagsBaseUrl}/tags`,
@@ -185,29 +224,43 @@ async function populateDropdown() {
 
         domElements.tagsDropdown.val(data[0].name);
         domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-        
+
         await fetchAndDisplayFieldsContent(data[0].name, true);
         await fetchAndDisplayFieldsContent(data[1].name, false);
     } catch (error) {
-        domElements.apiStatus.text('API call failed to fetch tags.');
+        updateApiStatus('API call failed to fetch tags.', false);
         console.error('Error populating dropdowns:', error);
     } finally {
         toggleLoadingSpinner(false);
     }
 }
 
-// Document ready function
+function updateApiStatus(message, isSuccess = true) {
+    domElements.apiStatus.text(message);
+
+    if (isSuccess) {
+        domElements.apiStatus.addClass('alert-success').removeClass('alert-danger');
+    } else {
+        domElements.apiStatus.addClass('alert-danger').removeClass('alert-success');
+    }
+
+    domElements.apiStatus.show();
+
+    setTimeout(() => {
+        domElements.apiStatus.fadeOut('slow');
+    }, 5000);
+}
+
 $(document).ready(() => {
     populateDropdown();
 });
 
-// Event handlers for dropdown changes
-domElements.tagsDropdown.change(async function() {
+domElements.tagsDropdown.change(async function () {
     const selectedTagName = $(this).val();
     await fetchAndDisplayFieldsContent(selectedTagName, true);
 });
 
-domElements.comparisonDropdown.change(async function() {
+domElements.comparisonDropdown.change(async function () {
     const selectedComparisonTagName = $(this).val();
     await fetchAndDisplayFieldsContent(selectedComparisonTagName, false);
 });

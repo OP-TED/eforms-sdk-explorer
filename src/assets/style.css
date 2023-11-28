@@ -55,9 +55,31 @@
 }
 
 .removed-node > a {
-    background-color: red !important;  
+    color: aliceblue !important;
+    background-color: #C70039 !important;  
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
 }
 
 .added-node > a {
-    background-color: green !important;
+    background-color: #89B9AD !important;
+    color: aliceblue !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+}
+
+#xmlStructureTreeContainer {
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    padding: 15px;
+    max-height: 800px; 
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+#detailsContent {
+    max-height: 800px; 
+    overflow-y: auto;
+    overflow-x: hidden;
 }
