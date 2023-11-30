@@ -68,6 +68,33 @@
     border-radius: 5px !important;
 }
 
+.changed-value  {
+    background-color: #E7BCDE !important; 
+    color: aliceblue !important; 
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+}
+
+.edited-node > a  {
+    background-color: #E7BCDE !important; 
+    color: aliceblue !important; 
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+}
+
+.changed-value {
+    background-color: #f0f0f0;
+    padding: 5px;
+    margin-top: 5px;
+    border-radius: 4px;
+}
+
+.changed-label {
+    font-weight: bold;
+    color: #333;
+}
+
+
 #xmlStructureTreeContainer {
     border: 1px solid #ddd;
     background-color: #f8f9fa;

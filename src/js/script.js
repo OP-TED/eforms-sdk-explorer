@@ -39,7 +39,8 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
             opened: true
         },
         li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
-            node.nodeChange === 'added' ? { class: 'added-node' } : {}
+            node.nodeChange === 'added' ? { class: 'added-node' } :
+                node.nodeChange === 'edited' ? { class: 'edited-node' } : {}
     }]));
 
     fieldsComparisonResults.forEach(field => {
@@ -52,7 +53,8 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
                 opened: true
             },
             li_attr: field.nodeChange === 'removed' ? { class: 'removed-node' } :
-                field.nodeChange === 'added' ? { class: 'added-node' } : {}
+                field.nodeChange === 'added' ? { class: 'added-node' } :
+                    field.nodeChange === 'edited' ? { class: 'edited-node' } : {}
         });
     });
 
@@ -75,61 +77,109 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
     })
 
     domElements.xmlStructureTree.on("select_node.jstree", function (e, data) {
+        let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
+        let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
         const selectedFieldId = data.node.id;
         const fieldDetails = fieldsComparisonResults.find(field => field.id === selectedFieldId);
         if (fieldDetails) {
-            displayFieldDetails(fieldDetails);
+            displayFieldDetails(fieldDetails, oldMap, newMap);
         }
     });
 }
 
-function displayFieldDetails(details) {
-    function createAccordion(key, value, uniqueId) {
-        return $(`
-            <div class="accordion" id="${uniqueId}">
-                <div class="card">
-                    <div class="card-header p-0" id="heading-${uniqueId}">
-                        <h2 class="mb-0">
-                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse-${uniqueId}" aria-expanded="true" aria-controls="collapse-${uniqueId}">
-                                ${key} (click to expand)
-                            </button>
-                        </h2>
-                    </div>
-                    <div id="collapse-${uniqueId}" class="collapse" aria-labelledby="heading-${uniqueId}" data-parent="#${uniqueId}">
-                        <div class="card-body">
-                            ${value.join(', ')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `);
-    }
 
-    function createTree(obj, parentKey = '') {
+function displayFieldDetails(fieldDetails, oldMap, newMap) {
+    function createTree() {
+        const newNode = newMap.get(fieldDetails.id);
+        const oldNode = oldMap.get(fieldDetails.id);
         const $ul = $('<ul class="list-group">');
-        Object.entries(obj).forEach(([key, value], index) => {
+        
+        // Display the properties of the new object, with comparisons to the old object
+        for (const [key, value] of Object.entries(newNode)) {
             const $li = $('<li class="list-group-item">');
-            const uniqueId = 'accordion-' + parentKey + key + '-' + index;
-
+            const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
+            const oldValue = oldNode[key];
+            let $valueSpan;
             if ($.isPlainObject(value) || Array.isArray(value)) {
-                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
-
-                if (Array.isArray(value) && key === 'noticeTypes') {
-                    $li.append($keySpan).append(createAccordion(key, value, uniqueId));
-                } else {
-                    $li.append($keySpan).append(createTree(value, key));
-                }
+                const formattedValue = formatObjectValue(value);
+                $valueSpan = $('<span>').html(formattedValue);
             } else {
-                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
-                const $valueSpan = $('<span>').text(value);
-                $li.append($keySpan).append($valueSpan);
+                $valueSpan = $('<span>').text(value);
             }
+
+            $li.append($keySpan).append($valueSpan);
+
+            // Compare and show old values if different
+            if (!areValuesEquivalent(value, oldValue)) {
+                const formattedOldValue = formatObjectValue(oldValue);
+                const $oldValueDiv = $(`<div class="changed-value">
+                    <strong>Changed Values:</strong> ${formattedOldValue}
+                </div>`);
+                $li.append($oldValueDiv);
+            } else if (oldValue === undefined) {
+                // Highlight newly added properties
+                $li.css('background-color', '#d4edda');
+            }
+
             $ul.append($li);
-        });
+        }
+
+        // Identify and display missing properties in the new object
+        for (const key in oldNode) {
+            if (!newNode.hasOwnProperty(key)) {
+                const $li = $('<li class="list-group-item">').css('background-color', '#f8d7da');
+                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
+                const formattedOldValue = formatObjectValue(oldNode[key]);
+                $li.append($keySpan).html(`<span>Removed Value: ${formattedOldValue}</span>`);
+                $ul.append($li);
+            }
+        }
+
         return $ul;
     }
 
-    $('#detailsContent').empty().append(createTree(details));
+    function formatObjectValue(obj) {
+        return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
+    }
+
+    $('#detailsContent').empty().append(createTree());
+}
+
+
+function highlightDifference(source, reference) {
+    let sourceWords = words(source);
+    let referenceWords = words(reference);
+    let diffWords = sourceWords.filter(i => !referenceWords.includes(i));
+  
+    diffWords.forEach(word => {
+      source = source.replace(new RegExp(`(${word})`, 'g'), `<mark>$1</mark>`);
+    });
+    
+    return source;
+  }
+  
+  function words(str) {
+      return str.split(/\s+/);
+  }
+  
+  function formatObjectValue(obj) {
+      return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
+  }
+
+function areValuesEquivalent(a, b) {
+    if (_.isEqual(a, b)) {
+        return true;
+    }
+
+    if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (!_.isEqual(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -152,9 +202,8 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
             appState.comparisonData = fieldsData.xmlStructure;
             appState.comparisonDataFields = fieldsData.fields;
             if (appState.versionData && appState.comparisonData) {
-
-                const xmlComparisonResults = compareXMLStructures(appState.comparisonData, appState.versionData);
-                const fieldsComparisonResults = compareXMLStructures(appState.comparisonDataFields, appState.versionDataFields);
+                const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.versionData);
+                const fieldsComparisonResults = compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, true);
                 initializeTree(xmlComparisonResults, fieldsComparisonResults);
 
             }
@@ -168,29 +217,42 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     }
 }
 
-
-function compareXMLStructures(oldXmlStructure, newXmlStructure) {
+function compareDataStructures(oldStructure, newStructure, performDeepComparison = false) {
     let comparisonResults = [];
 
-    let oldMap = new Map(oldXmlStructure.map(node => [node.id, node]));
-    let newMap = new Map(newXmlStructure.map(node => [node.id, node]));
+    let oldMap = new Map(oldStructure.map(node => [node.id, node]));
+    let newMap = new Map(newStructure.map(node => [node.id, node]));
 
-    oldXmlStructure.forEach(oldNode => {
-        if (newMap.has(oldNode.id)) {
-            comparisonResults.push({ ...oldNode, nodeChange: 'unchanged' });
-        } else {
+    // First, check for removed nodes
+    oldStructure.forEach(oldNode => {
+        if (!newMap.has(oldNode.id)) {
             comparisonResults.push({ ...oldNode, nodeChange: 'removed' });
         }
     });
 
-    newXmlStructure.forEach(newNode => {
+    // Then, check for added nodes
+    newStructure.forEach(newNode => {
         if (!oldMap.has(newNode.id)) {
             comparisonResults.push({ ...newNode, nodeChange: 'added' });
         }
     });
 
+    // Finally, check for edited nodes
+    oldStructure.forEach(oldNode => {
+        if (newMap.has(oldNode.id)) {
+            const newNode = newMap.get(oldNode.id);
+            if (performDeepComparison && !areValuesEquivalent(oldNode, newNode)) {
+                comparisonResults.push({ ...oldNode, nodeChange: 'edited' });
+            } else if (!comparisonResults.some(node => node.id === oldNode.id)) {
+                // Only add as unchanged if it hasn't been already added as removed or added
+                comparisonResults.push({ ...oldNode, nodeChange: 'unchanged' });
+            }
+        }
+    });
+
     return comparisonResults;
 }
+
 
 
 
