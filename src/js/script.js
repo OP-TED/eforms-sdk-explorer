@@ -6,7 +6,9 @@ const appConfig = {
 const appState = {
     sortedData: [],
     versionData: [],
-    comparisonData: []
+    comparisonData: [],
+    selectedTagName: '',
+    selectedComparisonTagName: ''
 };
 
 const domElements = {
@@ -89,82 +91,87 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
 
 
 function displayFieldDetails(fieldDetails, oldMap, newMap) {
+    function formatObjectValue(obj) {
+        return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
+    }
+
     function createTree() {
         const newNode = newMap.get(fieldDetails.id);
         const oldNode = oldMap.get(fieldDetails.id);
         const $ul = $('<ul class="list-group">');
-        
-        // Display the properties of the new object, with comparisons to the old object
-        for (const [key, value] of Object.entries(newNode)) {
+
+        for (const [key, newValue] of Object.entries(newNode)) {
             const $li = $('<li class="list-group-item">');
             const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
-            const oldValue = oldNode[key];
-            let $valueSpan;
-            if ($.isPlainObject(value) || Array.isArray(value)) {
-                const formattedValue = formatObjectValue(value);
-                $valueSpan = $('<span>').html(formattedValue);
+            const oldValue = oldNode ? oldNode[key] : undefined;
+            let formattedValue; // Define formattedValue here
+
+            // Format the new value
+            if (_.isObject(newValue) || Array.isArray(newValue)) {
+                formattedValue = formatObjectValue(newValue);
+                const $valueSpan = $('<span>').html(formattedValue);
+                $li.append($keySpan).append($valueSpan);
             } else {
-                $valueSpan = $('<span>').text(value);
+                formattedValue = newValue; // Assign the direct value if not an object or array
+                const $valueSpan = $('<span>').text(newValue);
+                $li.append($keySpan).append($valueSpan);
             }
 
-            $li.append($keySpan).append($valueSpan);
-
-            // Compare and show old values if different
-            if (!areValuesEquivalent(value, oldValue)) {
+            // Check for new property
+            if (oldValue === undefined) {
+                $li.css('background-color', '#d4edda').html(`<span>New Property "${key}": ${formattedValue}</span>`);
+            } else if (!areValuesEquivalent(newValue, oldValue)) {
+                // Handle changed properties
                 const formattedOldValue = formatObjectValue(oldValue);
                 const $oldValueDiv = $(`<div class="changed-value">
-                    <strong>Changed Values:</strong> ${formattedOldValue}
+                    <strong>Changed Property "${key}":</strong> ${formattedOldValue}
                 </div>`);
                 $li.append($oldValueDiv);
-            } else if (oldValue === undefined) {
-                // Highlight newly added properties
-                $li.css('background-color', '#d4edda');
             }
 
             $ul.append($li);
         }
 
-        // Identify and display missing properties in the new object
-        for (const key in oldNode) {
-            if (!newNode.hasOwnProperty(key)) {
-                const $li = $('<li class="list-group-item">').css('background-color', '#f8d7da');
-                const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
-                const formattedOldValue = formatObjectValue(oldNode[key]);
-                $li.append($keySpan).html(`<span>Removed Value: ${formattedOldValue}</span>`);
-                $ul.append($li);
+        // Handle removed properties
+        if (oldNode) {
+            for (const key in oldNode) {
+                if (!newNode.hasOwnProperty(key)) {
+                    const formattedOldValue = formatObjectValue(oldNode[key]);
+                    const $li = $('<li class="list-group-item">').addClass('removed-property');
+                    $li.html(`<span>Removed Property "${key}": ${formattedOldValue}</span>`);
+                    $ul.append($li);
+                }
             }
         }
 
-        return $ul;
-    }
 
-    function formatObjectValue(obj) {
-        return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
+        return $ul;
     }
 
     $('#detailsContent').empty().append(createTree());
 }
 
 
+
 function highlightDifference(source, reference) {
     let sourceWords = words(source);
     let referenceWords = words(reference);
     let diffWords = sourceWords.filter(i => !referenceWords.includes(i));
-  
+
     diffWords.forEach(word => {
-      source = source.replace(new RegExp(`(${word})`, 'g'), `<mark>$1</mark>`);
+        source = source.replace(new RegExp(`(${word})`, 'g'), `<mark>$1</mark>`);
     });
-    
+
     return source;
-  }
-  
-  function words(str) {
-      return str.split(/\s+/);
-  }
-  
-  function formatObjectValue(obj) {
-      return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
-  }
+}
+
+function words(str) {
+    return str.split(/\s+/);
+}
+
+function formatObjectValue(obj) {
+    return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
+}
 
 function areValuesEquivalent(a, b) {
     if (_.isEqual(a, b)) {
@@ -186,7 +193,9 @@ function areValuesEquivalent(a, b) {
 async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     toggleLoadingSpinner(true);
     clearApiStatus();
-
+    // Disable dropdowns during the API call
+    domElements.tagsDropdown.prop('disabled', true);
+    domElements.comparisonDropdown.prop('disabled', true);
     const url = `${appConfig.fieldsBaseUrl}/${tagName}/fields/fields.json`;
     try {
         const response = await $.ajax({ url, dataType: 'json' });
@@ -208,12 +217,16 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
 
             }
         }
-        updateApiStatus(`API call succeeded for file version "${tagName}"`, true);
     } catch (error) {
-        updateApiStatus(`API call succeeded for file version "${tagName}"`, false);
+        updateApiStatus('Failed to load data.', false);
         console.error('Error fetching and displaying fields content:', error);
     } finally {
+        // Enable dropdowns after the API call is complete
+        domElements.tagsDropdown.prop('disabled', false);
+        domElements.comparisonDropdown.prop('disabled', false);
         toggleLoadingSpinner(false);
+        updateApiStatus(`Data successfully loaded for SDK version ${appState.selectedTagName} and compared with ${appState.selectedComparisonTagName}`, true);
+
     }
 }
 
@@ -255,7 +268,6 @@ function compareDataStructures(oldStructure, newStructure, performDeepComparison
 
 
 
-
 function findIndexByVersion(versionName) {
     return sortedData.findIndex(function (item) {
         return item.name === versionName;
@@ -286,7 +298,8 @@ async function populateDropdown() {
 
         domElements.tagsDropdown.val(data[0].name);
         domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-
+        appState.selectedTagName = data[0].name;
+        appState.selectedComparisonTagName = data[1].name;
         await fetchAndDisplayFieldsContent(data[0].name, true);
         await fetchAndDisplayFieldsContent(data[1].name, false);
     } catch (error) {
@@ -318,11 +331,15 @@ $(document).ready(() => {
 });
 
 domElements.tagsDropdown.change(async function () {
-    const selectedTagName = $(this).val();
-    await fetchAndDisplayFieldsContent(selectedTagName, true);
+    appState.selectedTagName = $(this).val();
+    $('#detailsContent').html('Select a field to see details.');
+    await fetchAndDisplayFieldsContent(appState.selectedTagName, true);
 });
 
 domElements.comparisonDropdown.change(async function () {
-    const selectedComparisonTagName = $(this).val();
-    await fetchAndDisplayFieldsContent(selectedComparisonTagName, false);
+    appState.selectedComparisonTagName = $(this).val();
+    $('#detailsContent').html('Select a field to see details.');
+    await fetchAndDisplayFieldsContent(appState.selectedComparisonTagName, false);
 });
+
+

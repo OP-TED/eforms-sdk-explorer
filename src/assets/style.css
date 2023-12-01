@@ -6,107 +6,112 @@
     height: 30px;
     border-radius: 50%;
     animation: spin 2s linear infinite;
-    display: none; 
+    display: none;
 }
-
+/* Additional CSS for spinner alignment */
+.d-flex.align-items-center {
+    display: flex;
+    align-items: center;
+}
+.spinner-border {
+    margin-left: 10px;
+   /* Adjust as needed for spacing */
+}
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+   }
+    100% {
+        transform: rotate(360deg);
+   }
 }
-
 .navbar-nav {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
 }
-
 .navbar-brand {
-    padding-right: 0.5rem; 
+    padding-right: 0.5rem;
 }
-
 .custom-select {
     min-width: 150px;
     max-width: 100%;
 }
-
 .navbar {
     min-height: 70px;
 }
-
 .version-text {
     white-space: nowrap;
     min-width: max-content;
-    color: white; 
+    color: white;
 }
-
 .comparison-text {
     white-space: nowrap;
     color: white;
 }
-
 .custom-select {
     min-width: 150px;
     max-width: 100%;
 }
-
 .ml-auto {
     display: flex;
-    flex-wrap: nowrap; 
+    flex-wrap: nowrap;
 }
-
 .removed-node > a {
     color: aliceblue !important;
-    background-color: #C70039 !important;  
+    background-color: #C70039 !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
 }
-
 .added-node > a {
     background-color: #89B9AD !important;
     color: aliceblue !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
 }
-
-.changed-value  {
-    background-color: #E7BCDE !important; 
-    color: aliceblue !important; 
-    margin: 1px 1px !important;
-    border-radius: 5px !important;
-}
-
-.edited-node > a  {
-    background-color: #E7BCDE !important; 
-    color: aliceblue !important; 
-    margin: 1px 1px !important;
-    border-radius: 5px !important;
-}
-
 .changed-value {
-    background-color: #f0f0f0;
-    padding: 5px;
-    margin-top: 5px;
-    border-radius: 4px;
+    background-color: #E7BCDE !important;
+    color: aliceblue !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
 }
-
+.removed-property {
+    background-color: #C70039 !important;
+    color: aliceblue !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+}
+.edited-node > a {
+    background-color: #E7BCDE !important;
+    color: aliceblue !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+}
 .changed-label {
     font-weight: bold;
     color: #333;
 }
-
-
 #xmlStructureTreeContainer {
     border: 1px solid #ddd;
     background-color: #f8f9fa;
     padding: 15px;
-    max-height: 800px; 
+    max-height: 800px;
     overflow-y: auto;
     overflow-x: hidden;
 }
-
-
 #detailsContent {
-    max-height: 800px; 
+    max-height: 800px;
     overflow-y: auto;
     overflow-x: hidden;
+}
+#apiStatus {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1050;
+    max-width: 300px; /* Adjust as needed */
+    display: none; /* Initially hidden */
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
 }
