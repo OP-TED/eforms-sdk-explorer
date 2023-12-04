@@ -186,7 +186,7 @@ footer {
     margin: 1px 1px !important;
     border-radius: 5px !important;
     border: 1px solid #B1C5B6 !important;
-    padding: 2px 2px !important;
+    padding: 2px 4px !important;
     flex-basis: calc(50% - 2px); /* -1px to account for the margin */
 }
 
@@ -196,7 +196,7 @@ footer {
     margin: 1px 1px !important;
     border-radius: 5px !important;
     border: 1px solid #C5B4B3 !important;
-    padding: 2px 2px !important;
+    padding: 2px 4px !important;
     flex-basis: calc(50% - 2px); /* -1px to account for the margin */
 }
 
