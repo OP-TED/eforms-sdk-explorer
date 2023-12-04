@@ -90,56 +90,63 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
 }
 
 
+function displayProperty(key, newValue, oldValue) {
+
+    const valueHasChanged = !areValuesEquivalent(newValue, oldValue);
+
+    // Format the new value
+    if (_.isObject(newValue) || Array.isArray(newValue)) {
+        newValue = formatObjectValue(newValue);
+    }
+
+    // Format the old value
+    if (_.isObject(oldValue) || Array.isArray(oldValue)) {
+        oldValue = formatObjectValue(oldValue);
+    }
+
+    const $template = $($('#propertyTemplate').html());
+    $template.find('.property-label').text(key + ': ');
+    $template.find('#new-value').html(newValue);
+    $template.find('#old-value').html(oldValue);
+
+    if (oldValue === undefined) {
+        $template.addClass('added-property');
+        $template.find('#old-value').css('display', 'none');
+    } else if (newValue === undefined) {
+        $template.addClass('removed-property');
+        $template.find('#new-value').css('display', 'none');
+    } else if (valueHasChanged) {
+        $template.find('#new-value').addClass('new-property-value');
+        $template.find('#old-value').addClass('old-property-value');
+    } else {
+        $template.find('#old-value').css('display', 'none');
+    }
+
+    return $template;
+}
+
 function displayFieldDetails(fieldDetails, oldMap, newMap) {
     function formatObjectValue(obj) {
         return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
     }
 
     function createTree() {
-        const newNode = newMap.get(fieldDetails.id);
-        const oldNode = oldMap.get(fieldDetails.id);
+        const newField = newMap.get(fieldDetails.id);
+        const oldField = oldMap.get(fieldDetails.id);
         const $ul = $('<ul class="list-group">');
 
-        for (const [key, newValue] of Object.entries(newNode)) {
-            const $li = $('<li class="list-group-item">');
-            const $keySpan = $('<span class="font-weight-bold">').text(key + ': ');
-            const oldValue = oldNode ? oldNode[key] : undefined;
-            let formattedValue; // Define formattedValue here
-
-            // Format the new value
-            if (_.isObject(newValue) || Array.isArray(newValue)) {
-                formattedValue = formatObjectValue(newValue);
-                const $valueSpan = $('<span>').html(formattedValue);
-                $li.append($keySpan).append($valueSpan);
-            } else {
-                formattedValue = newValue; // Assign the direct value if not an object or array
-                const $valueSpan = $('<span>').text(newValue);
-                $li.append($keySpan).append($valueSpan);
-            }
-
-            // Check for new property
-            if (oldValue === undefined) {
-                $li.css('background-color', '#d4edda').html(`<span>New Property "${key}": ${formattedValue}</span>`);
-            } else if (!areValuesEquivalent(newValue, oldValue)) {
-                // Handle changed properties
-                const formattedOldValue = formatObjectValue(oldValue);
-                const $oldValueDiv = $(`<div class="changed-value">
-                    <strong>Changed Property "${key}":</strong> ${formattedOldValue}
-                </div>`);
-                $li.append($oldValueDiv);
-            }
-
-            $ul.append($li);
+        for (const [key, newValue] of Object.entries(newField)) {
+            const oldValue = oldField ? oldField[key] : undefined;
+            const $t = displayProperty(key, newValue, oldValue);
+            $ul.append($t);
         }
 
         // Handle removed properties
-        if (oldNode) {
-            for (const key in oldNode) {
-                if (!newNode.hasOwnProperty(key)) {
-                    const formattedOldValue = formatObjectValue(oldNode[key]);
-                    const $li = $('<li class="list-group-item">').addClass('removed-property');
-                    $li.html(`<span>Removed Property "${key}": ${formattedOldValue}</span>`);
-                    $ul.append($li);
+        if (oldField) {
+            for (const key in oldField) {
+                if (!newField.hasOwnProperty(key)) {
+                    const $t = displayProperty(key, undefined, oldField[key]);
+                    $ul.append($t);
                 }
             }
         }

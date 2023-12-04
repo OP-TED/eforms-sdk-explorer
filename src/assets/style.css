@@ -43,11 +43,11 @@
 .version-text {
     white-space: nowrap;
     min-width: max-content;
-    color: white;
+    color: black;
 }
 .comparison-text {
     white-space: nowrap;
-    color: white;
+    color: black;
 }
 .custom-select {
     min-width: 150px;
@@ -57,40 +57,149 @@
     display: flex;
     flex-wrap: nowrap;
 }
+
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: hidden;
+}
+
+body > header {
+    background-color: #EEEEEE;
+    border-bottom: 6px solid #2c862d;
+}
+
+nav {
+    margin: 10px;
+}
+
+
+main {
+    flex: 1;
+    margin: 10px;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+
+footer {
+    /* */
+}
+
+#tab-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+#fields-tab-content {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+
+#fields-tab-content > * {
+    flex: 1;
+    max-width: 50%;
+    padding: 0px 10px;
+}
+
+
+.column {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.column > *:nth-child(2) {
+    flex: 1;
+}
+
 .removed-node > a {
-    color: aliceblue !important;
-    background-color: #C70039 !important;
+    color: black !important;
+    background-color: #FFEBE9 !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
+    border:1px solid #C5B4B3 !important;
 }
+
 .added-node > a {
-    background-color: #89B9AD !important;
-    color: aliceblue !important;
+    background-color: #E6FFEC !important;
+    color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
+    border:1px solid #B1C5B6 !important;
 }
-.changed-value {
-    background-color: #E7BCDE !important;
-    color: aliceblue !important;
-    margin: 1px 1px !important;
-    border-radius: 5px !important;
+
+.added-property {
+    background-color: #E6FFEC !important;
+    color: #000000 !important;
+    /* margin: 1px 1px !important;
+    border-radius: 5px !important; */
 }
+
 .removed-property {
-    background-color: #C70039 !important;
-    color: aliceblue !important;
-    margin: 1px 1px !important;
-    border-radius: 5px !important;
+    background-color: #FFEBE9 !important;
+    color: black !important;
+    /* margin: 1px 1px !important;
+    border-radius: 5px !important; */
 }
+
 .edited-node > a {
-    background-color: #E7BCDE !important;
-    color: aliceblue !important;
+    background-color: #DDF4FF !important;
+    color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
+    border: 1px solid #ABBDC5 !important;
 }
+
 .changed-label {
     font-weight: bold;
     color: #333;
 }
+
+.property-flex {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.property-label {
+    font-weight: bold;
+    flex-basis: 100%;
+    font-size: smaller;
+}
+
+.property-value {
+    font-family: 'Courier New', Courier, monospace;
+    overflow-wrap: anywhere;
+    font-size: smaller;
+    float: right;
+    box-sizing: border-box;
+}
+
+.new-property-value {
+    background-color: #E6FFEC !important;
+    color: black !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+    border: 1px solid #B1C5B6 !important;
+    padding: 2px 4px !important;
+    flex-basis: calc(50% - 2px); /* -1px to account for the margin */
+}
+
+.old-property-value {
+    background-color: #FFEBE9 !important;
+    color: black !important;
+    margin: 1px 1px !important;
+    border-radius: 5px !important;
+    border: 1px solid #C5B4B3 !important;
+    padding: 2px 4px !important;
+    flex-basis: calc(50% - 2px); /* -1px to account for the margin */
+}
+
 #xmlStructureTreeContainer {
     border: 1px solid #ddd;
     background-color: #f8f9fa;
@@ -100,7 +209,7 @@
     overflow-x: hidden;
 }
 #detailsContent {
-    max-height: 800px;
+    max-height: 100vh;
     overflow-y: auto;
     overflow-x: hidden;
 }
