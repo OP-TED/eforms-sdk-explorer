@@ -14,47 +14,101 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <header class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <img src="./assets/ec-logo.svg" alt="European Commission Logo" width="60"
-                    class="d-inline-block align-middle mr-2">SDK Explorer
+                <img src="./assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
+                    class="d-inline-block align-middle mr-2">eForms SDK Explorer
             </a>
             <div class="ml-auto d-flex align-items-center">
-                <div class="version-text mr-2">Explorer SDK Version:</div>
+                <div class="version-text mr-2">Explore SDK</div>
                 <select id="tagsDropdown" class="custom-select mr-2">
                 </select>
-                <div class="comparison-text mr-2">in comparison with:</div>
+                <div class="comparison-text mr-2">in comparison with</div>
                 <select id="comparisonDropdown" class="custom-select">
                 </select>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <div class="container-fluid mt-5 pt-5">
-        <div id="apiStatus" class="alert alert-info" role="alert">
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center mb-3">
-                    <h3 class="mb-0">Fields</h3>
-                    <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner" style="display: none;">
+    <nav>
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
+                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button"
+                    role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
+                    role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button"
+                    role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+            </li>
+        </ul>
+    </nav>
+    
+    <main class="tab-content">
+
+        <!-- Fields -->
+        <div class="tab-pane fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
+
+            <!-- XML Structure Tree -->
+            <section class="column">
+                <header class="font-weight-bold">
+                    <span>Fields</span>
+                    <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
+                        style="display: none;">
                         <span class="sr-only">Loading...</span>
                     </div>
-                </div>
-                <div id="xmlStructureTreeContainer" class="alert alert-secondary mt-3">
+                </header>
+                <div id="xmlStructureTreeContainer" class="alert alert-secondary">
                     <div id="xmlStructureTree"></div>
                 </div>
-            </div>
-            
-            <div class="col-md-6">
-                <h3 class="mb-3">Details</h3>
+            </section>
+
+            <!-- Field & Node Details -->
+            <section class="column">
+                <header class="font-weight-bold">Details</header>
                 <div id="detailsContent" class="alert alert-secondary" role="alert">
                     Select a field to see details.
                 </div>
-            </div>
+            </section>
         </div>
-    </div>
+
+        <!-- Notice subtypes -->
+        <div class="tab-pane fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
+            <p>TODO: Add UI similar to "Fields". Select notice-subtype via drop-down.</p>
+        </div>
+
+        <!-- Codelists -->
+        <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with different version numbers.</p>
+        </div>
+
+        <!-- Release notes -->
+        <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+            <p>TODO: display CHANGELOG.md here</p>
+        </div>
+    </main>
+
+    <footer>
+        <div id="apiStatus" class="alert alert-info" role="alert">
+        </div>
+    </footer>
+
+    <!-- Property Template -->
+    <template id="propertyTemplate">
+        <li class="list-group-item property-flex">
+            <span id="label" class="property-label"></span>
+            <div id="new-value" class="property-value"></div>
+            <div id="old-value" class="property-value"></div>
+        </li>
+    </template>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
     <script src="js/script.js"></script>
