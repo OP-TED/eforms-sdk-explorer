@@ -126,10 +126,6 @@ function displayProperty(key, newValue, oldValue) {
 }
 
 function displayFieldDetails(fieldDetails, oldMap, newMap) {
-    function formatObjectValue(obj) {
-        return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
-    }
-
     function createTree() {
         const newField = newMap.get(fieldDetails.id);
         const oldField = oldMap.get(fieldDetails.id);
@@ -156,20 +152,6 @@ function displayFieldDetails(fieldDetails, oldMap, newMap) {
     }
 
     $('#detailsContent').empty().append(createTree());
-}
-
-
-
-function highlightDifference(source, reference) {
-    let sourceWords = words(source);
-    let referenceWords = words(reference);
-    let diffWords = sourceWords.filter(i => !referenceWords.includes(i));
-
-    diffWords.forEach(word => {
-        source = source.replace(new RegExp(`(${word})`, 'g'), `<mark>$1</mark>`);
-    });
-
-    return source;
 }
 
 function words(str) {
