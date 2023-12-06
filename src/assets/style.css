@@ -8,14 +8,13 @@
     animation: spin 2s linear infinite;
     display: none;
 }
-/* Additional CSS for spinner alignment */
+
 .d-flex.align-items-center {
     display: flex;
     align-items: center;
 }
 .spinner-border {
     margin-left: 10px;
-   /* Adjust as needed for spacing */
 }
 @keyframes spin {
     0% {
@@ -84,10 +83,6 @@ main {
 }
 
 
-footer {
-    /* */
-}
-
 #tab-content {
     flex: 1;
     overflow-y: auto;
@@ -119,14 +114,14 @@ footer {
 
 .removed-node > a {
     color: black !important;
-    background-color: #FFEBE9 !important;
+    background-color: #EA9999 !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
     border:1px solid #C5B4B3 !important;
 }
 
 .added-node > a {
-    background-color: #E6FFEC !important;
+    background-color: #B6D7A8 !important;
     color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
@@ -136,19 +131,15 @@ footer {
 .added-property {
     background-color: #E6FFEC !important;
     color: #000000 !important;
-    /* margin: 1px 1px !important;
-    border-radius: 5px !important; */
 }
 
 .removed-property {
     background-color: #FFEBE9 !important;
     color: black !important;
-    /* margin: 1px 1px !important;
-    border-radius: 5px !important; */
 }
 
 .edited-node > a {
-    background-color: #DDF4FF !important;
+    background-color: #9FC5F8 !important;
     color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
@@ -187,7 +178,7 @@ footer {
     border-radius: 5px !important;
     border: 1px solid #B1C5B6 !important;
     padding: 2px 4px !important;
-    flex-basis: calc(50% - 2px); /* -1px to account for the margin */
+    flex-basis: calc(50% - 2px);
 }
 
 .old-property-value {
@@ -197,7 +188,7 @@ footer {
     border-radius: 5px !important;
     border: 1px solid #C5B4B3 !important;
     padding: 2px 4px !important;
-    flex-basis: calc(50% - 2px); /* -1px to account for the margin */
+    flex-basis: calc(50% - 2px);
 }
 
 #xmlStructureTreeContainer {
@@ -218,9 +209,42 @@ footer {
     bottom: 10px;
     right: 10px;
     z-index: 1050;
-    max-width: 300px; /* Adjust as needed */
-    display: none; /* Initially hidden */
+    max-width: 300px;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 10px;
+}
+
+/* Legend styling */
+.legend-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+.legend-title {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.legend-item {
+    display: inline-block;
+    padding: 2px 6px;
+    color: #fff;
+    margin-right: 5px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.legend-item.added {
+    background-color: #B6D7A8;
+}
+
+.legend-item.removed {
+    background-color: #EA9999;
+}
+
+.legend-item.modified {
+    background-color: #9FC5F8;
 }
