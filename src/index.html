@@ -74,7 +74,7 @@
             <!-- Field & Node Details -->
             <section class="column">
                 <header class="font-weight-bold">Details</header>
-                <div id="detailsContent" class="alert alert-secondary" role="alert">
+                <div id="fieldDetailsContent" class="alert alert-secondary" role="alert">
                     Select a field to see details.
                 </div>
             </section>
@@ -82,8 +82,35 @@
 
         <!-- Notice subtypes -->
         <div class="tab-pane fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
-            <p>TODO: Add UI similar to "Fields". Select notice-subtype via drop-down.</p>
+            <!-- Dropdown and Spinner -->
+            <div class="notice-types-dropdown-container d-flex align-items-center">
+                <span class="notice-types-header font-weight-bold">Notice Types</span>
+                <select id="noticeTypesDropdown" class="custom-select notice-types-dropdown"></select>
+                <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+
+            <!-- New section for comparison results -->
+            <section class="column notice-types-comparison">
+                <div id="noticeTypesComparisonContent" class="alert alert-secondary comparison-content">
+                </div>
+            </section>
+
+            <!-- Tree and Details Container -->
+            <div class="d-flex" id="noticeTypesContent">
+                <!-- Tree View Container -->
+                <div id="noticeTypesTreeContainer" class="flex-grow-1">
+                    <div id="noticeTypesTree" class="alert alert-secondary"></div>
+                </div>
+
+                <!-- Details Panel -->
+                <div id="noticeTypesDetails" class="flex-grow-1">
+                    <div class="alert alert-secondary">Select a node to see details.</div>
+                </div>
+            </div>
         </div>
+
 
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
