@@ -172,7 +172,7 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
     if (Array.isArray(data)) {
         data.forEach(item => {
             const $itemTree = createTree(item[uniqueKey]);
-            const $itemContainer = $('<div class="mb-3"></div>').append($itemTree);
+            const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
             $(container).append($itemContainer);
         });
     } else {
