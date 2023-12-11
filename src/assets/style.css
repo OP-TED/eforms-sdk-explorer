@@ -97,6 +97,7 @@ main {
 }
 .column > *:nth-child(2) {
     flex: 1;
+    overflow-y: auto;
 }
 .removed-node > a {
     color: black !important;
@@ -268,8 +269,6 @@ main {
 }
 /* Legend styles */
 .legend-container {
-    position: fixed;
-    bottom: 0;
     width: 100%;
     background-color: #f8f9fa;
    /* To match tab content background */
