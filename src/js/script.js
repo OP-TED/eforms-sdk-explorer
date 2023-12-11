@@ -113,9 +113,10 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
             displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
         }
         const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
-        debugger
         if(nodeDetails){
-
+            let oldMap = new Map( appState.comparisonData.map(node => [node.id, node]));
+            let newMap = new Map(appState.versionData.map(node => [node.id, node]));
+            displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
 
         }
     });
@@ -164,14 +165,15 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
         const oldField = oldMap.get(uniqueId);
         const $ul = $('<ul class="list-group">');
 
-        for (const [key, newValue] of Object.entries(newField)) {
+        const fieldToIterate = newField || oldField;
+
+        for (const [key, value] of Object.entries(fieldToIterate)) {
+            const newValue = newField ? newField[key] : undefined;
             const oldValue = oldField ? oldField[key] : undefined;
-            const $propertyTemplate = displayProperty(key, newValue, oldValue);
+            const $propertyTemplate = displayProperty(key, newField ? newValue : undefined, oldValue);
             $ul.append($propertyTemplate);
         }
-
-        // Handle removed properties
-        if (oldField) {
+        if (newField) {
             for (const key in oldField) {
                 if (!newField.hasOwnProperty(key)) {
                     const $removedPropertyTemplate = displayProperty(key, undefined, oldField[key]);
@@ -183,21 +185,22 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
         return $ul;
     }
 
-    $(container).empty(); // Clear existing content
+    // Clear existing content
+    $(container).empty();
 
     if (Array.isArray(data)) {
-        // Loop through the array and add each item with spacing
         data.forEach(item => {
             const $itemTree = createTree(item[uniqueKey]);
-            const $itemContainer = $('<div class="mb-3"></div>').append($itemTree); // mb-3 for spacing
+            const $itemContainer = $('<div class="mb-3"></div>').append($itemTree);
             $(container).append($itemContainer);
         });
     } else {
-        // Handle single object
+
         const $tree = createTree(data[uniqueKey]);
         $(container).append($tree);
     }
 }
+
 
 
 function words(str) {
