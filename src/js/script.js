@@ -39,6 +39,7 @@ function clearApiStatus() {
     domElements.apiStatus.text('');
 }
 
+
 function buildTreeData(xmlStructure, fieldsComparisonResults) {
 
     const treeDataMap = new Map(xmlStructure.map(node => [node.id, {
@@ -366,21 +367,22 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
     }
 }
 
-
 function processContentDataForJsTree(content, parentId = "#") {
     let treeData = [];
-
     content.forEach(item => {
+        let displayText = item.description.length > 100 ? item.description.substring(0, 20) + '...' : item.description;
         let node = {
             id: item.id,
             parent: parentId,
-            text: item.description,
+            text: displayText,
             state: { opened: true },
-            type: item.contentType === 'group' ? "default" : "file"
+            type: item.contentType === 'group' ? "default" : "field"
         };
-
+        // Adding icon for items with contentType "file"
+        if (item.contentType === "field") {
+            node.icon = 'jstree-file';
+        }
         treeData.push(node);
-
         if (item.contentType === 'group' && item.content) {
             let children = processContentDataForJsTree(item.content, item.id);
             treeData = treeData.concat(children);
@@ -395,43 +397,35 @@ function showTreeView(treeData) {
     $('#noticeTypesComparisonContent').remove();
     $('.notice-types-comparison').hide();
 
+    $('<div/>', {
+        id: 'noticeTypesTree',
+        class: 'alert alert-secondary'
+    }).appendTo('#noticeTypesTreeContainer');
+
+    // Initialize the tree here
     debugger
-    // Create tree view if it doesn't exist
-  
-        $('<div/>', {
-            id: 'noticeTypesTreeContainer',
-            class: 'flex-grow-1'
-        }).appendTo('#noticeTypesContent');
+    // initializeNoticeTypesTree(treeData);
+    let jsTreeData = processContentDataForJsTree(treeData);
+    $('#noticeTypesComparisonContainer').hide();
+    $('#noticeTypesTreeContainer').show();
 
-        $('<div/>', {
-            id: 'noticeTypesTree',
-            class: 'alert alert-secondary'
-        }).appendTo('#noticeTypesTreeContainer');
+    // Check if the tree view is already initialized
+    if (domElements.noticeTypesTree.jstree(true)) {
+        // If already initialized, destroy the existing tree before creating a new one
+        domElements.noticeTypesTree.jstree("destroy");
+    }
+    domElements.noticeTypesTree.jstree({
+        core: {
+            data: jsTreeData,
+            check_callback: true
+        },
+        plugins: ["wholerow"]
+    });
 
-        // Initialize the tree here
-        debugger
-        // initializeNoticeTypesTree(treeData);
-        let jsTreeData = processContentDataForJsTree(treeData);
-        $('#noticeTypesComparisonContainer').hide();noticeTypesTreeContainer
-        $('#noticeTypesTreeContainer').show();
-    
-        // Check if the tree view is already initialized
-        if (domElements.noticeTypesTree.jstree(true)) {
-            // If already initialized, destroy the existing tree before creating a new one
-            domElements.noticeTypesTree.jstree("destroy");
-        }
-        domElements.noticeTypesTree.jstree({
-            core: {
-                data: jsTreeData,
-                check_callback: true
-            },
-            plugins: ["wholerow"]
-        });
-
-        domElements.noticeTypesTree.on("select_node.jstree", function (e, data) {
-            displayNoticeTypeDetails(data.node.original);
-        });
-        $('#noticeTypesTreeContainer').show();
+    domElements.noticeTypesTree.on("select_node.jstree", function (e, data) {
+        displayNoticeTypeDetails(data.node.original);
+    });
+    $('#noticeTypesTreeContainer').show();
 }
 
 function buildTreeDataForNoticeTypes(noticeData, parent = "#") {
@@ -629,3 +623,19 @@ function fetchDataBasedOnActiveTab() {
     }
 }
 
+function buildGenericTreeData(items, mapNode, parentId = "#") {
+    let treeData = [];
+
+    items.forEach(item => {
+        let node = mapNode(item, parentId);
+
+        treeData.push(node);
+
+        if (item.content && Array.isArray(item.content)) {
+            let children = buildGenericTreeData(item.content, mapNode, item.id);
+            treeData = treeData.concat(children);
+        }
+    });
+
+    return treeData;
+}

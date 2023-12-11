@@ -66,7 +66,7 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </header>
-                <div id="xmlStructureTreeContainer" class="alert alert-secondary">
+                <div id="xmlStructureTreeContainer" class="alert alert-secondary tree-container">
                     <div id="xmlStructureTree"></div>
                 </div>
             </section>
@@ -100,14 +100,16 @@
             <!-- Tree and Details Container -->
             <div class="d-flex" id="noticeTypesContent">
                 <!-- Tree View Container -->
-                <div id="noticeTypesTreeContainer" class="flex-grow-1">
+                <div id="noticeTypesTreeContainer" class="tree-container">
                     <div id="noticeTypesTree" class="alert alert-secondary"></div>
                 </div>
 
-                <!-- Details Panel -->
-                <div id="noticeTypesDetails" class="flex-grow-1">
-                    <div class="alert alert-secondary">Select a node to see details.</div>
-                </div>
+                <!-- Notice Types Details Panel -->
+                <section class="column details-container">
+                    <div id="noticeTypesDetails" class="alert alert-secondary">
+                        Select a node to see details.
+                    </div>
+                </section>
             </div>
         </div>
 

@@ -93,7 +93,7 @@ main {
 .column {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: calc(100vh - 150px);
 }
 .column > *:nth-child(2) {
     flex: 1;
@@ -172,14 +172,7 @@ main {
     padding: 2px 4px !important;
     flex-basis: calc(50% - 4px);
 }
-#xmlStructureTreeContainer {
-    border: 1px solid #ddd;
-    background-color: #f8f9fa;
-    padding: 15px;
-    max-height: 800px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
+
 #detailsContent {
     max-height: 100vh;
     overflow-y: auto;
@@ -305,10 +298,35 @@ main {
     flex-grow: 1;
 }
 
-#xmlStructureTreeContainer, #noticeTypesTreeContainer {
-    max-height: 100vh;
-    overflow-y: auto;
+.tree-container {
+    border: 1px solid #ddd;
     background-color: #f8f9fa;
-    border: 1px solid #ddd; 
+    padding: 15px;
+    max-height: 800px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#noticeTypesDetailsContainer {
+    flex: 1;  
+    padding: 0 10px;
+}
+
+#noticeTypesContent {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    margin: 10px 0;
+}
+
+.tree-container,
+.details-container {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    margin: 0 10px;
     padding: 10px;
 }
+
+
