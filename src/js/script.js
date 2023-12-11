@@ -354,9 +354,6 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
         } else {
             debugger
             showTreeView(selectedNoticeTypesData.content);
-
-            // Usage:
-
         }
 
         updateApiStatus('Successfully loaded notice types.');
@@ -395,8 +392,11 @@ function processContentDataForJsTree(content, parentId = "#") {
 function showTreeView(treeData) {
     // Remove comparison view if it exists
     $('#noticeTypesComparisonContent').remove();
+    $('.notice-types-comparison').hide();
+
+    debugger
     // Create tree view if it doesn't exist
-    if ($('#noticeTypesTreeContainer').length === 1) {
+  
         $('<div/>', {
             id: 'noticeTypesTreeContainer',
             class: 'flex-grow-1'
@@ -411,7 +411,7 @@ function showTreeView(treeData) {
         debugger
         // initializeNoticeTypesTree(treeData);
         let jsTreeData = processContentDataForJsTree(treeData);
-        $('#noticeTypesComparisonContainer').hide();
+        $('#noticeTypesComparisonContainer').hide();noticeTypesTreeContainer
         $('#noticeTypesTreeContainer').show();
     
         // Check if the tree view is already initialized
@@ -430,8 +430,7 @@ function showTreeView(treeData) {
         domElements.noticeTypesTree.on("select_node.jstree", function (e, data) {
             displayNoticeTypeDetails(data.node.original);
         });
-
-    }
+        $('#noticeTypesTreeContainer').show();
 }
 
 function buildTreeDataForNoticeTypes(noticeData, parent = "#") {
