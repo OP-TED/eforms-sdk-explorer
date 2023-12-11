@@ -77,7 +77,6 @@ function initializeNoticeTypesTree(noticeData) {
     if (domElements.noticeTypesTree.jstree(true)) {
         domElements.noticeTypesTree.jstree("destroy");
     }
-    console.log(' buildTreeDataForNoticeTypes(noticeData)', buildTreeDataForNoticeTypes(noticeData))
     domElements.noticeTypesTree.jstree({
         core: {
             data: buildTreeDataForNoticeTypes(noticeData),
@@ -106,12 +105,18 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
     })
 
     domElements.xmlStructureTree.on("select_node.jstree", function (e, data) {
-        let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
-        let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
         const selectedFieldId = data.node.id;
         const fieldDetails = fieldsComparisonResults.find(field => field.id === selectedFieldId);
         if (fieldDetails) {
+            let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
+            let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
             displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
+        }
+        const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
+        debugger
+        if(nodeDetails){
+
+
         }
     });
 }
@@ -282,7 +287,6 @@ async function fetchAndPopulateNoticeTypesDropdown() {
 }
 
 function constructNoticeTypesUrl(tagName, fileName) {
-    console.log('constructNoticeTypesUrl', `${appConfig.rawBaseUrl}/${tagName}/notice-types/${fileName}`)
     return `${appConfig.rawBaseUrl}/${tagName}/notice-types/${fileName}`;
 }
 
@@ -402,8 +406,6 @@ function showTreeView(treeData) {
         class: 'alert alert-secondary'
     }).appendTo('#noticeTypesTreeContainer');
 
-    // Initialize the tree here
-    debugger
     // initializeNoticeTypesTree(treeData);
     let jsTreeData = processContentDataForJsTree(treeData);
     $('#noticeTypesComparisonContainer').hide();
@@ -466,7 +468,6 @@ function displayNoticeTypeDetails(nodeData) {
 
     // Create a list to display the details
     const $ul = $('<ul class="list-group">');
-
     // Add each property of the node as a list item
     Object.entries(nodeData).forEach(([key, value]) => {
         const $li = $('<li class="list-group-item"></li>');
@@ -621,21 +622,4 @@ function fetchDataBasedOnActiveTab() {
     } else if (appState.activeTab === 'notice-types') {
         fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTagName);
     }
-}
-
-function buildGenericTreeData(items, mapNode, parentId = "#") {
-    let treeData = [];
-
-    items.forEach(item => {
-        let node = mapNode(item, parentId);
-
-        treeData.push(node);
-
-        if (item.content && Array.isArray(item.content)) {
-            let children = buildGenericTreeData(item.content, mapNode, item.id);
-            treeData = treeData.concat(children);
-        }
-    });
-
-    return treeData;
 }
