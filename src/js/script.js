@@ -142,6 +142,7 @@ function displayProperty(key, newValue, oldValue) {
         $template.addClass('removed-property');
         $template.find('#new-value').css('display', 'none');
     } else if (valueHasChanged) {
+        $template.addClass('changed-property');
         $template.find('#new-value').addClass('new-property-value');
         $template.find('#old-value').addClass('old-property-value');
     } else {

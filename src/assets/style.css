@@ -119,6 +119,12 @@ main {
     background-color: #FFEBE9 !important;
     color: black !important;
 }
+
+.changed-property {
+    background-color: #E6E9FF !important;
+    color: black !important;
+}
+
 .edited-node > a {
     background-color: #E6E9FF !important;
     color: black !important;
@@ -149,20 +155,22 @@ main {
 .new-property-value {
     background-color: #E6FFEC !important;
     color: black !important;
-    margin: 1px 1px !important;
+    margin: 1px 0px 1px 4px !important;
     border-radius: 5px !important;
-    border: 1px solid #B1C5B6 !important;
+    border-top: 6px solid #B8E6C2 !important;
+    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
     padding: 2px 4px !important;
-    flex-basis: calc(50% - 2px);
+    flex-basis: calc(50% - 4px);
 }
 .old-property-value {
     background-color: #FFE6E8 !important;
     color: black !important;
-    margin: 1px 1px !important;
+    margin: 1px 4px 1px 0px !important;
     border-radius: 5px !important;
-    border: 1px solid #C5B4B3 !important;
+    border-top: 6px solid #E6B8BC !important;
+    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
     padding: 2px 4px !important;
-    flex-basis: calc(50% - 2px);
+    flex-basis: calc(50% - 4px);
 }
 #xmlStructureTreeContainer {
     border: 1px solid #ddd;
