@@ -72,25 +72,6 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
     return Array.from(treeDataMap.values());
 }
 
-
-function initializeNoticeTypesTree(noticeData) {
-    if (domElements.noticeTypesTree.jstree(true)) {
-        domElements.noticeTypesTree.jstree("destroy");
-    }
-    domElements.noticeTypesTree.jstree({
-        core: {
-            data: buildTreeDataForNoticeTypes(noticeData),
-            check_callback: true
-        },
-        plugins: ["wholerow"]
-    })
-
-    domElements.noticeTypesTree.on("select_node.jstree", function (e, data) {
-        displayNoticeTypeDetails(data.node.original);
-    });
-}
-
-
 function initializeTree(xmlStructure, fieldsComparisonResults) {
     if (domElements.xmlStructureTree.jstree(true)) {
         domElements.xmlStructureTree.jstree("destroy");
@@ -361,8 +342,8 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
             let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
             displayFieldDetails(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
         } else {
-            debugger
-            showTreeView(selectedNoticeTypesData.content);
+            const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
+            showTreeView(comparisonResults);
         }
 
         updateApiStatus('Successfully loaded notice types.');
@@ -383,7 +364,10 @@ function processContentDataForJsTree(content, parentId = "#") {
             parent: parentId,
             text: displayText,
             state: { opened: true },
-            type: item.contentType === 'group' ? "default" : "field"
+            type: item.contentType === 'group' ? "default" : "field",
+            li_attr: item.nodeChange === 'removed' ? { class: 'removed-node' } :
+            item.nodeChange === 'added' ? { class: 'added-node' } :
+            item.nodeChange === 'edited' ? { class: 'edited-node' } : {}
         };
         // Adding icon for items with contentType "file"
         if (item.contentType === "field") {
@@ -434,7 +418,6 @@ function showTreeView(treeData) {
 }
 
 function buildTreeDataForNoticeTypes(noticeData, parent = "#") {
-    debugger
     let treeData = [];
 
     noticeData.forEach(item => {
