@@ -101,17 +101,15 @@ main {
 }
 .removed-node > a {
     color: black !important;
-    background-color: #EA9999 !important;
+    background-color: #FFCCD0 !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
-    border:1px solid #C5B4B3 !important;
 }
 .added-node > a {
-    background-color: #B6D7A8 !important;
+    background-color: #CCFFD8 !important;
     color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
-    border:1px solid #B1C5B6 !important;
 }
 .added-property {
     background-color: #E6FFEC !important;
@@ -122,11 +120,10 @@ main {
     color: black !important;
 }
 .edited-node > a {
-    background-color: #9FC5F8 !important;
+    background-color: #E6E9FF !important;
     color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
-    border: 1px solid #ABBDC5 !important;
 }
 .changed-label {
     font-weight: bold;
@@ -159,7 +156,7 @@ main {
     flex-basis: calc(50% - 2px);
 }
 .old-property-value {
-    background-color: #FFEBE9 !important;
+    background-color: #FFE6E8 !important;
     color: black !important;
     margin: 1px 1px !important;
     border-radius: 5px !important;
@@ -210,13 +207,16 @@ main {
     font-size: 0.875rem;
 }
 .legend-item.added {
-    background-color: #B6D7A8;
+    background-color: #CCFFD8;
+    color: #000000;
 }
 .legend-item.removed {
-    background-color: #EA9999;
+    background-color: #FFCCD0;
+    color: #000000;
 }
 .legend-item.modified {
-    background-color: #9FC5F8;
+    background-color: #CCD3FF;
+    color: #000000;
 }
 .custom-select {
     width: 100%;
@@ -246,7 +246,7 @@ main {
     background-color: #E6FFEC;
 }
 .removed-item {
-    background-color: #FFEBE9;
+    background-color: #FFE6E8;
 }
 .edited-item {
     background-color: #DDF4FF;
