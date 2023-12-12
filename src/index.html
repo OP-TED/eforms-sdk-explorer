@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
 </head>
 
 <body>
@@ -179,7 +181,10 @@
         
         <!-- Release notes -->
         <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
-            <p>TODO: display CHANGELOG.md here</p>
+            <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+                <div id="release-notes" class="markdown-body">
+                </div>
+            </div>
         </div>
     </main>
 

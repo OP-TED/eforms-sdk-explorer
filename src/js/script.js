@@ -629,6 +629,27 @@ function updateApiStatus(message, isSuccess = true) {
     }, 5000);
 }
 
+async function fetchAndDisplayReleaseNotes() {
+    const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.selectedTagName}/CHANGELOG.md`;
+    try {
+        toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
+        const response = await fetch(releaseNotesUrl);
+        const markdownContent = await response.text();
+        displayMarkdownAsHtml(markdownContent);
+    } catch (error) {
+        console.error('Error fetching release notes:', error);
+        $('#release-notes').html('<p>Error loading release notes.</p>');
+    } finally {
+        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+    }
+}
+
+function displayMarkdownAsHtml(markdownContent) {
+    const converter = new showdown.Converter();
+    const htmlContent = converter.makeHtml(markdownContent);
+    $('#release-notes').html(`<div class="p-3">${htmlContent}</div>`);
+}
+
 $(document).ready(() => {
     populateDropdown();
     $('#fields-tab').on('click', function () {
@@ -651,6 +672,10 @@ $(document).ready(() => {
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
         await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
         toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+    });
+
+    $('#release-notes-tab').on('click', function () {
+        fetchAndDisplayReleaseNotes();
     });
 
 });
