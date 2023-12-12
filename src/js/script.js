@@ -244,6 +244,42 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     }
 }
 
+async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTagName) {
+    toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
+    clearApiStatus();
+
+    try {
+        const selectedUrl = constructNoticeTypesUrl(selectedTagName, appState.selectedNoticeTypeFile);
+        const comparisonUrl = constructNoticeTypesUrl(selectedComparisonTagName, appState.selectedNoticeTypeFile);
+        const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
+            fetchNoticeTypesData(selectedUrl),
+            fetchNoticeTypesData(comparisonUrl)
+        ]);
+
+        const isMainNoticeTypesFile = appState.selectedNoticeTypeFile === 'notice-types.json';
+
+        if (isMainNoticeTypesFile) {
+            showComparisonView();
+            const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
+            let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
+            let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
+            displayFieldDetails(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
+        } else {
+            let oldMap = flattenToMap(selectedNoticeTypesData.content);
+            let newMap = flattenToMap(comparisonNoticeTypesData.content);
+            const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
+            showTreeView(comparisonResults, oldMap, newMap);
+        }
+
+        updateApiStatus('Successfully loaded notice types.');
+    } catch (error) {
+        updateApiStatus('Failed to load notice types.', false);
+        console.error('Error during notice types operation:', error);
+    } finally {
+        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+    }
+}
+
 async function fetchAndPopulateNoticeTypesDropdown() {
     try {
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);;
@@ -346,51 +382,13 @@ function compareNoticeTypes(selectedData, comparisonData) {
     return comparisonResults;
 }
 
-
-async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTagName) {
-    toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
-    clearApiStatus();
-
-    try {
-        const selectedUrl = constructNoticeTypesUrl(selectedTagName, appState.selectedNoticeTypeFile);
-        const comparisonUrl = constructNoticeTypesUrl(selectedComparisonTagName, appState.selectedNoticeTypeFile);
-        const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
-            fetchNoticeTypesData(selectedUrl),
-            fetchNoticeTypesData(comparisonUrl)
-        ]);
-
-        const isMainNoticeTypesFile = appState.selectedNoticeTypeFile === 'notice-types.json';
-
-        if (isMainNoticeTypesFile) {
-            showComparisonView();
-            const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
-            let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-            let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-            displayFieldDetails(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
-        } else {
-            let oldMap = flattenToMap(selectedNoticeTypesData.content);
-            let newMap = flattenToMap(comparisonNoticeTypesData.content);
-            const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
-            showTreeView(comparisonResults, oldMap, newMap);
-        }
-
-        updateApiStatus('Successfully loaded notice types.');
-    } catch (error) {
-        updateApiStatus('Failed to load notice types.', false);
-        console.error('Error during notice types operation:', error);
-    } finally {
-        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
-    }
-}
-
-function processContentDataForJsTree(content, parentId = "#") {
+function processNoticeTypesJsTree(content, parentId = "#") {
     let treeData = [];
     content.forEach(item => {
-        let displayText = item.description.length > 100 ? item.description.substring(0, 20) + '...' : item.description;
         let node = {
             id: item.id,
             parent: parentId,
-            text: displayText,
+            text: item.id,
             state: { opened: true },
             type: item.contentType === 'group' ? "default" : "field",
             li_attr: item.nodeChange === 'removed' ? { class: 'removed-node' } :
@@ -403,7 +401,7 @@ function processContentDataForJsTree(content, parentId = "#") {
         }
         treeData.push(node);
         if (item.contentType === 'group' && item.content) {
-            let children = processContentDataForJsTree(item.content, item.id);
+            let children = processNoticeTypesJsTree(item.content, item.id);
             treeData = treeData.concat(children);
         }
     });
@@ -435,7 +433,7 @@ function showTreeView(treeData, oldMap, newMap) {
     }).appendTo('#noticeTypesTreeContainer');
 
     // initializeNoticeTypesTree(treeData);
-    let jsTreeData = processContentDataForJsTree(treeData);
+    let jsTreeData = processNoticeTypesJsTree(treeData);
     $('#noticeTypesComparisonContainer').hide();
     $('#noticeTypesTreeContainer').show();
 
