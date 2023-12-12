@@ -92,20 +92,16 @@
                     <div class="notice-types-dropdown-container d-flex align-items-center">
                         <ul class="nav nav-pills">
                             <li class="nav-item mr-2">
-                                <a class="nav-link active" href="#">Overview</a>
+                                <a class="nav-link active" id="overviewLink" href="#">Overview</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
                                     aria-expanded="false">Select Notice subtype</a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#">1.json</a>
-                                    <a class="dropdown-item" href="#">2.json</a>
-                                    <a class="dropdown-item" href="#">3.json</a>
+                                <div class="dropdown-menu" id="noticeSubtypesDropdown">
+                                    <!-- Notice subtype links will be populated here by JavaScript -->
                                 </div>
                             </li>
                         </ul>
-                        <span class="notice-types-header font-weight-bold">Notice Types</span>
-                        <select id="noticeTypesDropdown" class="custom-select notice-types-dropdown"></select>
                         <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
                             <span class="sr-only">Loading...</span>
                         </div>

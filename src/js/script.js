@@ -25,7 +25,8 @@ const domElements = {
     noticeTypesDropdown: $('#noticeTypesDropdown'),
     noticeTypesTree: $('#noticeTypesTree'),
     fieldDetailsContent: $('#fieldDetailsContent'),
-    noticeTypesComparisonContent: $('#noticeTypesComparisonContent')
+    noticeTypesComparisonContent: $('#noticeTypesComparisonContent'),
+    noticeTypesDetails: $('#noticeTypesDetails')
 };
 
 function toggleLoadingSpinner(show, spinnerElement = domElements.loadingSpinner) {
@@ -76,7 +77,6 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
     if (domElements.xmlStructureTree.jstree(true)) {
         domElements.xmlStructureTree.jstree("destroy");
     }
-
     domElements.xmlStructureTree.jstree({
         core: {
             data: buildTreeData(xmlStructure, fieldsComparisonResults),
@@ -94,8 +94,8 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
             displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
         }
         const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
-        if(nodeDetails){
-            let oldMap = new Map( appState.comparisonData.map(node => [node.id, node]));
+        if (nodeDetails) {
+            let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
             let newMap = new Map(appState.versionData.map(node => [node.id, node]));
             displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
 
@@ -230,9 +230,7 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
             if (appState.versionData && appState.comparisonData) {
                 const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.versionData, 'id');
                 const fieldsComparisonResults = compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, 'id', true);
-
                 initializeTree(xmlComparisonResults, fieldsComparisonResults);
-
             }
         }
     } catch (error) {
@@ -252,23 +250,50 @@ async function fetchAndPopulateNoticeTypesDropdown() {
         const response = await $.ajax({ url: appConfig.noticeTypesFileUrl, dataType: 'json' });
         const noticeTypesFiles = response.filter(item => item.type === 'file');
 
-        const $dropdown = $('#noticeTypesDropdown');
-        $dropdown.empty();
+        const $dropdownMenu = $('.dropdown-menu');
+        $dropdownMenu.empty(); // Clear any existing items
 
         noticeTypesFiles.forEach(file => {
-            const option = new Option(file.name, file.name);
-            $dropdown.append(option);
-            if (file.name === appState.selectedNoticeTypeFile) {
-                $(option).prop('selected', true);
+            if (file.name !== 'notice-types.json') {
+                const $dropdownItem = $('<a class="dropdown-item" href="#">').text(file.name);
+                $dropdownItem.on('click', function (e) {
+                    e.preventDefault(); // Prevent default anchor click behavior
+                    selectNoticeSubtype(file.name);
+                });
+                $dropdownMenu.append($dropdownItem);
             }
         });
+
+        // Bind the 'notice-types.json' action to the "Overview" link
+        $('.nav-link.active').on('click', function (e) {
+            e.preventDefault(); // Prevent default anchor click behavior
+            selectNoticeSubtype('notice-types.json');
+        });
+
     } catch (error) {
         console.error('Error fetching notice types:', error);
-        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
     } finally {
         toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
     }
 }
+
+function selectNoticeSubtype(filename) {
+    appState.selectedNoticeTypeFile = filename;
+
+    toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
+
+    fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName)
+        .then(() => {
+            toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+        })
+        .catch(error => {
+            console.error('Error fetching and displaying notice types:', error);
+            toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+            updateApiStatus('Failed to load notice types.', false);
+        });
+}
+
+
 
 function constructNoticeTypesUrl(tagName, fileName) {
     return `${appConfig.rawBaseUrl}/${tagName}/notice-types/${fileName}`;
@@ -337,13 +362,16 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
         const isMainNoticeTypesFile = appState.selectedNoticeTypeFile === 'notice-types.json';
 
         if (isMainNoticeTypesFile) {
+            showComparisonView();
             const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
             let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
             let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
             displayFieldDetails(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
         } else {
+            let oldMap = flattenToMap(selectedNoticeTypesData.content);
+            let newMap = flattenToMap(comparisonNoticeTypesData.content);
             const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
-            showTreeView(comparisonResults);
+            showTreeView(comparisonResults, oldMap, newMap);
         }
 
         updateApiStatus('Successfully loaded notice types.');
@@ -366,8 +394,8 @@ function processContentDataForJsTree(content, parentId = "#") {
             state: { opened: true },
             type: item.contentType === 'group' ? "default" : "field",
             li_attr: item.nodeChange === 'removed' ? { class: 'removed-node' } :
-            item.nodeChange === 'added' ? { class: 'added-node' } :
-            item.nodeChange === 'edited' ? { class: 'edited-node' } : {}
+                item.nodeChange === 'added' ? { class: 'added-node' } :
+                    item.nodeChange === 'edited' ? { class: 'edited-node' } : {}
         };
         // Adding icon for items with contentType "file"
         if (item.contentType === "field") {
@@ -383,10 +411,24 @@ function processContentDataForJsTree(content, parentId = "#") {
     return treeData;
 }
 
-function showTreeView(treeData) {
+function showComparisonView() {
+    // Hide the tree view and details view
+    $('#noticeTypesTreeContainer').hide();
+    $('#noticeTypesDetails').hide();
+
+    // Show the comparison view
+    $('.notice-types-comparison').show();
+    $('#noticeTypesComparisonContent').show();
+}
+
+function showTreeView(treeData, oldMap, newMap) {
     // Remove comparison view if it exists
-    $('#noticeTypesComparisonContent').remove();
     $('.notice-types-comparison').hide();
+    $('#noticeTypesComparisonContent').hide();
+
+    // Show the tree view and details view
+    $('#noticeTypesTreeContainer').show();
+    $('#noticeTypesDetails').show();
 
     $('<div/>', {
         id: 'noticeTypesTree'
@@ -411,10 +453,45 @@ function showTreeView(treeData) {
     });
 
     domElements.noticeTypesTree.on("select_node.jstree", function (e, data) {
-        displayNoticeTypeDetails(data.node.original);
+        const selectedFieldId = data.node.id;
+        const fieldDetails = findFieldById(treeData, selectedFieldId)
+        displayFieldDetails(fieldDetails, oldMap, newMap, domElements.noticeTypesDetails);
+
     });
     $('#noticeTypesTreeContainer').show();
 }
+
+function flattenToMap(data, map = new Map()) {
+    data.forEach(item => {
+        map.set(item.id, item);
+        if (Array.isArray(item.content)) {
+            flattenToMap(item.content, map); // Recursively process nested arrays
+        }
+    });
+    return map;
+}
+
+function findFieldById(data, fieldId) {
+    let result = null;
+    function searchContent(content) {
+        for (let item of content) {
+            if (item.id === fieldId) {
+                result = item;
+                return true;
+            }
+            if (Array.isArray(item.content)) {
+                if (searchContent(item.content)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    searchContent(data);
+    return result;
+}
+
 
 function buildTreeDataForNoticeTypes(noticeData, parent = "#") {
     let treeData = [];
@@ -443,24 +520,20 @@ function buildTreeDataForNoticeTypes(noticeData, parent = "#") {
 
 
 function displayNoticeTypeDetails(nodeData) {
-    const $detailsContent = $('#noticeTypesDetails');
-    $detailsContent.empty();
+    domElements.noticeTypesDetails.empty();
 
     if (!nodeData) {
-        $detailsContent.html('Select a node to see details.');
+        domElements.noticeTypesDetails.html('Select a node to see details.');
         return;
     }
-
-    // Create a list to display the details
     const $ul = $('<ul class="list-group">');
-    // Add each property of the node as a list item
     Object.entries(nodeData).forEach(([key, value]) => {
         const $li = $('<li class="list-group-item"></li>');
         $li.html(`<strong>${key}:</strong> ${value}`);
         $ul.append($li);
     });
 
-    $detailsContent.append($ul);
+    domElements.noticeTypesDetails.append($ul);
 }
 
 function compareDataStructures(oldStructure, newStructure, uniqueKey = 'id', performDeepComparison = false) {
@@ -490,7 +563,6 @@ function compareDataStructures(oldStructure, newStructure, uniqueKey = 'id', per
             if (performDeepComparison && !areValuesEquivalent(oldNode, newNode)) {
                 comparisonResults.push({ ...newNode, nodeChange: 'edited' });
             } else if (!comparisonResults.some(node => node[uniqueKey] === oldNode[uniqueKey])) {
-                // Only add as unchanged if it hasn't been already added as removed or added
                 comparisonResults.push({ ...oldNode, nodeChange: 'unchanged' });
             }
         }
@@ -574,6 +646,13 @@ $(document).ready(() => {
 
     $('#noticeTypesTreeContainer').hide();
 
+    $('#overviewLink').on('click', async function (e) {
+        appState.selectedNoticeTypeFile = 'notice-types.json';
+        toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
+        await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
+        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+    });
+
 });
 
 domElements.noticeTypesDropdown.change(async function () {
@@ -600,7 +679,6 @@ domElements.comparisonDropdown.change(function () {
 function fetchDataBasedOnActiveTab() {
     const selectedTagName = appState.selectedTagName;
     const selectedComparisonTagName = appState.selectedComparisonTagName;
-
     if (appState.activeTab === 'fields') {
         fetchAndDisplayFieldsContent(selectedTagName, true);
         fetchAndDisplayFieldsContent(selectedComparisonTagName, false);
