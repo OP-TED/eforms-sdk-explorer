@@ -53,73 +53,88 @@
     </nav>
 
     <main class="tab-content">
-
+    
         <!-- Fields -->
-        <div class="tab-pane fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
-
-            <!-- XML Structure Tree -->
-            <section class="column">
-                <header class="font-weight-bold">
-                    <span>Fields</span>
-                    <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
-                        style="display: none;">
-                        <span class="sr-only">Loading...</span>
+        <div class="tab-pane h-100 fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
+    
+            <div class="container-fluid h-100">
+                <div class="row row-cols-2 h-100">
+                    <!-- XML Structure Tree -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">
+                            <span>Fields</span>
+                            <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
+                                style="display: none;">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </header>
+                        <div id="xmlStructureTreeContainer" class="tree-container mh-100">
+                            <div id="xmlStructureTree"></div>
+                        </div>
                     </div>
-                </header>
-                <div id="xmlStructureTreeContainer" class="alert alert-secondary tree-container">
-                    <div id="xmlStructureTree"></div>
+    
+                    <!-- Field & Node Details -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="fieldDetailsContent" class="details-container mh-100">
+                            <p class="m-2">Select a field to see details.</p>
+                        </div>
+                    </div>
                 </div>
-            </section>
-
-            <!-- Field & Node Details -->
-            <section class="column">
-                <header class="font-weight-bold">Details</header>
-                <div id="fieldDetailsContent" class="alert alert-secondary" role="alert">
-                    Select a field to see details.
-                </div>
-            </section>
+            </div>
         </div>
-
+    
         <!-- Notice subtypes -->
-        <div class="tab-pane fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
-            <!-- Dropdown and Spinner -->
-            <div class="notice-types-dropdown-container d-flex align-items-center">
-                <span class="notice-types-header font-weight-bold">Notice Types</span>
-                <select id="noticeTypesDropdown" class="custom-select notice-types-dropdown"></select>
-                <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
-                    <span class="sr-only">Loading...</span>
-                </div>
-            </div>
-
-            <!-- New section for comparison results -->
-            <section class="column notice-types-comparison">
-                <div id="noticeTypesComparisonContent" class="alert alert-secondary comparison-content">
-                </div>
-            </section>
-
-            <!-- Tree and Details Container -->
-            <div class="d-flex" id="noticeTypesContent">
-                <!-- Tree View Container -->
-                <div id="noticeTypesTreeContainer" class="tree-container">
-                    <div id="noticeTypesTree" class="alert alert-secondary"></div>
-                </div>
-
-                <!-- Notice Types Details Panel -->
-                <section class="column details-container">
-                    <div id="noticeTypesDetails" class="alert alert-secondary">
-                        Select a node to see details.
+        <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
+            <div class="container-fluid h-100">
+                <div class="row row-cols-1">
+                    <!-- Dropdown and Spinner -->
+                    <div class="notice-types-dropdown-container d-flex align-items-center">
+                        <span class="notice-types-header font-weight-bold">Notice Types</span>
+                        <select id="noticeTypesDropdown" class="custom-select notice-types-dropdown"></select>
+                        <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
+                            <span class="sr-only">Loading...</span>
+                        </div>
                     </div>
-                </section>
+                </div>
+    
+                <div class="row row-cols-1">
+                    <!-- New section for comparison results -->
+                    <div class="notice-types-comparison">
+                        <div id="noticeTypesComparisonContent" class="comparison-content">
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="row row-cols-2 h-100">
+    
+                    <!-- Notice-type Structure Column -->
+                    <div class="col h-100">
+                        <!-- Tree View Container -->
+                        <header class="font-weight-bold">Notice Structure</header>
+                        <div id="noticeTypesTreeContainer" class="tree-container mh-100">
+                            <div id="noticeTypesTree"></div>
+                        </div>
+                    </div>
+    
+                    <!-- Notice-Types Details Column -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="noticeTypesDetails" class="details-container mh-100">
+                            <p class="m-2">Select a node to see details.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-
+    
+    
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
             <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with
                 different version numbers.</p>
         </div>
-
+    
         <!-- Release notes -->
         <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
             <p>TODO: display CHANGELOG.md here</p>

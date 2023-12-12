@@ -389,8 +389,7 @@ function showTreeView(treeData) {
     $('.notice-types-comparison').hide();
 
     $('<div/>', {
-        id: 'noticeTypesTree',
-        class: 'alert alert-secondary'
+        id: 'noticeTypesTree'
     }).appendTo('#noticeTypesTreeContainer');
 
     // initializeNoticeTypesTree(treeData);
