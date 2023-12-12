@@ -38,16 +38,28 @@
                     type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types"
-                    type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button"
+                    role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
                     role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes"
-                    type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab"
+                    aria-controls="schemas" aria-selected="false">Schemas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button"
+                    role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
+                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button"
+                    role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
             </li>
         </ul>
     </nav>
@@ -56,9 +68,9 @@
     
         <!-- Fields -->
         <div class="tab-pane h-100 fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
-    
             <div class="container-fluid h-100">
                 <div class="row row-cols-2 h-100">
+    
                     <!-- XML Structure Tree -->
                     <div class="col h-100">
                         <header class="font-weight-bold">
@@ -80,6 +92,7 @@
                             <p class="m-2">Select a field to see details.</p>
                         </div>
                     </div>
+    
                 </div>
             </div>
         </div>
@@ -87,8 +100,9 @@
         <!-- Notice subtypes -->
         <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
             <div class="container-fluid h-100">
+        
+                <!-- Dropdown and Spinner -->
                 <div class="row row-cols-1">
-                    <!-- Dropdown and Spinner -->
                     <div class="notice-types-dropdown-container d-flex align-items-center">
                         <ul class="nav nav-pills">
                             <li class="nav-item mr-2">
@@ -111,7 +125,8 @@
                         </div>
                     </div>
                 </div>
-    
+        
+                <!-- Notice-types comparison overview -->
                 <div class="row row-cols-1">
                     <!-- New section for comparison results -->
                     <div class="notice-types-comparison">
@@ -119,10 +134,10 @@
                         </div>
                     </div>
                 </div>
-    
+                <!-- Notice-type comparison -->
                 <div class="row row-cols-2 h-100">
     
-                    <!-- Notice-type Structure Column -->
+                    <!-- Tree -->
                     <div class="col h-100">
                         <!-- Tree View Container -->
                         <header class="font-weight-bold">Notice Structure</header>
@@ -131,7 +146,7 @@
                         </div>
                     </div>
     
-                    <!-- Notice-Types Details Column -->
+                    <!-- Details -->
                     <div class="col h-100">
                         <header class="font-weight-bold">Details</header>
                         <div id="noticeTypesDetails" class="details-container mh-100">
@@ -139,16 +154,33 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
-    
     
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
             <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with
                 different version numbers.</p>
         </div>
-    
+
+        <!-- Schemas -->
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed XSDs and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+
+        <!-- Translations -->
+        <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed translations files and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+        
+        <!-- View Templates -->
+        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed view templates and link to GitHub compare page for detailed comparison.</p>
+        </div>
+        
         <!-- Release notes -->
         <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
             <p>TODO: display CHANGELOG.md here</p>
