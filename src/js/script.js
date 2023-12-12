@@ -149,14 +149,19 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
         const fieldToIterate = newField || oldField;
 
         for (const [key, value] of Object.entries(fieldToIterate)) {
+            if (key === 'content') {
+                continue;
+            }
             const newValue = newField ? newField[key] : undefined;
             const oldValue = oldField ? oldField[key] : undefined;
             const $propertyTemplate = displayProperty(key, newField ? newValue : undefined, oldValue);
             $ul.append($propertyTemplate);
         }
+
+        // Handle removed properties in oldField that are not in newField
         if (newField) {
             for (const key in oldField) {
-                if (!newField.hasOwnProperty(key)) {
+                if (!newField.hasOwnProperty(key) && key !== 'content') {
                     const $removedPropertyTemplate = displayProperty(key, undefined, oldField[key]);
                     $ul.append($removedPropertyTemplate);
                 }
@@ -176,16 +181,9 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
             $(container).append($itemContainer);
         });
     } else {
-
         const $tree = createTree(data[uniqueKey]);
         $(container).append($tree);
     }
-}
-
-
-
-function words(str) {
-    return str.split(/\s+/);
 }
 
 function formatObjectValue(obj) {
