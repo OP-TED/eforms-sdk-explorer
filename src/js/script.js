@@ -575,19 +575,30 @@ function findIndexByVersion(versionName) {
 }
 
 function compareVersions(a, b) {
-    const aParts = a.split('.').map(Number);
-    const bParts = b.split('.').map(Number);
-    
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-        const aValue = i < aParts.length ? aParts[i] : 0;
-        const bValue = i < bParts.length ? bParts[i] : 0;
+    const parseVersionPart = (part) => {
+        const match = part.match(/(\d+)(.*)/);
+        return match ? { number: parseInt(match[1], 10), text: match[2] } : { number: 0, text: '' };
+    };
 
-        if (aValue > bValue) return -1;
-        if (aValue < bValue) return 1;
+    const aParts = a.split('.').map(parseVersionPart);
+    const bParts = b.split('.').map(parseVersionPart);
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+        const aValue = i < aParts.length ? aParts[i] : { number: 0, text: '' };
+        const bValue = i < bParts.length ? bParts[i] : { number: 0, text: '' };
+
+        // Compare numeric
+        if (aValue.number > bValue.number) return -1;
+        if (aValue.number < bValue.number) return 1;
+
+        // Compare textual parts if needed
+        if (aValue.text > bValue.text) return -1;
+        if (aValue.text < bValue.text) return 1;
     }
 
     return 0;
 }
+
 
 async function populateDropdown() {
     toggleLoadingSpinner(true);
