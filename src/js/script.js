@@ -574,6 +574,20 @@ function findIndexByVersion(versionName) {
     });
 }
 
+function compareVersions(a, b) {
+    const aParts = a.split('.').map(Number);
+    const bParts = b.split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+        const aValue = i < aParts.length ? aParts[i] : 0;
+        const bValue = i < bParts.length ? bParts[i] : 0;
+
+        if (aValue > bValue) return -1;
+        if (aValue < bValue) return 1;
+    }
+
+    return 0;
+}
 
 async function populateDropdown() {
     toggleLoadingSpinner(true);
@@ -583,7 +597,7 @@ async function populateDropdown() {
             url: `${appConfig.tagsBaseUrl}/tags`,
             dataType: 'json'
         });
-        const data = response.sort((a, b) => b.name.localeCompare(a.name));
+        const data = response.sort((a, b) => compareVersions(a.name, b.name));
 
         appState.sortedData = data;
         domElements.tagsDropdown.empty();
