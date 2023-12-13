@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
 </head>
 
 <body>
@@ -38,63 +40,155 @@
                     type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types"
-                    type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button"
+                    role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
                     role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes"
-                    type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab"
+                    aria-controls="schemas" aria-selected="false">Schemas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button"
+                    role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
+                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button"
+                    role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
             </li>
         </ul>
     </nav>
 
     <main class="tab-content">
-
+    
         <!-- Fields -->
-        <div class="tab-pane fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
-
-            <!-- XML Structure Tree -->
-            <section class="column">
-                <header class="font-weight-bold">
-                    <span>Fields</span>
-                    <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
-                        style="display: none;">
-                        <span class="sr-only">Loading...</span>
+        <div class="tab-pane h-100 fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
+            <div class="container-fluid h-100">
+                <div class="row row-cols-2 h-100">
+    
+                    <!-- XML Structure Tree -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">
+                            <span>Fields</span>
+                            <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
+                                style="display: none;">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </header>
+                        <div id="xmlStructureTreeContainer" class="tree-container mh-100">
+                            <div id="xmlStructureTree"></div>
+                        </div>
                     </div>
-                </header>
-                <div id="xmlStructureTreeContainer" class="alert alert-secondary">
-                    <div id="xmlStructureTree"></div>
+    
+                    <!-- Field & Node Details -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="fieldDetailsContent" class="details-container mh-100">
+                            <p class="m-2">Select a field to see details.</p>
+                        </div>
+                    </div>
+    
                 </div>
-            </section>
-
-            <!-- Field & Node Details -->
-            <section class="column">
-                <header class="font-weight-bold">Details</header>
-                <div id="detailsContent" class="alert alert-secondary" role="alert">
-                    Select a field to see details.
-                </div>
-            </section>
+            </div>
         </div>
-
+    
         <!-- Notice subtypes -->
-        <div class="tab-pane fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
-            <p>TODO: Add UI similar to "Fields". Select notice-subtype via drop-down.</p>
-        </div>
+        <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
+            <div class="container-fluid h-100">
+        
+                <!-- Dropdown and Spinner -->
+                <div class="row row-cols-1">
+                    <div class="notice-types-dropdown-container d-flex align-items-center">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item mr-2">
+                                <a class="nav-link active" id="overviewLink" href="#">Overview</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+                                    aria-expanded="false">Select Notice subtype</a>
+                                <div class="dropdown-menu" id="noticeSubtypesDropdown">
+                                    <!-- Notice subtype links will be populated here by JavaScript -->
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Notice-types comparison overview -->
+                <div class="row row-cols-1">
+                    <!-- New section for comparison results -->
+                    <div class="notice-types-comparison">
+                        <div id="noticeTypesComparisonContent" class="comparison-content">
+                        </div>
+                    </div>
+                </div>
+                <!-- Notice-type comparison -->
+                <div class="row row-cols-2 h-100">
+    
+                    <!-- Tree -->
+                    <div class="col h-100">
+                        <!-- Tree View Container -->
+                        <header class="font-weight-bold">Notice Structure</header>
+                        <div id="noticeTypesTreeContainer" class="tree-container mh-100">
+                            <div id="noticeTypesTree"></div>
+                        </div>
+                    </div>
+    
+                    <!-- Details -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="noticeTypesDetails" class="details-container mh-100">
+                            <p class="m-2">Select a node to see details.</p>
+                        </div>
+                    </div>
+                </div>
 
+            </div>
+        </div>
+    
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
             <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with
                 different version numbers.</p>
         </div>
 
+        <!-- Schemas -->
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed XSDs and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+
+        <!-- Translations -->
+        <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed translations files and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+        
+        <!-- View Templates -->
+        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed view templates and link to GitHub compare page for detailed comparison.</p>
+        </div>
+        
         <!-- Release notes -->
         <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
-            <p>TODO: display CHANGELOG.md here</p>
+            <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+                <div id="release-notes" class="markdown-body">
+                </div>
+            </div>
         </div>
+    </main>
+
+    <footer>
         <!-- Legend -->
         <div class="legend-container">
             <span class="legend-title">Legend:</span>
@@ -102,10 +196,6 @@
             <span class="legend-item removed">removed</span>
             <span class="legend-item modified">modified</span>
         </div>
-
-    </main>
-
-    <footer>
         <div id="apiStatus" class="alert alert-info" role="alert">
         </div>
     </footer>
