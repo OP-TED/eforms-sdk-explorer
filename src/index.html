@@ -16,6 +16,7 @@
 </head>
 
 <body>
+
     <header class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -200,17 +201,86 @@
         </div>
     </footer>
 
-    <!-- Property Template -->
-    <template id="propertyTemplate">
-        <li class="list-group-item property-flex">
-            <span id="label" class="property-label"></span>
-            <div id="old-value" class="property-value"></div>
-            <div id="new-value" class="property-value"></div>
-        </li>
-    </template>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
-    <script src="js/script.js"></script>
+    <script type="module" src="../dist//bundle.js"></script>
 </body>
+
+<!-- Tree Panel Template -->
+<template>
+    
+</template>
+
+<!-- Details Panel template -->
+<template>
+
+</template>
+
+<!-- Property Template -->
+<template id="property-card-template">
+    <style>
+        .property-flex {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .property-label {
+            font-weight: bold;
+            flex-basis: 100%;
+            font-size: smaller;
+        }
+
+        .property-value {
+            font-family: 'Courier New', Courier, monospace;
+            overflow-wrap: anywhere;
+            font-size: smaller;
+            float: right;
+            box-sizing: border-box;
+        }
+
+        .new-property-value {
+            background-color: #E6FFEC !important;
+            color: black !important;
+            margin: 1px 0px 1px 4px !important;
+            border-radius: 5px !important;
+            border-top: 6px solid #B8E6C2 !important;
+            box-shadow: 1px 1px 3px 1px #A3A9CC !important;
+            padding: 2px 4px !important;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .old-property-value {
+            background-color: #FFE6E8 !important;
+            color: black !important;
+            margin: 1px 4px 1px 0px !important;
+            border-radius: 5px !important;
+            border-top: 6px solid #E6B8BC !important;
+            box-shadow: 1px 1px 3px 1px #A3A9CC !important;
+            padding: 2px 4px !important;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .added-property {
+            background-color: #E6FFEC !important;
+            color: #000000 !important;
+        }
+
+        .removed-property {
+            background-color: #FFEBE9 !important;
+            color: black !important;
+        }
+
+        .changed-property {
+            background-color: #E6E9FF !important;
+            color: black !important;
+        }
+    </style>
+    <li id="list-item" class="list-group-item property-flex">
+        <span id="property-name" class="property-label"></span>
+        <div id="old-property-value" class="property-value"></div>
+        <div id="new-property-value" class="property-value"></div>
+    </li>
+</template>
 
 </html>

@@ -1,3 +1,5 @@
+import { PropertyCard } from './property-card.js';
+
 const appConfig = {
     tagsBaseUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK',
     rawBaseUrl: 'https://raw.githubusercontent.com/OP-TED/eForms-SDK',
@@ -106,8 +108,6 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
 
 function displayProperty(key, newValue, oldValue) {
 
-    const valueHasChanged = !areValuesEquivalent(newValue, oldValue);
-
     // Format the new value
     if (_.isObject(newValue) || Array.isArray(newValue)) {
         newValue = formatObjectValue(newValue);
@@ -118,26 +118,12 @@ function displayProperty(key, newValue, oldValue) {
         oldValue = formatObjectValue(oldValue);
     }
 
-    const $template = $($('#propertyTemplate').html());
-    $template.find('.property-label').text(key + ': ');
-    $template.find('#new-value').html(newValue);
-    $template.find('#old-value').html(oldValue);
+    const $component = $('<property-card/>');
+    $component.attr('property-name', key + ': ');
+    $component.attr('new-property-value', newValue);
+    $component.attr('old-property-value', oldValue);
 
-    if (oldValue === undefined) {
-        $template.addClass('added-property');
-        $template.find('#old-value').css('display', 'none');
-    } else if (newValue === undefined) {
-        $template.addClass('removed-property');
-        $template.find('#new-value').css('display', 'none');
-    } else if (valueHasChanged) {
-        $template.addClass('changed-property');
-        $template.find('#new-value').addClass('new-property-value');
-        $template.find('#old-value').addClass('old-property-value');
-    } else {
-        $template.find('#old-value').css('display', 'none');
-    }
-
-    return $template;
+    return $component;
 }
 
 function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') {

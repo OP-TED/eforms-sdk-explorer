@@ -117,20 +117,6 @@ body > footer {
     margin: 1px 1px !important;
     border-radius: 5px !important;
 }
-.added-property {
-    background-color: #E6FFEC !important;
-    color: #000000 !important;
-}
-.removed-property {
-    background-color: #FFEBE9 !important;
-    color: black !important;
-}
-
-.changed-property {
-    background-color: #E6E9FF !important;
-    color: black !important;
-}
-
 .edited-node > a {
     background-color: #CCD3FF !important;
     color: black !important;
@@ -141,44 +127,6 @@ body > footer {
     font-weight: bold;
     color: #333;
 }
-.property-flex {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-.property-label {
-    font-weight: bold;
-    flex-basis: 100%;
-    font-size: smaller;
-}
-.property-value {
-    font-family: 'Courier New', Courier, monospace;
-    overflow-wrap: anywhere;
-    font-size: smaller;
-    float: right;
-    box-sizing: border-box;
-}
-.new-property-value {
-    background-color: #E6FFEC !important;
-    color: black !important;
-    margin: 1px 0px 1px 4px !important;
-    border-radius: 5px !important;
-    border-top: 6px solid #B8E6C2 !important;
-    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-    padding: 2px 4px !important;
-    flex-basis: calc(50% - 4px);
-}
-.old-property-value {
-    background-color: #FFE6E8 !important;
-    color: black !important;
-    margin: 1px 4px 1px 0px !important;
-    border-radius: 5px !important;
-    border-top: 6px solid #E6B8BC !important;
-    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-    padding: 2px 4px !important;
-    flex-basis: calc(50% - 4px);
-}
-
 #detailsContent {
     max-height: 100vh;
     overflow-y: auto;
