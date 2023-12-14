@@ -216,6 +216,36 @@
 
 </template>
 
+<!-- Index Card Template -->
+<template id="index-card-template">
+    <style>
+        .added-card {
+            background-color: #E6FFEC;
+            color: black;
+        }
+
+        .removed-card {
+            background-color: #FFEBE9;
+            color: black;
+        }
+
+        .changed-card {
+            background-color: #E6E9FF;
+            color: black;
+        }
+    </style>
+    <div class="card">
+        <div class="card-body" style="display: flex; flex-direction: row; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h1 id="title" class="card-title"></h1>
+                <h5 id="subtitle" class="card-subtitle""></h5>
+            </div>
+            <button id="action-button" type="button" class="btn btn-outline-primary"></button>
+        </div>
+        <ul id="property-list" class="list-group list-group-flush">
+        </ul>
+    </div></template>
+
 <!-- Property Template -->
 <template id="property-card-template">
     <style>
@@ -240,40 +270,44 @@
         }
 
         .new-property-value {
-            background-color: #E6FFEC !important;
-            color: black !important;
-            margin: 1px 0px 1px 4px !important;
-            border-radius: 5px !important;
-            border-top: 6px solid #B8E6C2 !important;
-            box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-            padding: 2px 4px !important;
+            background-color: #E6FFEC;
+            color: black;
+            margin: 1px 0px 1px 4px;
+            border-radius: 5px;
+            border-top: 6px solid #B8E6C2;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
             flex-basis: calc(50% - 4px);
         }
 
         .old-property-value {
-            background-color: #FFE6E8 !important;
-            color: black !important;
-            margin: 1px 4px 1px 0px !important;
-            border-radius: 5px !important;
-            border-top: 6px solid #E6B8BC !important;
-            box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-            padding: 2px 4px !important;
+            background-color: #FFE6E8;
+            color: black;
+            margin: 1px 4px 1px 0px;
+            border-radius: 5px;
+            border-top: 6px solid #E6B8BC;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
             flex-basis: calc(50% - 4px);
         }
 
         .added-property {
-            background-color: #E6FFEC !important;
-            color: #000000 !important;
+            background-color: #E6FFEC;
+            color: black;
         }
 
         .removed-property {
-            background-color: #FFEBE9 !important;
-            color: black !important;
+            background-color: #FFEBE9;
+            color: black;
         }
 
         .changed-property {
-            background-color: #E6E9FF !important;
-            color: black !important;
+            background-color: #E6E9FF;
+            color: black;
+        }
+
+        :host-context(.list-group-flush) .list-group-item {
+            border-width: 0 0 1px;
         }
     </style>
     <li id="list-item" class="list-group-item property-flex">
