@@ -1,4 +1,5 @@
 import { PropertyCard } from './property-card.js';
+import { IndexCard } from './index-card.js';
 
 const appConfig = {
     tagsBaseUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK',
@@ -172,6 +173,65 @@ function displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') 
     }
 }
 
+function displayNoticeTypeCard(data, oldMap, newMap, container, uniqueKey = 'id') {
+    function createTree(uniqueId) {
+        const newField = newMap.get(uniqueId);
+        const oldField = oldMap.get(uniqueId);
+
+        const component = document.createElement('index-card');
+
+        const fieldToIterate = newField || oldField;
+
+        for (const [key, value] of Object.entries(fieldToIterate)) {
+            if (key === 'content') {
+                continue;
+            }
+            const newValue = newField ? newField[key] : undefined;
+            const oldValue = oldField ? oldField[key] : undefined;
+            const $propertyTemplate = displayProperty(key, newField ? newValue : undefined, oldValue);
+
+            component.appendProperty($propertyTemplate);
+            component.setAttribute('action-name', 'Compare');
+
+            if (key === 'subTypeId') {
+                component.setAttribute('title', value);
+                component.setActionHandler(function (e) {
+                    e.preventDefault();
+                    selectNoticeSubtype(newValue + '.json');
+                });
+            } else if (key === 'type') {
+                component.setAttribute('subtitle', value);
+            }
+        }
+
+        // Handle removed properties in oldField that are not in newField
+        if (newField) {
+            for (const key in oldField) {
+                if (!newField.hasOwnProperty(key) && key !== 'content') {
+                    const $removedPropertyTemplate = displayProperty(key, undefined, oldField[key]);
+                    component.appendProperty($removedPropertyTemplate);
+                }
+            }
+        }
+
+        return component;
+    }
+
+    // Clear existing content
+    $(container).empty();
+
+    if (Array.isArray(data)) {
+        data.forEach(item => {
+            const $itemTree = createTree(item[uniqueKey]);
+            const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
+            $(container).append($itemContainer);
+        });
+    } else {
+        const $tree = createTree(data[uniqueKey]);
+        $(container).append($tree);
+    }
+}
+
 function formatObjectValue(obj) {
     return _.isObject(obj) ? JSON.stringify(obj, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : obj;
 }
@@ -247,7 +307,7 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
             const comparisonResults = compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
             let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
             let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-            displayFieldDetails(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
+            displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
         } else {
             let oldMap = flattenToMap(selectedNoticeTypesData.content);
             let newMap = flattenToMap(comparisonNoticeTypesData.content);
