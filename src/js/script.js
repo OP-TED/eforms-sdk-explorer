@@ -324,39 +324,6 @@ async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTag
     }
 }
 
-async function fetchAndPopulateNoticeTypesDropdown() {
-    try {
-        toggleLoadingSpinner(true, domElements.noticeTypesSpinner);;
-        const response = await $.ajax({ url: appConfig.noticeTypesFileUrl, dataType: 'json' });
-        const noticeTypesFiles = response.filter(item => item.type === 'file');
-
-        const $dropdownMenu = $('.dropdown-menu');
-        $dropdownMenu.empty(); // Clear any existing items
-
-        noticeTypesFiles.forEach(file => {
-            if (file.name !== 'notice-types.json') {
-                const $dropdownItem = $('<a class="dropdown-item" href="#">').text(file.name);
-                $dropdownItem.on('click', function (e) {
-                    e.preventDefault(); // Prevent default anchor click behavior
-                    selectNoticeSubtype(file.name);
-                });
-                $dropdownMenu.append($dropdownItem);
-            }
-        });
-
-        // Bind the 'notice-types.json' action to the "Overview" link
-        $('.nav-link.active').on('click', function (e) {
-            e.preventDefault(); // Prevent default anchor click behavior
-            selectNoticeSubtype('notice-types.json');
-        });
-
-    } catch (error) {
-        console.error('Error fetching notice types:', error);
-    } finally {
-        toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
-    }
-}
-
 function selectNoticeSubtype(filename) {
     appState.selectedNoticeTypeFile = filename;
 
@@ -726,7 +693,6 @@ $(document).ready(() => {
     $('#notice-types-tab').on('click', async function () {
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
         appState.activeTab = 'notice-types';
-        fetchAndPopulateNoticeTypesDropdown();
         await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
         toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
 
