@@ -33,7 +33,6 @@
 }
 .custom-select {
     min-width: 150px;
-    max-width: 100%;
 }
 .navbar {
     min-height: 70px;
@@ -47,10 +46,7 @@
     white-space: nowrap;
     color: black;
 }
-.custom-select {
-    min-width: 150px;
-    max-width: 100%;
-}
+
 .ml-auto {
     display: flex;
     flex-wrap: nowrap;
@@ -228,10 +224,6 @@ body > footer {
 .legend-item.modified {
     background-color: #CCD3FF;
     color: #000000;
-}
-.custom-select {
-    width: 100%;
-    margin-bottom: 20px;
 }
 .notice-types-dropdown-container {
     display: flex;
