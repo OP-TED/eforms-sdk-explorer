@@ -43,17 +43,20 @@ function clearApiStatus() {
 
 function buildTreeData(xmlStructure, fieldsComparisonResults) {
 
-    const treeDataMap = new Map(xmlStructure.map(node => [node.id, {
-        id: node.id,
-        parent: node.parentId || "#",
-        text: node.name || node.id,
-        state: {
-            opened: true
-        },
-        li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
-            node.nodeChange === 'added' ? { class: 'added-node' } :
-                node.nodeChange === 'edited' ? { class: 'edited-node' } : {}
-    }]));
+    const treeDataMap = new Map(xmlStructure.map(node => {
+        return [node.id, {
+            id: node.id,
+            parent: node.parentId || "#",
+            text: node.name || node.id,
+            state: {
+                opened: true
+            },
+            li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
+                node.nodeChange === 'added' ? { class: 'added-node' } :
+                    node.nodeChange === 'edited' ? { class: 'edited-node' } : {}
+        }];
+    }));
+
 
     fieldsComparisonResults.forEach(field => {
         treeDataMap.set(field.id, {
@@ -215,12 +218,10 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     try {
         const response = await $.ajax({ url, dataType: 'json' });
         const fieldsData = response;
-
         if (isTagsDropdown) {
             appState.versionData = fieldsData.xmlStructure;
             appState.versionDataFields = fieldsData.fields;
             fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
-
         } else {
             fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
             appState.comparisonData = fieldsData.xmlStructure;
@@ -550,18 +551,15 @@ function compareDataStructures(oldStructure, newStructure, uniqueKey = 'id', per
         if (!oldMap.has(newNode[uniqueKey])) {
             comparisonResults.push({ ...newNode, nodeChange: 'added' });
         }
-    });
-
-    // Finally, check for edited nodes
-    oldStructure.forEach(oldNode => {
-        if (newMap.has(oldNode[uniqueKey])) {
-            const newNode = newMap.get(oldNode[uniqueKey]);
+        if (oldMap.has(newNode[uniqueKey])) {
+            const oldNode = oldMap.get(newNode[uniqueKey]);
             if (performDeepComparison && !areValuesEquivalent(oldNode, newNode)) {
                 comparisonResults.push({ ...newNode, nodeChange: 'edited' });
-            } else if (!comparisonResults.some(node => node[uniqueKey] === oldNode[uniqueKey])) {
-                comparisonResults.push({ ...oldNode, nodeChange: 'unchanged' });
+            } else if (!comparisonResults.some(node => node[uniqueKey] === oldNode)) {
+                comparisonResults.push({ ...newNode, nodeChange: 'unchanged' });
             }
         }
+
     });
 
     return comparisonResults;
