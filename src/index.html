@@ -21,7 +21,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="./assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
-                    class="d-inline-block align-middle mr-2">eForms SDK Explorer
+                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer <span class="badge badge-warning">preview</span></span>
             </a>
             <div class="ml-auto d-flex align-items-center">
                 <div class="version-text mr-2">Explore SDK</div>
@@ -37,7 +37,11 @@
     <nav>
         <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
+                <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home-tab-content"
+                    type="button" role="tab" aria-controls="home-tab-content" aria-selected="true">Home</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
                     type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
@@ -65,7 +69,20 @@
 
     <main class="tab-content">
 
-        <!-- Fields -->
+        <!-- Home -->
+        <div class="tab-pane h-100 fade show active" id="home-tab-content" role="tabpanel" aria-labelledby="home-tab">
+            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is an early preview of the SDK Explorer. Some features may not be fully functional.</div>
+            <div class="jumbotron">
+                    <h1 class="display-4">SDK Explorer</h1>
+                    <p class="lead">Explore and compare different versions of the eForms SDK.</p>
+                <hr class="my-4">
+                <p>The eForms SDK Explorer is a web application that allows you to explore the contents as well as changes between any two versions of the eForms SDK.
+                    The application is being developed by the Publications Office of the EU and is available as open source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>.</p>
+                    <p>We welcome your feedback, suggestions for improvement as well as your contributions to the project.</p>
+              </div>
+        </div>
+
+            <!-- Fields -->
         <div class="tab-pane h-100 fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
             <div class="container-fluid h-100">
                 <div class="row row-cols-2 h-100">
