@@ -1,3 +1,4 @@
+import { BootstrapWebComponent } from './bootstrap-web-component.js';
 import { PropertyCard } from './property-card.js';
 import { IndexCard } from './index-card.js';
 

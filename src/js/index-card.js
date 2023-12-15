@@ -1,4 +1,4 @@
-import { BootstrapWebComponent } from "./bootstrap-web-component";
+import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 
 export class IndexCard extends BootstrapWebComponent {
  
