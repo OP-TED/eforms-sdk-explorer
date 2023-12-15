@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>SDK Explorer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+    <link rel="stylesheet" href="./src/assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+</head>
+
+<body>
+    <header class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="./src/assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
+                    class="d-inline-block align-middle mr-2">eForms SDK Explorer
+            </a>
+            <div class="ml-auto d-flex align-items-center">
+                <div class="version-text mr-2">Explore SDK</div>
+                <select id="tagsDropdown" class="custom-select mr-2">
+                </select>
+                <div class="comparison-text mr-2">in comparison with</div>
+                <select id="comparisonDropdown" class="custom-select">
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
+                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
+                    role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab" aria-controls="schemas" aria-selected="false">Schemas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button" role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
+                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="tab-content">
+    
+        <!-- Fields -->
+        <div class="tab-pane h-100 fade show active" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
+            <div class="container-fluid h-100">
+                <div class="row row-cols-2 h-100">
+    
+                    <!-- XML Structure Tree -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">
+                            <span>Fields</span>
+                            <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
+                                style="display: none;">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </header>
+                        <div id="xmlStructureTreeContainer" class="tree-container mh-100">
+                            <div id="xmlStructureTree"></div>
+                        </div>
+                    </div>
+    
+                    <!-- Field & Node Details -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="fieldDetailsContent" class="details-container mh-100">
+                            <p class="m-2">Select a field to see details.</p>
+                        </div>
+                    </div>
+    
+                </div>
+            </div>
+        </div>
+    
+        <!-- Notice subtypes -->
+        <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
+            <div class="container-fluid h-100">
+        
+                <!-- Notice-types overview -->
+                    <div class="notice-types-comparison container-fluid h-100 mb-3">
+                        <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                        </nav>
+                        <div id="noticeTypesComparisonContent" class="comparison-content">
+                    </div>
+                </div>
+        
+                                <!-- Notice-type comparison -->
+<div class="container-fluid h-100">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="overviewLink">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                <div class="row row-cols-2 h-100">
+    
+                    <!-- Tree -->
+                    <div class="col h-100">
+                        <!-- Tree View Container -->
+                        <header class="font-weight-bold">Notice Structure</header>
+                        <div id="noticeTypesTreeContainer" class="tree-container mh-100">
+                            <div id="noticeTypesTree"></div>
+                        </div>
+                    </div>
+    
+                    <!-- Details -->
+                    <div class="col h-100">
+                        <header class="font-weight-bold">Details</header>
+                        <div id="noticeTypesDetails" class="details-container mh-100">
+                            <p class="m-2">Select a node to see details.</p>
+                                            </div>
+                </div>
+
+            </div>
+        
+                </div> <!-- End of notice-type comparison row -->
+
+            </div> <!-- End of container -->
+        </div> <!-- End of notice-types tab -->
+    
+        <!-- Codelists -->
+        <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with
+                different version numbers.</p>
+        </div>
+
+        <!-- Schemas -->
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed XSDs and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+
+        <!-- Translations -->
+        <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed translations files and link to GitHub compare page for detailed comparison.
+            </p>
+        </div>
+        
+        <!-- View Templates -->
+        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="codelists-tab">
+            <p>TODO: Provide an overview of changed view templates and link to GitHub compare page for detailed comparison.</p>
+        </div>
+        
+        <!-- Release notes -->
+        <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+            <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+                <div id="release-notes" class="markdown-body">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <!-- Legend -->
+        <div class="legend-container">
+            <span class="legend-title">Legend:</span>
+            <span class="legend-item added">added</span>
+            <span class="legend-item removed">removed</span>
+            <span class="legend-item modified">modified</span>
+        </div>
+        <div id="apiStatus" class="alert alert-info" role="alert">
+        </div>
+    </footer>
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <script type="module" src="./src/js/script.js"></script>
+</body>
+
+<!-- Tree Panel Template -->
+<template>
+
+</template>
+
+<!-- Details Panel template -->
+<template>
+
+</template>
+
+<!-- Index Card Template - used by idex-card.js -->
+<template id="index-card-template">
+    <style>
+        .added-card {
+            background-color: #E6FFEC;
+            color: black;
+        }
+
+        .removed-card {
+            background-color: #FFEBE9;
+            color: black;
+        }
+
+        .changed-card {
+            background-color: #E6E9FF;
+            color: black;
+        }
+    </style>
+    <div class="card">
+        <div class="card-body" style="display: flex; flex-direction: row; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h1 id="title" class="card-title"></h1>
+                <h5 id="subtitle" class="card-subtitle"></h5>
+            </div>
+            <button id="action-button" type="button" class="btn btn-outline-primary"></button>
+        </div>
+        <ul id="property-list" class="list-group list-group-flush">
+        </ul>
+    </div>
+</template>
+
+<!-- PropertyCard template - used by property-card.js -->
+<template id="property-card-template">
+    <style>
+        .property-flex {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .property-label {
+            font-weight: bold;
+            flex-basis: 100%;
+            font-size: smaller;
+        }
+
+        .property-value {
+            font-family: 'Courier New', Courier, monospace;
+            overflow-wrap: anywhere;
+            font-size: smaller;
+            float: right;
+            box-sizing: border-box;
+        }
+
+        .new-property-value {
+            background-color: #E6FFEC;
+            color: black;
+            margin: 1px 0px 1px 4px;
+            border-radius: 5px;
+            border-top: 6px solid #B8E6C2;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .old-property-value {
+            background-color: #FFE6E8;
+            color: black;
+            margin: 1px 4px 1px 0px;
+            border-radius: 5px;
+            border-top: 6px solid #E6B8BC;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .added-property {
+            background-color: #E6FFEC;
+            color: black;
+        }
+
+        .removed-property {
+            background-color: #FFEBE9;
+            color: black;
+        }
+
+        .changed-property {
+            background-color: #E6E9FF;
+            color: black;
+        }
+
+        :host-context(.list-group-flush) .list-group-item {
+            border-width: 0 0 1px;
+        }
+    </style>
+    <li id="list-item" class="list-group-item property-flex">
+        <span id="property-name" class="property-label"></span>
+        <div id="old-property-value" class="property-value"></div>
+        <div id="new-property-value" class="property-value"></div>
+    </li>
+</template>
+
+</html>
