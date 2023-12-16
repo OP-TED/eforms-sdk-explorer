@@ -228,7 +228,7 @@ function displayNoticeTypeCard(data, oldMap, newMap, container, uniqueKey = 'id'
         data.forEach(item => {
             const $itemTree = createTree(item[uniqueKey]);
             const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
-            $(container).append($itemContainer);
+            $(container).append($itemTree);
         });
     } else {
         const $tree = createTree(data[uniqueKey]);

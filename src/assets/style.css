@@ -202,7 +202,8 @@ body > footer {
 .edited-item {
     background-color: #DDF4FF;
 }
-.notice-types-comparison .comparison-content {
+
+.card-group {
     height: calc(100vh - 290px);
     overflow-y: auto;
     background-color: #f8f9fa;
@@ -212,7 +213,7 @@ body > footer {
     flex-wrap: wrap;
 }
 
-.notice-type-card {
+.card-group index-card {
     flex: 1 0 300px;
     margin: 10px;
 }
@@ -243,20 +244,6 @@ body > footer {
     padding: 10px;
     margin-bottom: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.property-container {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #eee;
-    padding: 5px 0;
-}
-.notice-types-comparison .comparison-content .property-label {
-    font-weight: bold;
-    flex-basis: content;
-    margin-right: 5px;
-}
-.property-value {
-    flex-grow: 1;
 }
 
 .tree-container {
