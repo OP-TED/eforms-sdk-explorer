@@ -276,7 +276,10 @@ body > footer {
     margin: 4px;
 }
 
-#fields-tab-content  .tree-container,
+#fields-tab-content  .tree-container {
+    height: calc(100% - 51px);
+}
+
 #fields-tab-content  .details-container {
     height: calc(100% - 36px);
 }
