@@ -57,7 +57,12 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
             },
             li_attr: node.nodeChange === 'removed' ? { class: 'removed-node' } :
                 node.nodeChange === 'added' ? { class: 'added-node' } :
-                    node.nodeChange === 'edited' ? { class: 'edited-node' } : {}
+                    node.nodeChange === 'modified' ? { class: 'modified-node' } : {},
+            data: {
+                btId: node.btId,
+                xpathRelative: node.xpathRelative,
+                status: node.nodeChange
+    }
         }];
     }));
 
@@ -73,7 +78,13 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
             },
             li_attr: field.nodeChange === 'removed' ? { class: 'removed-node' } :
                 field.nodeChange === 'added' ? { class: 'added-node' } :
-                    field.nodeChange === 'edited' ? { class: 'edited-node' } : {}
+                    field.nodeChange === 'modified' ? { class: 'modified-node' } : {},
+                    data: {
+                        id: field.id,
+                        btId: field.btId,
+                        xpathRelative: field.xpathRelative,
+                        status: field.nodeChange
+                    }
         });
     });
 
@@ -82,15 +93,36 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
 
 function initializeTree(xmlStructure, fieldsComparisonResults) {
     if (domElements.xmlStructureTree.jstree(true)) {
-        domElements.xmlStructureTree.jstree("destroy");
+        domElements.xmlStructureTree.jstree("destroy");node.data
     }
     domElements.xmlStructureTree.jstree({
         core: {
             data: buildTreeData(xmlStructure, fieldsComparisonResults),
             check_callback: true
         },
-        plugins: ["wholerow"]
-    })
+        plugins: ["wholerow", "search"],
+        'search': {
+            'show_only_matches': true,
+            search_callback: function (str, node) {
+
+                var terms = str.split('::');
+                var status = terms[0];
+                var searchText = terms.length > 1 ? terms[1] : '';
+                
+                var textMatch = false;
+                if (searchText.length > 0 && !searchText.startsWith('|')) {
+                    var combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
+                    textMatch = combined.toLowerCase().indexOf(searchText) > -1;
+                }
+
+                if (status === 'all') {
+                    return textMatch;
+                } else {
+                    return (node?.data?.status === status) && (textMatch || searchText === '');
+                }
+            }            
+        }            
+    });
 
     domElements.xmlStructureTree.on("select_node.jstree", function (e, data) {
         const selectedFieldId = data.node.id;
@@ -105,9 +137,20 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
             let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
             let newMap = new Map(appState.versionData.map(node => [node.id, node]));
             displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
-
         }
     });
+
+    // Listen for changes in the search fields
+    $('#fields-tree-search').keyup(searchTree);
+    $('#fields-tree-filter').change(searchTree);
+
+    function searchTree() {
+        // Get the value of the search input field
+        var searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
+
+        // Search the tree
+        domElements.xmlStructureTree.jstree('search', searchString);
+    }
 }
 
 
@@ -274,7 +317,7 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
             appState.comparisonData = fieldsData.xmlStructure;
             appState.comparisonDataFields = fieldsData.fields;
             if (appState.versionData && appState.comparisonData) {
-                const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.versionData, 'id');
+                const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.versionData, 'id', true);
                 const fieldsComparisonResults = compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, 'id', true);
                 initializeTree(xmlComparisonResults, fieldsComparisonResults);
             }
@@ -364,14 +407,14 @@ function compareNoticeSubTypes(oldNoticeSubTypes, newNoticeSubTypes) {
     const oldMap = new Map(oldNoticeSubTypes.map(item => [item.subTypeId, item]));
     const newMap = new Map(newNoticeSubTypes.map(item => [item.subTypeId, item]));
 
-    // Check for removed or edited items
+    // Check for removed or modified items
     oldNoticeSubTypes.forEach(oldItem => {
         if (!newMap.has(oldItem.subTypeId)) {
             comparisonResults.push({ ...oldItem, changeType: 'removed' });
         } else {
             const newItem = newMap.get(oldItem.subTypeId);
             if (!areValuesEquivalent(oldItem, newItem)) {
-                comparisonResults.push({ ...newItem, changeType: 'edited' });
+                comparisonResults.push({ ...newItem, changeType: 'modified' });
             }
         }
     });
@@ -406,7 +449,7 @@ function processNoticeTypesJsTree(content, parentId = "#") {
             type: item.contentType === 'group' ? "default" : "field",
             li_attr: item.nodeChange === 'removed' ? { class: 'removed-node' } :
                 item.nodeChange === 'added' ? { class: 'added-node' } :
-                    item.nodeChange === 'edited' ? { class: 'edited-node' } : {}
+                    item.nodeChange === 'modified' ? { class: 'modified-node' } : {}
         };
         // Adding icon for items with contentType "file"
         if (item.contentType === "field") {
@@ -568,7 +611,7 @@ function compareDataStructures(oldStructure, newStructure, uniqueKey = 'id', per
         if (oldMap.has(newNode[uniqueKey])) {
             const oldNode = oldMap.get(newNode[uniqueKey]);
             if (performDeepComparison && !areValuesEquivalent(oldNode, newNode)) {
-                comparisonResults.push({ ...newNode, nodeChange: 'edited' });
+                comparisonResults.push({ ...newNode, nodeChange: 'modified' });
             } else if (!comparisonResults.some(node => node[uniqueKey] === oldNode)) {
                 comparisonResults.push({ ...newNode, nodeChange: 'unchanged' });
             }
@@ -710,6 +753,8 @@ $(document).ready(() => {
         fetchAndDisplayReleaseNotes();
     });
 
+    // Enable Bootstrap popovers everywhere
+    $('[data-toggle="popover"]').popover();
 });
 
 domElements.noticeTypesDropdown.change(async function () {

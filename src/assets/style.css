@@ -108,20 +108,23 @@ body > footer {
 .removed-node > a {
     color: black !important;
     background-color: #FFCCD0 !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
 .added-node > a {
     background-color: #CCFFD8 !important;
     color: black !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
-.edited-node > a {
+.modified-node > a {
     background-color: #CCD3FF !important;
     color: black !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
 .changed-label {
     font-weight: bold;
@@ -192,15 +195,6 @@ body > footer {
     border: 1px solid #ddd;
     margin-bottom: 10px;
     padding: 10px;
-}
-.added-item {
-    background-color: #E6FFEC;
-}
-.removed-item {
-    background-color: #FFE6E8;
-}
-.edited-item {
-    background-color: #DDF4FF;
 }
 
 .card-group {
@@ -290,4 +284,15 @@ body > footer {
 #notice-types  .tree-container,
 #notice-types  .details-container {
     height: calc(100% - 116px);
+}
+
+/* jQuery Treeview */
+.jstree-default .jstree-wholerow-hovered {
+    height: 24px;
+    background: #fcfcfd;
+}
+
+.jstree-default .jstree-wholerow-clicked {
+    height: 24px;
+    background: #d6d6d6;
 }
