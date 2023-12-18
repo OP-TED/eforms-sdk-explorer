@@ -29,6 +29,9 @@
                 <div class="comparison-text mr-2">in comparison with</div>
                 <select id="comparisonDropdown" class="custom-select">
                 </select>
+                <div class="spinner-border text-primary ml-2" role="status" id="centralLoadingSpinner" style="display: none;">
+                    <span class="sr-only">Loading...</span>
+                </div>
             </div>
         </div>
     </header>
@@ -77,10 +80,6 @@
                     <div class="col h-100">
                         <header class="font-weight-bold">
                             <span>Fields</span>
-                            <div class="spinner-border text-primary ml-2" role="status" id="loadingSpinner"
-                                style="display: none;">
-                                <span class="sr-only">Loading...</span>
-                            </div>
                         </header>
                         <div id="xmlStructureTreeContainer" class="tree-container mh-100">
                             <div id="xmlStructureTree"></div>
@@ -118,9 +117,6 @@
                                 </div>
                             </li>
                         </ul>
-                        <div class="spinner-border text-primary" role="status" id="noticeTypesSpinner">
-                            <span class="sr-only">Loading...</span>
-                        </div>
                     </div>
                 </div>
         
