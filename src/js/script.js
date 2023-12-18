@@ -93,7 +93,7 @@ function buildTreeData(xmlStructure, fieldsComparisonResults) {
 
 function initializeTree(xmlStructure, fieldsComparisonResults) {
     if (domElements.xmlStructureTree.jstree(true)) {
-        domElements.xmlStructureTree.jstree("destroy");node.data
+        domElements.xmlStructureTree.jstree("destroy");
     }
     domElements.xmlStructureTree.jstree({
         core: {
