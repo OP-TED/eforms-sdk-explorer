@@ -13,7 +13,16 @@
     align-items: center;
 }
 .spinner-border {
-    margin-left: 10px;
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border: 4px solid transparent;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+#centralLoadingSpinner {
+    margin-right: 10px; /* Adjust as needed */
 }
 @keyframes spin {
     0% {
