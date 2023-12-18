@@ -565,13 +565,6 @@ function compareDataStructures(oldStructure, newStructure, uniqueKey = 'id', per
     return comparisonResults;
 }
 
-
-function findIndexByVersion(versionName) {
-    return sortedData.findIndex(function (item) {
-        return item.name === versionName;
-    });
-}
-
 function compareVersions(a, b) {
     const parseVersionPart = (part) => {
         const match = part.match(/(\d+)(.*)/);
@@ -597,7 +590,6 @@ function compareVersions(a, b) {
     return 0;
 }
 
-
 async function populateDropdown() {
     toggleLoadingSpinner(true);
     clearApiStatus();
@@ -606,24 +598,23 @@ async function populateDropdown() {
             url: `${appConfig.tagsBaseUrl}/tags`,
             dataType: 'json'
         });
-        const data = response.sort((a, b) => compareVersions(a.name, b.name));
 
-        appState.sortedData = data;
         domElements.tagsDropdown.empty();
         domElements.comparisonDropdown.empty();
 
-        data.forEach(item => {
+        response.forEach(item => {
             const option = $('<option>', { value: item.name, text: item.name });
             domElements.tagsDropdown.append(option.clone());
             domElements.comparisonDropdown.append(option);
         });
 
-        domElements.tagsDropdown.val(data[0].name);
-        domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-        appState.selectedTagName = data[0].name;
-        appState.selectedComparisonTagName = data[1].name;
-        await fetchAndDisplayFieldsContent(data[0].name, true);
-        await fetchAndDisplayFieldsContent(data[1].name, false);
+        domElements.tagsDropdown.val(response[0]?.name);
+        domElements.comparisonDropdown.val(response[1]?.name || response[0]?.name);
+        appState.selectedTagName = response[0]?.name;
+        appState.selectedComparisonTagName = response[1]?.name || response[0]?.name;
+
+        await fetchAndDisplayFieldsContent(response[0]?.name, true);
+        await fetchAndDisplayFieldsContent(response[1]?.name || response[0]?.name, false);
     } catch (error) {
         updateApiStatus('API call failed to fetch tags.', false);
         console.error('Error populating dropdowns:', error);
