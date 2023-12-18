@@ -30,6 +30,9 @@
                 <div class="comparison-text mr-2">in comparison with</div>
                 <select id="comparisonDropdown" class="custom-select">
                 </select>
+                <div class="spinner-border text-primary ml-2" role="status" id="centralLoadingSpinner" style="display: none;">
+                    <span class="sr-only">Loading...</span>
+                </div>
             </div>
         </div>
     </header>
@@ -91,10 +94,6 @@
                     <div class="col h-100">
                         <header class="font-weight-bold" style="display: flex; flex-direction: row;">
                             <div style="flex: 1; align-self: self-end;">Fields</div>
-                            <div class= "s align-self: self-end;pinner-border text-primary ml-2" role="status" id="loadingSpinner"
-                                style="display: none;">
-                                <span class="sr-only">Loading...</span>
-                            </div>
                             <input type="text" id="fields-tree-search" placeholder="Search" class="form-control form-control-sm m-1" style="width: 200px;" data-toggle="popover" data-trigger="focus" data-placement="left" title="Looking for a particular BT?" data-html="true" data-content="Search and highlight nodes and fields with matching name, id, relative xpath, or business term.">
                             <select id="fields-tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
                                 <option value="all">all</option>

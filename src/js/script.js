@@ -20,7 +20,6 @@ const appState = {
 };
 
 const domElements = {
-    loadingSpinner: $('#loadingSpinner'),
     noticeTypesSpinner: $('#noticeTypesSpinner'),
     apiStatus: $('#apiStatus'),
     xmlStructureTree: $('#xmlStructureTree'),
@@ -33,7 +32,8 @@ const domElements = {
     noticeTypesDetails: $('#noticeTypesDetails')
 };
 
-function toggleLoadingSpinner(show, spinnerElement = domElements.loadingSpinner) {
+function toggleLoadingSpinner(show) {
+    const spinnerElement = $('#centralLoadingSpinner'); 
     if (show) {
         spinnerElement.show();
     } else {
