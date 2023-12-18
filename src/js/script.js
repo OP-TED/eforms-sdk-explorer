@@ -5,11 +5,11 @@ const appConfig = {
 };
 
 const appState = {
-    sortedData: [],
-    versionData: [],
+    tagsDropDownData: [],
+    primaryData: [],
     comparisonData: [],
-    selectedTagName: '',
-    selectedComparisonTagName: '',
+    primaryVersion: '',
+    comparisonVersion: '',
     selectedNoticeTypeFile: 'notice-types.json',
     activeTab: 'fields'
 
@@ -20,7 +20,7 @@ const domElements = {
     noticeTypesSpinner: $('#noticeTypesSpinner'),
     apiStatus: $('#apiStatus'),
     xmlStructureTree: $('#xmlStructureTree'),
-    tagsDropdown: $('#tagsDropdown'),
+    primaryDropdown: $('#primaryDropdown'),
     comparisonDropdown: $('#comparisonDropdown'),
     noticeTypesDropdown: $('#noticeTypesDropdown'),
     noticeTypesTree: $('#noticeTypesTree'),
@@ -99,7 +99,7 @@ function initializeTree(xmlStructure, fieldsComparisonResults) {
         const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
         if (nodeDetails) {
             let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
-            let newMap = new Map(appState.versionData.map(node => [node.id, node]));
+            let newMap = new Map(appState.primaryData.map(node => [node.id, node]));
             displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
 
         }
@@ -212,22 +212,22 @@ function areValuesEquivalent(a, b) {
 
 async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
     clearApiStatus();
-    domElements.tagsDropdown.prop('disabled', true);
+    domElements.primaryDropdown.prop('disabled', true);
     domElements.comparisonDropdown.prop('disabled', true);
     const url = `${appConfig.rawBaseUrl}/${tagName}/fields/fields.json`;
     try {
         const response = await $.ajax({ url, dataType: 'json' });
         const fieldsData = response;
         if (isTagsDropdown) {
-            appState.versionData = fieldsData.xmlStructure;
+            appState.primaryData = fieldsData.xmlStructure;
             appState.versionDataFields = fieldsData.fields;
             fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
         } else {
             fieldsData.xmlStructure[0].version = fieldsData.sdkVersion;
             appState.comparisonData = fieldsData.xmlStructure;
             appState.comparisonDataFields = fieldsData.fields;
-            if (appState.versionData && appState.comparisonData) {
-                const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.versionData, 'id');
+            if (appState.primaryData && appState.comparisonData) {
+                const xmlComparisonResults = compareDataStructures(appState.comparisonData, appState.primaryData, 'id');
                 const fieldsComparisonResults = compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, 'id', true);
                 initializeTree(xmlComparisonResults, fieldsComparisonResults);
             }
@@ -236,20 +236,20 @@ async function fetchAndDisplayFieldsContent(tagName, isTagsDropdown) {
         updateApiStatus('Failed to load data.', false);
         console.error('Error fetching and displaying fields content:', error);
     } finally {
-        domElements.tagsDropdown.prop('disabled', false);
+        domElements.primaryDropdown.prop('disabled', false);
         domElements.comparisonDropdown.prop('disabled', false);
-        updateApiStatus(`Data successfully loaded for SDK version ${appState.selectedTagName} and compared with ${appState.selectedComparisonTagName}`, true);
+        updateApiStatus(`Data successfully loaded for SDK version ${appState.primaryVersion} and compared with ${appState.comparisonVersion}`, true);
 
     }
 }
 
-async function fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTagName) {
+async function fetchAndDisplayNoticeTypes(primaryVersion, comparisonVersion) {
     toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
     clearApiStatus();
 
     try {
-        const selectedUrl = constructNoticeTypesUrl(selectedTagName, appState.selectedNoticeTypeFile);
-        const comparisonUrl = constructNoticeTypesUrl(selectedComparisonTagName, appState.selectedNoticeTypeFile);
+        const selectedUrl = constructNoticeTypesUrl(primaryVersion, appState.selectedNoticeTypeFile);
+        const comparisonUrl = constructNoticeTypesUrl(comparisonVersion, appState.selectedNoticeTypeFile);
         const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
             fetchNoticeTypesData(selectedUrl),
             fetchNoticeTypesData(comparisonUrl)
@@ -317,7 +317,7 @@ function selectNoticeSubtype(filename) {
 
     toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
 
-    fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName)
+    fetchAndDisplayNoticeTypes(appState.primaryVersion, appState.comparisonVersion)
         .then(() => {
             toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
         })
@@ -599,22 +599,23 @@ async function populateDropdown() {
             dataType: 'json'
         });
 
-        domElements.tagsDropdown.empty();
+        appState.tagsDropDownData = response;
+        domElements.primaryDropdown.empty();
         domElements.comparisonDropdown.empty();
 
         response.forEach(item => {
             const option = $('<option>', { value: item.name, text: item.name });
-            domElements.tagsDropdown.append(option.clone());
+            domElements.primaryDropdown.append(option.clone());
             domElements.comparisonDropdown.append(option);
         });
 
-        domElements.tagsDropdown.val(response[0]?.name);
+        domElements.primaryDropdown.val(response[0]?.name);
         domElements.comparisonDropdown.val(response[1]?.name || response[0]?.name);
-        appState.selectedTagName = response[0]?.name;
-        appState.selectedComparisonTagName = response[1]?.name || response[0]?.name;
+        appState.primaryVersion = response[0]?.name;
+        appState.comparisonVersion = response[1]?.name || response[0]?.name;
 
-        await fetchAndDisplayFieldsContent(response[0]?.name, true);
-        await fetchAndDisplayFieldsContent(response[1]?.name || response[0]?.name, false);
+        await fetchAndDisplayFieldsContent(appState.primaryVersion, true);
+        await fetchAndDisplayFieldsContent(appState.comparisonVersion || appState.primaryVersion, false);
     } catch (error) {
         updateApiStatus('API call failed to fetch tags.', false);
         console.error('Error populating dropdowns:', error);
@@ -640,7 +641,7 @@ function updateApiStatus(message, isSuccess = true) {
 }
 
 async function fetchAndDisplayReleaseNotes() {
-    const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.selectedTagName}/CHANGELOG.md`;
+    const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.primaryVersion}/CHANGELOG.md`;
     try {
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
         const response = await fetch(releaseNotesUrl);
@@ -670,7 +671,7 @@ $(document).ready(() => {
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
         appState.activeTab = 'notice-types';
         fetchAndPopulateNoticeTypesDropdown();
-        await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
+        await fetchAndDisplayNoticeTypes(appState.primaryVersion, appState.comparisonVersion);
         toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
 
     });
@@ -680,7 +681,7 @@ $(document).ready(() => {
     $('#overviewLink').on('click', async function (e) {
         appState.selectedNoticeTypeFile = 'notice-types.json';
         toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
-        await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
+        await fetchAndDisplayNoticeTypes(appState.primaryVersion, appState.comparisonVersion);
         toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
     });
 
@@ -690,34 +691,62 @@ $(document).ready(() => {
 
 });
 
+function findTagIndex(tagName) {
+    return appState.tagsDropDownData.findIndex(tag => tag.name === tagName);
+}
+
+function compareAndSwapDropdownValues(newTagName, isTagDropdown) {
+    const newTagIndex = findTagIndex(newTagName);
+    const comparisonTagIndex = isTagDropdown
+        ? findTagIndex(appState.comparisonVersion)
+        : findTagIndex(appState.primaryVersion);
+
+    if ((isTagDropdown && newTagIndex > comparisonTagIndex) || (!isTagDropdown && comparisonTagIndex > newTagIndex)) {
+        [appState.primaryVersion, appState.comparisonVersion] = 
+            [appState.comparisonVersion, appState.primaryVersion];
+        domElements.primaryDropdown.val(appState.primaryVersion);
+        domElements.comparisonDropdown.val(appState.comparisonVersion);
+    } else {
+        if (isTagDropdown) {
+            appState.primaryVersion = newTagName;
+        } else {
+            appState.comparisonVersion = newTagName;
+        }
+    }
+}
+
 domElements.noticeTypesDropdown.change(async function () {
     const fileName = $(this).val();
     appState.selectedNoticeTypeFile = fileName;
     toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
-    await fetchAndDisplayNoticeTypes(appState.selectedTagName, appState.selectedComparisonTagName);
+    await fetchAndDisplayNoticeTypes(appState.primaryVersion, appState.comparisonVersion);
     toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
 });
 
-domElements.tagsDropdown.change(function () {
-    appState.selectedTagName = $(this).val();
+domElements.primaryDropdown.change(function () {
+    const newSelectedTagName = $(this).val();
+    appState.primaryVersion = newSelectedTagName;
+    compareAndSwapDropdownValues(appState.primaryVersion, true);
+    debugger
     $('#fieldDetailsContent').html('Select an item to see details.');
     fetchDataBasedOnActiveTab();
 });
 
 domElements.comparisonDropdown.change(function () {
-    appState.selectedComparisonTagName = $(this).val();
+    const newComparisonTagName = $(this).val();
+    appState.comparisonVersion = newComparisonTagName;
+    compareAndSwapDropdownValues( appState.comparisonVersion, false);
+    debugger
     $('#fieldDetailsContent').html('Select an item to see details.');
     fetchDataBasedOnActiveTab();
 });
 
 
 function fetchDataBasedOnActiveTab() {
-    const selectedTagName = appState.selectedTagName;
-    const selectedComparisonTagName = appState.selectedComparisonTagName;
     if (appState.activeTab === 'fields') {
-        fetchAndDisplayFieldsContent(selectedTagName, true);
-        fetchAndDisplayFieldsContent(selectedComparisonTagName, false);
+        fetchAndDisplayFieldsContent(appState.primaryVersion, true);
+        fetchAndDisplayFieldsContent(appState.comparisonVersion, false);
     } else if (appState.activeTab === 'notice-types') {
-        fetchAndDisplayNoticeTypes(selectedTagName, selectedComparisonTagName);
+        fetchAndDisplayNoticeTypes( appState.primaryVersion, appState.comparisonVersion);
     }
 }
