@@ -21,52 +21,59 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="./src/assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
-                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer <span class="badge badge-warning">EARLY PREVIEW</span></span>
+                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer <span
+                        class="badge badge-warning">EARLY PREVIEW</span></span>
             </a>
-            <div class="ml-auto d-flex align-items-center">
+            <div class="d-flex align-items-center">
                 <div class="version-text mr-2">Explore SDK</div>
                 <select id="tagsDropdown" class="custom-select mr-2">
                 </select>
                 <div class="comparison-text mr-2">in comparison with</div>
                 <select id="comparisonDropdown" class="custom-select">
                 </select>
-                <div class="spinner-border text-primary ml-2" role="status" id="centralLoadingSpinner" style="display: none;">
-                    <span class="sr-only">Loading...</span>
-                </div>
             </div>
         </div>
     </header>
 
     <nav>
         <ul class="nav nav-tabs" role="tablist">
+            <div style="width: 20px;"><!-- leaves some space before the first tab --></div>
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home-tab-content"
                     type="button" role="tab" aria-controls="home-tab-content" aria-selected="true">Home</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
-                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
+                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content" type="button"
+                    role="tab" aria-controls="fields-tab-content" aria-selected="true">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button"
+                    role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
                     role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab" aria-controls="schemas" aria-selected="false">Schemas</button>
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab"
+                    aria-controls="schemas" aria-selected="false">Schemas</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button" role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button"
+                    role="tab" aria-controls="translations" aria-selected="false">Translations</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
                     type="button" role="tab" aria-controls="view-templates" aria-selected="false">View Templates</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button"
+                    role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
             </li>
+            <div class="spinner-grow spinner-grow-sm text-info ml-auto" role="status" id="centralLoadingSpinner"
+                style="display: none;">
+                <span class="sr-only">Loading...</span>
+            </div>
         </ul>
     </nav>
 
@@ -196,11 +203,8 @@
         </div>
 
         <!-- Release notes -->
-        <div class="tab-pane fade mh-100 overflow-auto" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
-            <div class="tab-pane fade" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
-                <div id="release-notes" class="markdown-body">
-                </div>
-            </div>
+        <div class="tab-pane fade mh-100 overflow-auto p-3" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+            <!-- Release Notes will appear here -->
         </div>
     </main>
 
