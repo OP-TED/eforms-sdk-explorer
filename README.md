@@ -27,7 +27,7 @@ However, we quickly deviated from our initial intention and decided to quickly i
 
 ## Contributing to the SDK Explorer
 
-If you are interested in this applications, we welcome your contributions:
+If you are interested in this application, we welcome your contributions:
 
-- You can suggest features and improvements in GitHub Issues.
-- You can clone or fork the repository and implement features and improvements that you would like to add to the SDK Explorer. Please submit your code for merging in the develop branch with a GitHub Pull Request.
+- You can suggest features and improvements in [GitHub Issues](https://github.com/OP-TED/eforms-sdk-explorer/issues).
+- You can clone or fork the repository and implement any features or improvements that you would like to add to the SDK Explorer. Please submit your code for merging into the `develop` branch with a GitHub Pull Request.
