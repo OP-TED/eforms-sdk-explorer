@@ -12,21 +12,22 @@ The eForms SDK Explorer is a single-page web application designed to allow busin
 
 The purpose of the application is to help any user identify the changes that occurred between any two SDK versions, to assist them while they assess the effort required to upgrade their applications to a newer version of the eForms SDK.
 
-The goals of the application are:
-1. to make the comparison of SDK versions more intuitive and more practical than the comparison of JSON and XML files.
-2. to be as accessible as possible by being self-contained, easy to download and install on any laptop without requiring any special software or infrastructure.
+The main goal of the application is to make the comparison of SDK versions more intuitive and more practical than the comparison of JSON and XML files.
 
-## Getting Started
+## Using the SDK Explorer
 
-You can download and run the eForms SDK Explorer to your laptop by following these steps:
+The SDK Explorer is integrated in the TED Developer Documentation Portal.
 
-1. Either [download this ZIP file](https://github.com/OP-TED/eforms-sdk-explorer/archive/refs/heads/develop.zip) and extract it in a folder on your computer,
-   
-   **or** clone the GitHub repository to your local machine:
+You can access it here: **https://docs.ted.europa.eu/eforms-sdk-explorer/**
 
-   ```bash
-   git clone https://github.com/OP-TED/eforms-sdk-explorer.git
-   ```
+> [!NOTE]
+> Initially our intention was to keep the application "as simple as possible" so that it can be downloaded and executed locally in your browser.
+However, we quickly deviated from our initial intention and decided to quickly integrate the application in the [TED Developer Documentation Portal](https://docs.ted.europa.eu/eforms-sdk-explorer/) instead. This makes accessing the SDK Explorer more convenient for everyone, and allows us to implement it without being restricted by code safety limitations imposed by browsers when executing scripts from the local filesystem of your computer.
 
-2. Open the `src/index.html` file in your web browser.
 
+## Contributing to the SDK Explorer
+
+If you are interested in this applications, we welcome your contributions:
+
+- You can suggest features and improvements in GitHub Issues.
+- You can clone or fork the repository and implement features and improvements that you would like to add to the SDK Explorer. Please submit your code for merging in the develop branch with a GitHub Pull Request.
