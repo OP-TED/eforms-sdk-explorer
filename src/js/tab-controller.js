@@ -19,6 +19,12 @@ export class TabController {
     }
 
     /**
+     * Override this method to initialize the tab and hook any necessary event handlers to the DOM.
+     */
+    init() {
+    }
+
+    /**
      * Called by the SdkExplorerApplication when the tab is activated.
      * No need to override this method.
      */

@@ -76,6 +76,7 @@ export class SdkExplorerApplication {
      * @returns 
      */
     #addTab(tab) {
+        tab.init();
         this.tabs.set(tab.getId(), tab);
     }
 

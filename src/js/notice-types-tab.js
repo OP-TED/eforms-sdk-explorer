@@ -11,6 +11,15 @@ export class NoticeTypesTab extends TabController {
         super('notice-types-tab');
     }
 
+    init() {
+        $('#overviewLink').on('click', async (e) => {
+            appState.selectedNoticeTypeFile = 'notice-types.json';
+            // toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
+            await this.fetchAndRender();
+            // toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
+        });
+    }
+
     async fetchAndRender() {
 
         try {
