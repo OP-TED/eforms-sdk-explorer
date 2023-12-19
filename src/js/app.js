@@ -168,28 +168,24 @@ export class SdkExplorerApplication {
         this.toggleLoadingSpinner(true);
         this.clearApiStatus();
         try {
-            const response = await $.ajax({
+            const repositoryTags = await $.ajax({
                 url: `${appConfig.tagsBaseUrl}/tags`,
                 dataType: 'json'
             });
-            const data = response.sort((a, b) => this.compareVersions(a.name, b.name));
-
-            appState.sortedData = data;
+            appState.sortedData = repositoryTags;
             domElements.tagsDropdown.empty();
             domElements.comparisonDropdown.empty();
 
-            data.forEach(item => {
+            repositoryTags.forEach(item => {
                 const option = $('<option>', { value: item.name, text: item.name });
                 domElements.tagsDropdown.append(option.clone());
                 domElements.comparisonDropdown.append(option);
             });
 
-            domElements.tagsDropdown.val(data[0].name);
-            domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-            appState.sdkVersion = data[0].name;
-            appState.baseVersion = data[1].name;
-            // await fetchAndDisplayFieldsContent(data[0].name, true);
-            // await fetchAndDisplayFieldsContent(data[1].name, false);
+            domElements.tagsDropdown.val(repositoryTags[0].name);
+            domElements.comparisonDropdown.val(repositoryTags.length > 1 ? repositoryTags[1].name : repositoryTags[0].name);
+            appState.sdkVersion = repositoryTags[0].name;
+            appState.baseVersion = repositoryTags[1].name;
         } catch (error) {
             this.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
