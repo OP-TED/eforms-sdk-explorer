@@ -12,17 +12,10 @@
     display: flex;
     align-items: center;
 }
-.spinner-border {
-    display: inline-block;
-    width: 30px;
-    height: 30px;
-    border: 4px solid transparent;
-    border-top-color: #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
 #centralLoadingSpinner {
-    margin-right: 10px; /* Adjust as needed */
+    margin: 10px;
+    min-width: 16px!important;
+    min-height: 16px!important;
 }
 @keyframes spin {
     0% {
@@ -117,77 +110,28 @@ body > footer {
 .removed-node > a {
     color: black !important;
     background-color: #FFCCD0 !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
 .added-node > a {
     background-color: #CCFFD8 !important;
     color: black !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
-.added-property {
-    background-color: #E6FFEC !important;
-    color: #000000 !important;
-}
-.removed-property {
-    background-color: #FFEBE9 !important;
-    color: black !important;
-}
-
-.changed-property {
-    background-color: #E6E9FF !important;
-    color: black !important;
-}
-
-.edited-node > a {
+.modified-node > a {
     background-color: #CCD3FF !important;
     color: black !important;
-    margin: 1px 1px !important;
     border-radius: 5px !important;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
 }
 .changed-label {
     font-weight: bold;
     color: #333;
 }
-.property-flex {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-}
-.property-label {
-    font-weight: bold;
-    flex-basis: 100%;
-    font-size: smaller;
-}
-.property-value {
-    font-family: 'Courier New', Courier, monospace;
-    overflow-wrap: anywhere;
-    font-size: smaller;
-    float: right;
-    box-sizing: border-box;
-}
-.new-property-value {
-    background-color: #E6FFEC !important;
-    color: black !important;
-    margin: 1px 0px 1px 4px !important;
-    border-radius: 5px !important;
-    border-top: 6px solid #B8E6C2 !important;
-    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-    padding: 2px 4px !important;
-    flex-basis: calc(50% - 4px);
-}
-.old-property-value {
-    background-color: #FFE6E8 !important;
-    color: black !important;
-    margin: 1px 4px 1px 0px !important;
-    border-radius: 5px !important;
-    border-top: 6px solid #E6B8BC !important;
-    box-shadow: 1px 1px 3px 1px #A3A9CC !important;
-    padding: 2px 4px !important;
-    flex-basis: calc(50% - 4px);
-}
-
 #detailsContent {
     max-height: 100vh;
     overflow-y: auto;
@@ -254,16 +198,8 @@ body > footer {
     margin-bottom: 10px;
     padding: 10px;
 }
-.added-item {
-    background-color: #E6FFEC;
-}
-.removed-item {
-    background-color: #FFE6E8;
-}
-.edited-item {
-    background-color: #DDF4FF;
-}
-.notice-types-comparison .comparison-content {
+
+.card-group {
     height: calc(100vh - 290px);
     overflow-y: auto;
     background-color: #f8f9fa;
@@ -273,7 +209,7 @@ body > footer {
     flex-wrap: wrap;
 }
 
-.notice-type-card {
+.card-group index-card {
     flex: 1 0 300px;
     margin: 10px;
 }
@@ -304,20 +240,6 @@ body > footer {
     padding: 10px;
     margin-bottom: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.property-container {
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid #eee;
-    padding: 5px 0;
-}
-.notice-types-comparison .comparison-content .property-label {
-    font-weight: bold;
-    flex-basis: content;
-    margin-right: 5px;
-}
-.property-value {
-    flex-grow: 1;
 }
 
 .tree-container {
@@ -356,7 +278,10 @@ body > footer {
     margin: 4px;
 }
 
-#fields-tab-content  .tree-container,
+#fields-tab-content  .tree-container {
+    height: calc(100% - 51px);
+}
+
 #fields-tab-content  .details-container {
     height: calc(100% - 36px);
 }
@@ -364,4 +289,15 @@ body > footer {
 #notice-types  .tree-container,
 #notice-types  .details-container {
     height: calc(100% - 116px);
+}
+
+/* jQuery Treeview */
+.jstree-default .jstree-wholerow-hovered {
+    height: 24px;
+    background: #fcfcfd;
+}
+
+.jstree-default .jstree-wholerow-clicked {
+    height: 24px;
+    background: #d6d6d6;
 }
