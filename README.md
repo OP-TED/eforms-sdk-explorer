@@ -22,7 +22,7 @@ You can access it here: **https://docs.ted.europa.eu/eforms-sdk-explorer/**
 
 > [!NOTE]
 > Initially our intention was to keep the application "as simple as possible" so that it can be downloaded and executed locally in your browser.
-However, we quickly deviated from our initial intention and decided to quickly integrate the application in the [TED Developer Documentation Portal](https://docs.ted.europa.eu/eforms-sdk-explorer/) instead. This makes accessing the SDK Explorer more convenient for everyone, and allows us to implement it without being restricted by code safety limitations imposed by browsers when executing scripts from the local filesystem of your computer.
+However, we quickly deviated from our initial intention and decided to quickly integrate the application in the [TED Developer Documentation Portal](https://docs.ted.europa.eu/eforms-sdk-explorer/) instead. This makes accessing the SDK Explorer more convenient for everyone, and allows us to implement it without being restricted by code safety limitations imposed when browsers execute scripts on locally on your computer.
 
 
 ## Contributing to the SDK Explorer
