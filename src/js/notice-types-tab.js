@@ -14,14 +14,12 @@ export class NoticeTypesTab extends TabController {
     init() {
         $('#overviewLink').on('click', async (e) => {
             appState.selectedNoticeTypeFile = 'notice-types.json';
-            // toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
             await this.fetchAndRender();
-            // toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
         });
     }
 
     async fetchAndRender() {
-
+        debugger
         try {
             const mainUrl = this.constructNoticeTypesUrl(appState.sdkVersion, appState.selectedNoticeTypeFile);
             const baseUrl = this.constructNoticeTypesUrl(appState.baseVersion, appState.selectedNoticeTypeFile);
@@ -29,20 +27,13 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(mainUrl),
                 this.fetchNoticeTypesData(baseUrl)
             ]);
-
             const isMainNoticeTypesFile = appState.selectedNoticeTypeFile === 'notice-types.json';
-
             if (isMainNoticeTypesFile) {
                 this.showComparisonView();
                 const comparisonResults = this.compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
                 let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
-            } else {
-                let oldMap = this.flattenToMap(selectedNoticeTypesData.content);
-                let newMap = this.flattenToMap(comparisonNoticeTypesData.content);
-                const comparisonResults = this.compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
-                this.showTreeView(comparisonResults, oldMap, newMap);
             }
         } catch (error) {
             console.error('Error during notice types operation:', error);
@@ -64,7 +55,7 @@ export class NoticeTypesTab extends TabController {
         const selectedKey = selectedData.noticeSubTypes ? 'noticeSubTypes' : 'content';
         const comparisonKey = comparisonData.noticeSubTypes ? 'noticeSubTypes' : 'content';
         const uniqueKey = selectedData.noticeSubTypes ? 'subTypeId' : 'id';
-    
+
         const comparisonResults = Comparer.compareDataStructures(selectedData[selectedKey], comparisonData[comparisonKey], uniqueKey, true);
         return comparisonResults;
     }
@@ -77,17 +68,17 @@ export class NoticeTypesTab extends TabController {
         // Hide the tree view and details view
         $('#noticeTypesTreeContainer').hide();
         $('#noticeTypesDetails').hide();
-    
+
         // Show the comparison view
         $('.notice-types-comparison').show();
         $('#noticeTypesComparisonContent').show();
     }
 
     displayNoticeTypeCard(data, oldMap, newMap, container, uniqueKey = 'id') {
-    
+
         // Clear existing content
         $(container).empty();
-    
+
         if (Array.isArray(data)) {
             data.forEach(item => {
                 const $itemTree = this.createTree(item[uniqueKey], newMap, oldMap);
@@ -143,20 +134,17 @@ export class NoticeTypesTab extends TabController {
         return component;
     }
 
-    selectNoticeSubtype(filename) {
-        appState.selectedNoticeTypeFile = filename;
-    
-        // SdkExplorerApplication.instance.toggleLoadingSpinner(true, domElements.noticeTypesSpinner);
-    
-        this.fetchAndRender()
-            .then(() => {
-                // SdkExplorerApplication.instance.toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
-            })
-            .catch(error => {
-                console.error('Error fetching and displaying notice types:', error);
-                // SdkExplorerApplication.instance.toggleLoadingSpinner(false, domElements.noticeTypesSpinner);
-                // SdkExplorerApplication.instance.updateApiStatus('Failed to load notice types.', false);
-            });
+    async selectNoticeSubtype(filename) {
+        const mainUrl = this.constructNoticeTypesUrl(appState.sdkVersion, filename);
+        const baseUrl = this.constructNoticeTypesUrl(appState.baseVersion, filename);
+        const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
+            this.fetchNoticeTypesData(mainUrl),
+            this.fetchNoticeTypesData(baseUrl)
+        ]);
+        let oldMap = this.flattenToMap(selectedNoticeTypesData.content);
+        let newMap = this.flattenToMap(comparisonNoticeTypesData.content);
+        const comparisonResults = Comparer.compareNestedStructures(selectedNoticeTypesData.content, comparisonNoticeTypesData.content);
+        this.showTreeView(comparisonResults, oldMap, newMap);
     }
 
     flattenToMap(data, map = new Map()) {
@@ -173,20 +161,20 @@ export class NoticeTypesTab extends TabController {
         // Remove comparison view if it exists
         $('.notice-types-comparison').hide();
         $('#noticeTypesComparisonContent').hide();
-    
+
         // Show the tree view and details view
         $('#noticeTypesTreeContainer').show();
         $('#noticeTypesDetails').show();
-    
+
         $('<div/>', {
             id: 'noticeTypesTree'
         }).appendTo('#noticeTypesTreeContainer');
-    
+
         // initializeNoticeTypesTree(treeData);
         let jsTreeData = this.processNoticeTypesJsTree(treeData);
         $('#noticeTypesComparisonContainer').hide();
         $('#noticeTypesTreeContainer').show();
-    
+
         // Check if the tree view is already initialized
         if (domElements.noticeTypesTree.jstree(true)) {
             // If already initialized, destroy the existing tree before creating a new one
@@ -199,16 +187,16 @@ export class NoticeTypesTab extends TabController {
             },
             plugins: ["wholerow"]
         });
-    
+
         domElements.noticeTypesTree.on("select_node.jstree", (e, data) => {
             const selectedFieldId = data.node.id;
             const fieldDetails = this.findFieldById(treeData, selectedFieldId)
             this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.noticeTypesDetails);
-    
+
         });
         $('#noticeTypesTreeContainer').show();
     }
-    
+
     processNoticeTypesJsTree(content, parentId = "#") {
         let treeData = [];
         content.forEach(item => {
@@ -232,10 +220,10 @@ export class NoticeTypesTab extends TabController {
                 treeData = treeData.concat(children);
             }
         });
-    
+
         return treeData;
     }
-    
+
     findFieldById(data, fieldId) {
         let result = null;
         function searchContent(content) {
@@ -252,19 +240,19 @@ export class NoticeTypesTab extends TabController {
             }
             return false;
         }
-    
+
         searchContent(data);
         return result;
     }
-    
+
     displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') {
         function createTree(uniqueId) {
             const newField = newMap.get(uniqueId);
             const oldField = oldMap.get(uniqueId);
             const $ul = $('<ul class="list-group">');
-    
+
             const fieldToIterate = newField || oldField;
-    
+
             for (const [key, value] of Object.entries(fieldToIterate)) {
                 if (key === 'content') {
                     continue;
@@ -274,7 +262,7 @@ export class NoticeTypesTab extends TabController {
                 const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
                 $ul.append($propertyTemplate);
             }
-    
+
             // Handle removed properties in oldField that are not in newField
             if (newField) {
                 for (const key in oldField) {
@@ -284,13 +272,13 @@ export class NoticeTypesTab extends TabController {
                     }
                 }
             }
-    
+
             return $ul;
         }
-    
+
         // Clear existing content
         $(container).empty();
-    
+
         if (Array.isArray(data)) {
             data.forEach(item => {
                 const $itemTree = createTree(item[uniqueKey]);
@@ -302,5 +290,5 @@ export class NoticeTypesTab extends TabController {
             $(container).append($tree);
         }
     }
-    
+
 }
