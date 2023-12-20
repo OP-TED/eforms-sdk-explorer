@@ -19,7 +19,6 @@ export class NoticeTypesTab extends TabController {
     }
 
     async fetchAndRender() {
-        debugger
         try {
             const mainUrl = this.constructNoticeTypesUrl(appState.sdkVersion, appState.selectedNoticeTypeFile);
             const baseUrl = this.constructNoticeTypesUrl(appState.baseVersion, appState.selectedNoticeTypeFile);
@@ -185,7 +184,27 @@ export class NoticeTypesTab extends TabController {
                 data: jsTreeData,
                 check_callback: true
             },
-            plugins: ["wholerow"]
+            plugins: ["wholerow", "search"],
+            'search': {
+                'show_only_matches': true,
+                search_callback: function (str, node) {
+
+                    let terms = str.split('::');
+                    let status = terms[0];
+                    let searchText = terms.length > 1 ? terms[1] : '';
+
+                    let textMatch = false;
+                    if (searchText.length > 0 && !searchText.startsWith('|')) {
+                        let combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
+                        textMatch = combined.toLowerCase().indexOf(searchText) > -1;
+                    }
+                    if (status === 'all') {
+                        return textMatch;
+                    } else {
+                        return (node?.data?.status === status) && (textMatch || searchText === '');
+                    }
+                }
+            }
         });
 
         domElements.noticeTypesTree.on("select_node.jstree", (e, data) => {
@@ -195,6 +214,14 @@ export class NoticeTypesTab extends TabController {
 
         });
         $('#noticeTypesTreeContainer').show();
+
+        $('#notice-tree-search').keyup(searchTree);
+        $('#notice-tree-filter').change(searchTree);
+
+        function searchTree() {
+            let searchString = $('#notice-tree-filter').val() + '::' + $('#notice-tree-search').val();
+            domElements.noticeTypesTree.jstree('search', searchString);
+        }
     }
 
     processNoticeTypesJsTree(content, parentId = "#") {
@@ -208,7 +235,12 @@ export class NoticeTypesTab extends TabController {
                 type: item.contentType === 'group' ? "default" : "field",
                 li_attr: item.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
                     item.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        item.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {}
+                        item.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
+                data: {
+                    btId: item.id,
+                    description: item.description,
+                    status: item.nodeChange
+                }
             };
             // Adding icon for items with contentType "file"
             if (item.contentType === "field") {

@@ -103,13 +103,13 @@ export class FieldsTab extends TabController {
                 'show_only_matches': true,
                 search_callback: function (str, node) {
 
-                    var terms = str.split('::');
-                    var status = terms[0];
-                    var searchText = terms.length > 1 ? terms[1] : '';
+                    let terms = str.split('::');
+                    let status = terms[0];
+                    let searchText = terms.length > 1 ? terms[1] : '';
 
-                    var textMatch = false;
+                    let textMatch = false;
                     if (searchText.length > 0 && !searchText.startsWith('|')) {
-                        var combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
+                        let combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
                         textMatch = combined.toLowerCase().indexOf(searchText) > -1;
                     }
 
@@ -144,7 +144,7 @@ export class FieldsTab extends TabController {
 
         function searchTree() {
             // Get the value of the search input field
-            var searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
+            let searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
 
             // Search the tree
             domElements.xmlStructureTree.jstree('search', searchString);
