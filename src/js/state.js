@@ -2,8 +2,8 @@ export const appState = {
     sortedData: [],
     versionData: [],
     comparisonData: [],
-    sdkVersion: '',
-    baseVersion: '',
+    newVersion: '',
+    comparisonVersion: '',
     selectedNoticeTypeFile: 'notice-types.json',
     activeTab: 'fields'
 };

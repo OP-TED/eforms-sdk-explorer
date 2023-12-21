@@ -20,20 +20,17 @@ export class NoticeTypesTab extends TabController {
 
     async fetchAndRender() {
         try {
-            const mainUrl = this.constructNoticeTypesUrl(appState.sdkVersion, appState.selectedNoticeTypeFile);
-            const baseUrl = this.constructNoticeTypesUrl(appState.baseVersion, appState.selectedNoticeTypeFile);
-            const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
-                this.fetchNoticeTypesData(mainUrl),
-                this.fetchNoticeTypesData(baseUrl)
+            const newVersionUrl = this.constructNoticeTypesUrl(appState.newVersion, appState.selectedNoticeTypeFile);
+            const comparisonVersionUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, appState.selectedNoticeTypeFile);
+            const [newVersionNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
+                this.fetchNoticeTypesData(newVersionUrl),
+                this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
-            const isMainNoticeTypesFile = appState.selectedNoticeTypeFile === 'notice-types.json';
-            if (isMainNoticeTypesFile) {
                 this.showComparisonView();
-                const comparisonResults = this.compareNoticeTypes(selectedNoticeTypesData, comparisonNoticeTypesData);
-                let oldMap = new Map(selectedNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
+                const comparisonResults = this.compareNoticeTypes(comparisonNoticeTypesData, newVersionNoticeTypesData);
+                let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
-            }
         } catch (error) {
             console.error('Error during notice types operation:', error);
             throw new Error('Failed to load notice types');
@@ -51,11 +48,8 @@ export class NoticeTypesTab extends TabController {
     }
 
     compareNoticeTypes(selectedData, comparisonData) {
-        const selectedKey = selectedData.noticeSubTypes ? 'noticeSubTypes' : 'content';
-        const comparisonKey = comparisonData.noticeSubTypes ? 'noticeSubTypes' : 'content';
-        const uniqueKey = selectedData.noticeSubTypes ? 'subTypeId' : 'id';
-
-        const comparisonResults = Comparer.compareDataStructures(selectedData[selectedKey], comparisonData[comparisonKey], uniqueKey, true);
+        const removed1 = selectedData.noticeSubTypes.shift()
+        const comparisonResults = Comparer.compareDataStructures(selectedData.noticeSubTypes, comparisonData.noticeSubTypes, 'subTypeId', true);
         return comparisonResults;
     }
 
@@ -77,7 +71,7 @@ export class NoticeTypesTab extends TabController {
 
         // Clear existing content
         $(container).empty();
-
+        
         if (Array.isArray(data)) {
             data.forEach(item => {
                 const $itemTree = this.createTree(item[uniqueKey], newMap, oldMap);
@@ -97,7 +91,7 @@ export class NoticeTypesTab extends TabController {
         const component = document.createElement('index-card');
 
         const fieldToIterate = newField || oldField;
-
+        debugger
         for (const [key, value] of Object.entries(fieldToIterate)) {
             if (key === 'content') {
                 continue;
@@ -134,8 +128,8 @@ export class NoticeTypesTab extends TabController {
     }
 
     async selectNoticeSubtype(filename) {
-        const mainUrl = this.constructNoticeTypesUrl(appState.sdkVersion, filename);
-        const baseUrl = this.constructNoticeTypesUrl(appState.baseVersion, filename);
+        const mainUrl = this.constructNoticeTypesUrl(appState.newVersion, filename);
+        const baseUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, filename);
         const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
             this.fetchNoticeTypesData(mainUrl),
             this.fetchNoticeTypesData(baseUrl)

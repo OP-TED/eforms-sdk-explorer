@@ -11,20 +11,18 @@ export class FieldsTab extends TabController {
     }
 
     async fetchAndRender() {
-        // domElements.tagsDropdown.prop('disabled', true);
-        // domElements.comparisonDropdown.prop('disabled', true);
 
-        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.sdkVersion}/fields/fields.json`;
-        const baseVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
+        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.newVersion}/fields/fields.json`;
+        const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.comparisonVersion}/fields/fields.json`;
 
         try {
             const response1 = await $.ajax({ url: mainVersionUrl, dataType: 'json' });
             appState.versionData = response1.xmlStructure;
             appState.versionDataFields = response1.fields;
-            appState.versionData[0].version = response1.sdkVersion;
+            appState.versionData[0].version = response1.newVersion;
 
-            const response2 = await $.ajax({ url: baseVersionUrl, dataType: 'json' });
-            response2.xmlStructure[0].version = response2.sdkVersion;
+            const response2 = await $.ajax({ url: comparisonVersionUrl, dataType: 'json' });
+            response2.xmlStructure[0].version = response2.newVersion;
             appState.comparisonData = response2.xmlStructure;
             appState.comparisonDataFields = response2.fields;
 
@@ -36,10 +34,7 @@ export class FieldsTab extends TabController {
         } catch (error) {
             console.error('Error fetching and displaying fields content:', error);
             throw new Error('Failed to load data');
-        } finally {
-            // domElements.tagsDropdown.prop('disabled', false);
-            // domElements.comparisonDropdown.prop('disabled', false);
-        }
+        } 
     }
 
 

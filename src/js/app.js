@@ -22,13 +22,13 @@ export class SdkExplorerApplication {
     #activeTab = null
 
     /** @returns {string} */
-    get sdkVersion() {
-        return appState.sdkVersion;
+    get newVersion() {
+        return appState.newVersion;
     }
 
     /** @returns {string} */
-    getBaseVersion() {
-        return appState.baseVersion;
+    getComparisonVersion() {
+        return appState.comparisonVersion;
     }
 
     constructor() {
@@ -55,17 +55,17 @@ export class SdkExplorerApplication {
             SdkExplorerApplication.instance.activeTabChanged(activeTabId);
         });
 
-        domElements.tagsDropdown.change(function () {
-            appState.sdkVersion = $(this).val();
+        domElements.newVersionDropdown.change(function () {
+            appState.newVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.sdkVersion, appState.baseVersion);
+            SdkExplorerApplication.instance.versionChanged(appState.newVersion, appState.comparisonVersion);
             // fetchDataBasedOnActiveTab();
         });
         
         domElements.comparisonDropdown.change(function () {
-            appState.baseVersion = $(this).val();
+            appState.comparisonVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.sdkVersion, appState.baseVersion);
+            SdkExplorerApplication.instance.versionChanged(appState.newVersion, appState.comparisonVersion);
             // fetchDataBasedOnActiveTab();
         });
     }
@@ -169,25 +169,25 @@ export class SdkExplorerApplication {
         this.clearApiStatus();
         try {
             const response = await $.ajax({
-                url: `${appConfig.tagsBaseUrl}/tags`,
+                url: `${appConfig.eformsBaseUrl}/tags`,
                 dataType: 'json'
             });
             const data = response.sort((a, b) => this.compareVersions(a.name, b.name));
 
             appState.sortedData = data;
-            domElements.tagsDropdown.empty();
+            domElements.newVersionDropdown.empty();
             domElements.comparisonDropdown.empty();
 
             data.forEach(item => {
                 const option = $('<option>', { value: item.name, text: item.name });
-                domElements.tagsDropdown.append(option.clone());
+                domElements.newVersionDropdown.append(option.clone());
                 domElements.comparisonDropdown.append(option);
             });
 
-            domElements.tagsDropdown.val(data[0].name);
+            domElements.newVersionDropdown.val(data[0].name);
             domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-            appState.sdkVersion = data[0].name;
-            appState.baseVersion = data[1].name;
+            appState.newVersion = data[0].name;
+            appState.comparisonVersion = data[1].name;
             // await fetchAndDisplayFieldsContent(data[0].name, true);
             // await fetchAndDisplayFieldsContent(data[1].name, false);
         } catch (error) {
