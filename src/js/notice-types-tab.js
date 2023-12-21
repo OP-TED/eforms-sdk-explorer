@@ -27,9 +27,9 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
                 this.showComparisonView();
-                const removed1 = selectedData.noticeSubTypes.shift()
+                const removed1 = newVersionNoticeTypesData.noticeSubTypes.shift()
 
-                const comparisonResults = Comparer.compareDataStructures(comparisonData.noticeSubTypes, selectedData.noticeSubTypes, 'subTypeId', true);
+                const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes,newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
                 let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
@@ -89,8 +89,7 @@ export class NoticeTypesTab extends TabController {
         for (const [key, value] of Object.entries(fieldToIterate)) {
             const newValue = newField ? newField[key] : undefined;
             const oldValue = oldField ? oldField[key] : undefined;
-            const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
-
+            const $propertyTemplate = PropertyCard.create(key, newValue, oldValue, item.nodeChange);
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
 
