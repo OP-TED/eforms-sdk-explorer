@@ -158,7 +158,16 @@
                         <!-- Tree -->
                         <div class="col h-100">
                             <!-- Tree View Container -->
-                            <header class="font-weight-bold">Notice Structure</header>
+                            <header class="font-weight-bold" style="display: flex; flex-direction: row;">
+                            <div style="flex: 1; align-self: self-end;">Notice Structure</div>
+                            <input type="text" id="notice-tree-search" placeholder="Search" class="form-control form-control-sm m-1" style="width: 200px;" data-toggle="popover" data-trigger="focus" data-placement="left" title="Looking for a particular BT?" data-html="true" data-content="Search and highlight nodes and notices types with matching name, id, relative xpath, or business term.">
+                            <select id="notice-tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
+                                <option value="all">all</option>
+                                <option value="added">added</option>
+                                <option value="removed">removed</option>
+                                <option value="modified">modified</option>
+                            </select>
+                        </header>
                             <div id="noticeTypesTreeContainer" class="tree-container mh-100">
                                 <div id="noticeTypesTree"></div>
                             </div>
