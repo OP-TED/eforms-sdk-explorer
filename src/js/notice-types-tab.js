@@ -27,7 +27,9 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
                 this.showComparisonView();
-                const comparisonResults = this.compareNoticeTypes(comparisonNoticeTypesData, newVersionNoticeTypesData);
+                const removed1 = selectedData.noticeSubTypes.shift()
+
+                const comparisonResults = Comparer.compareDataStructures(comparisonData.noticeSubTypes, selectedData.noticeSubTypes, 'subTypeId', true);
                 let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
                 this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
@@ -45,12 +47,6 @@ export class NoticeTypesTab extends TabController {
             console.error('Error fetching notice types:', error);
             throw error;
         }
-    }
-
-    compareNoticeTypes(selectedData, comparisonData) {
-        const removed1 = selectedData.noticeSubTypes.shift()
-        const comparisonResults = Comparer.compareDataStructures(selectedData.noticeSubTypes, comparisonData.noticeSubTypes, 'subTypeId', true);
-        return comparisonResults;
     }
 
     constructNoticeTypesUrl(tagName, fileName) {
@@ -74,34 +70,47 @@ export class NoticeTypesTab extends TabController {
         
         if (Array.isArray(data)) {
             data.forEach(item => {
-                const $itemTree = this.createTree(item[uniqueKey], newMap, oldMap);
-                const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
+                const $itemTree = this.createTree(item, newMap, oldMap, uniqueKey);
                 $(container).append($itemTree);
             });
         } else {
-            const $tree = this.createTree(data[uniqueKey], newMap, oldMap);
+            const $tree = this.createTree(item, newMap, oldMap, uniqueKey);
             $(container).append($tree);
         }
     }
 
-    createTree(uniqueId, newMap, oldMap) {
+    createTree(item, newMap, oldMap,uniqueKey) {
+        const uniqueId = item[uniqueKey];
         const newField = newMap.get(uniqueId);
         const oldField = oldMap.get(uniqueId);
-
         const component = document.createElement('index-card');
-
         const fieldToIterate = newField || oldField;
-        debugger
+    
         for (const [key, value] of Object.entries(fieldToIterate)) {
-            if (key === 'content') {
-                continue;
-            }
             const newValue = newField ? newField[key] : undefined;
             const oldValue = oldField ? oldField[key] : undefined;
             const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
 
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
+
+            const observer = new MutationObserver((mutations, obs) => {
+                const cardHeader = component.shadowRoot.querySelector('#card-header');
+                if (cardHeader) {
+                    if (item.nodeChange === 'added') {
+                        cardHeader.classList.add('added-card');
+                    } else if (item.nodeChange === 'removed') {
+                        cardHeader.classList.add('removed-card');
+                    }
+                    else if (item.nodeChange === 'modified') {
+                        cardHeader.classList.add('changed-card');
+                    }
+                    obs.disconnect(); 
+                }
+            });
+        
+            observer.observe(component.shadowRoot, { childList: true, subtree: true });
+        
 
             if (key === 'subTypeId') {
                 component.setAttribute('title', value);
