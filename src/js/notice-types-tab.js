@@ -26,7 +26,7 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(newVersionUrl),
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
-            this.fetchVersionFileLists();//fetch the list of files to compare
+           const compareFileList = this.fetchVersionFileLists();//fetch the list of files to compare
             this.showComparisonView();
             const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes, newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
             let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));

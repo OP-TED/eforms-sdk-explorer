@@ -1,7 +1,7 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 
 export class IndexCard extends BootstrapWebComponent {
- 
+
     static get observedAttributes() {
         return ['title', 'subtitle', 'action-name', 'status'];
     }
@@ -27,7 +27,7 @@ export class IndexCard extends BootstrapWebComponent {
             this.subTitle = newValue;
         } else if (name === 'action-name') {
             this.actionName = newValue;
-        } else if (name === 'status') {  
+        } else if (name === 'status') {
             this.status = newValue;
         }
 
@@ -51,8 +51,19 @@ export class IndexCard extends BootstrapWebComponent {
         button.onclick = this.actionHandler;
     }
 
-    appendProperty(propertyCard) {
+    connectedCallback() {
+        super.connectedCallback()
+        if (!this.status) {
+            this.status =  this.setStatusCallback();
+            if (this.status) this.render();
+        }
+    }
 
+    setStatusCallback(statusCallback) {
+        this.statusCallback = statusCallback;
+    }
+    
+    appendProperty(propertyCard) {
         this.propertyCards.push(propertyCard[0]);
         if (this.isConnected) {
             this.render();
