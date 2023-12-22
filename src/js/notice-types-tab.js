@@ -26,6 +26,7 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(newVersionUrl),
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
+            this.fetchVersionFileLists();//fetch the list of files to compare
             this.showComparisonView();
             const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes, newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
             let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
@@ -321,6 +322,61 @@ export class NoticeTypesTab extends TabController {
             const $tree = createTree(data[uniqueKey]);
             $(container).append($tree);
         }
+    }
+
+    async fetchVersionFileLists() {
+        const baseVersionPath = `${appConfig.noticeTypesFileUrl}?ref=${appState.newVersion}`
+        const comparisonVersionPath = `${appConfig.noticeTypesFileUrl}?ref=${appState.comparisonVersion}`
+        try {
+            const [baseVersionResponse, comparisonVersionResponse] = await Promise.all([
+                $.ajax({ url: baseVersionPath, dataType: 'json' }),
+                $.ajax({ url: comparisonVersionPath, dataType: 'json' })
+            ]);
+            const baseVersionFiles = baseVersionResponse.map(file => file.name);
+            const comparisonVersionFiles = comparisonVersionResponse.map(file => file.name);
+            await this.compareFiles(baseVersionResponse, comparisonVersionResponse);
+
+            return {
+                baseVersionFiles: baseVersionFiles,
+                comparisonVersionFiles: comparisonVersionFiles
+            };
+
+        } catch (error) {
+            console.error('Error fetching version file lists:', error);
+            throw new Error('Failed to load version file lists');
+        }
+    }
+
+    async compareFiles(baseVersionResponse, comparisonVersionResponse) {
+        let comparisonResults = [];
+        const comparisonVersionFiles = comparisonVersionResponse.map(file => file.name);
+
+        for (let baseFile of baseVersionResponse) {
+            if (comparisonVersionFiles.includes(baseFile.name)) {
+                let comparisonFile = comparisonVersionResponse.find(file => file.name === baseFile.name);
+
+                try {
+                    let baseFileContent = await $.ajax({ url: baseFile.download_url, dataType: 'text' });
+                    let comparisonFileContent = await $.ajax({ url: comparisonFile.download_url, dataType: 'text' });
+
+                    let { ublVersion, sdkVersion, metadataDatabase, ...baseFileFiltered } = JSON.parse(baseFileContent);
+                    let { ublVersion: _, sdkVersion: __, metadataDatabase: ___, ...comparisonFileFiltered } = JSON.parse(comparisonFileContent);
+
+                    let modifiedBaseContent = JSON.stringify(baseFileFiltered);
+                    let modifiedComparisonContent = JSON.stringify(comparisonFileFiltered);
+
+                    let nodeChange = modifiedBaseContent === modifiedComparisonContent ? Comparer.TypeOfChange.UNCHANGED : Comparer.TypeOfChange.MODIFIED;
+
+                    comparisonResults.push({
+                        ...comparisonFile,
+                        nodeChange: nodeChange
+                    });
+                } catch (error) {
+                    console.error(`Error processing files for ${baseFile.name}:`, error);
+                }
+            }
+        }
+        return comparisonResults;
     }
 
 }
