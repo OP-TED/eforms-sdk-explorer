@@ -3,7 +3,7 @@ import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 export class IndexCard extends BootstrapWebComponent {
  
     static get observedAttributes() {
-        return ['title', 'subtitle', 'action-name'];
+        return ['title', 'subtitle', 'action-name', 'status'];
     }
 
     constructor() {
@@ -27,6 +27,8 @@ export class IndexCard extends BootstrapWebComponent {
             this.subTitle = newValue;
         } else if (name === 'action-name') {
             this.actionName = newValue;
+        } else if (name === 'status') {  
+            this.status = newValue;
         }
 
         if (this.isConnected) {
@@ -42,6 +44,7 @@ export class IndexCard extends BootstrapWebComponent {
 
         this.shadowRoot.querySelector('#title').textContent = this.title;
         this.shadowRoot.querySelector('#subtitle').textContent = this.subTitle;
+        this.shadowRoot.querySelector('#card-header').classList.add(this.status + '-card');
 
         const button = this.shadowRoot.querySelector('#action-button');
         button.textContent = this.actionName;

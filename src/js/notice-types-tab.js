@@ -90,24 +90,7 @@ export class NoticeTypesTab extends TabController {
             const $propertyTemplate = PropertyCard.create(key, newValue, oldValue, item.nodeChange);
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
-
-            const observer = new MutationObserver((mutations, obs) => {
-                const cardHeader = component.shadowRoot.querySelector('#card-header');
-                if (cardHeader) {
-                    if (item.nodeChange === 'added') {
-                        cardHeader.classList.add('added-card');
-                    } else if (item.nodeChange === 'removed') {
-                        cardHeader.classList.add('removed-card');
-                    }
-                    else if (item.nodeChange === 'modified') {
-                        cardHeader.classList.add('changed-card');
-                    }
-                    obs.disconnect();
-                }
-            });
-
-            observer.observe(component.shadowRoot, { childList: true, subtree: true });
-
+            component.setAttribute('status', item.nodeChange);
 
             if (key === 'subTypeId') {
                 component.setAttribute('title', value);
