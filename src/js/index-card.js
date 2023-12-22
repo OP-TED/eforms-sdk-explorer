@@ -54,7 +54,8 @@ export class IndexCard extends BootstrapWebComponent {
     connectedCallback() {
         super.connectedCallback()
         if (!this.status) {
-            this.getStatusCallback().then(status => {this.status = status
+            this.getStatusCallback().then(status => {
+            this.status = status;
              this.render();
             })
         }
