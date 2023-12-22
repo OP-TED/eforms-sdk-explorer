@@ -196,7 +196,6 @@ export class NoticeTypesTab extends TabController {
         ];
         $('#noticeTypesComparisonContainer').hide();
         $('#noticeTypesTreeContainer').show();
-        debugger
         domElements.noticeTypesTree.jstree({
             core: {
                 data: jsTreeData,

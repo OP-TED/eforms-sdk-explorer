@@ -86,28 +86,43 @@ export class Comparer {
 
     static compareFlatStructures(oldFlatMap, newFlatMap) {
         const comparisonResults = new Map();
-
+    
         oldFlatMap.forEach((oldNode, id) => {
             if (!newFlatMap.has(id)) {
                 comparisonResults.set(id, { ...oldNode, nodeChange: this.TypeOfChange.REMOVED });
             } else {
                 const newNode = newFlatMap.get(id);
-                const nodeChange = (newNode.contentType === "group")
-                ? this.TypeOfChange.UNCHANGED
-                : Comparer.#areValuesEquivalent(oldNode, newNode) ? this.TypeOfChange.UNCHANGED : this.TypeOfChange.MODIFIED;
-            comparisonResults.set(id, { ...newNode, nodeChange });
+                let nodeChange;
+                if (newNode.contentType === "group") {
+                    // Clone nodes without the content property for comparison
+                    const oldNodeWithoutContent = { ...oldNode };
+                    const newNodeWithoutContent = { ...newNode };
+                    delete oldNodeWithoutContent.content;
+                    delete newNodeWithoutContent.content;
+    
+                    // Compare the nodes without the content property
+                    nodeChange = Comparer.#areValuesEquivalent(oldNodeWithoutContent, newNodeWithoutContent)
+                        ? this.TypeOfChange.UNCHANGED
+                        : this.TypeOfChange.MODIFIED;
+                } else {
+                    // If not a group, compare normally
+                    nodeChange = Comparer.#areValuesEquivalent(oldNode, newNode) 
+                        ? this.TypeOfChange.UNCHANGED 
+                        : this.TypeOfChange.MODIFIED;
+                }
                 comparisonResults.set(id, { ...newNode, nodeChange });
             }
         });
-
+    
         newFlatMap.forEach((newNode, id) => {
             if (!oldFlatMap.has(id)) {
                 comparisonResults.set(id, { ...newNode, nodeChange: this.TypeOfChange.ADDED });
             }
         });
-
+    
         return comparisonResults;
     }
+    
 
     static compareNestedStructures(oldStructure, newStructure) {
         const oldFlatMap = Comparer.flattenStructure(oldStructure);
