@@ -26,13 +26,11 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(newVersionUrl),
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
-                this.showComparisonView();
-                const removed1 = newVersionNoticeTypesData.noticeSubTypes.shift()
-
-                const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes,newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
-                let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-                let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-                this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
+            this.showComparisonView();
+            const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes, newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
+            let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
+            let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
+            this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
         } catch (error) {
             console.error('Error during notice types operation:', error);
             throw new Error('Failed to load notice types');
@@ -67,7 +65,7 @@ export class NoticeTypesTab extends TabController {
 
         // Clear existing content
         $(container).empty();
-        
+
         if (Array.isArray(data)) {
             data.forEach(item => {
                 const $itemTree = this.createTree(item, newMap, oldMap, uniqueKey);
@@ -79,13 +77,13 @@ export class NoticeTypesTab extends TabController {
         }
     }
 
-    createTree(item, newMap, oldMap,uniqueKey) {
+    createTree(item, newMap, oldMap, uniqueKey) {
         const uniqueId = item[uniqueKey];
         const newField = newMap.get(uniqueId);
         const oldField = oldMap.get(uniqueId);
         const component = document.createElement('index-card');
         const fieldToIterate = newField || oldField;
-    
+
         for (const [key, value] of Object.entries(fieldToIterate)) {
             const newValue = newField ? newField[key] : undefined;
             const oldValue = oldField ? oldField[key] : undefined;
@@ -104,12 +102,12 @@ export class NoticeTypesTab extends TabController {
                     else if (item.nodeChange === 'modified') {
                         cardHeader.classList.add('changed-card');
                     }
-                    obs.disconnect(); 
+                    obs.disconnect();
                 }
             });
-        
+
             observer.observe(component.shadowRoot, { childList: true, subtree: true });
-        
+
 
             if (key === 'subTypeId') {
                 component.setAttribute('title', value);
@@ -144,8 +142,19 @@ export class NoticeTypesTab extends TabController {
         ]);
         let oldMap = this.flattenToMap(selectedNoticeTypesData.content);
         let newMap = this.flattenToMap(comparisonNoticeTypesData.content);
+        if (selectedNoticeTypesData.metadata) {
+            for (const item of selectedNoticeTypesData.metadata) {
+                oldMap.set(item.id, item);
+            }
+        }
+        if (comparisonNoticeTypesData.metadata) {
+            for (const item of comparisonNoticeTypesData.metadata) {
+                newMap.set(item.id, item);
+            }
+        }
         const comparisonResults = Comparer.compareNestedStructures(selectedNoticeTypesData.content, comparisonNoticeTypesData.content);
-        this.showTreeView(comparisonResults, oldMap, newMap);
+        const comparisonResultsMetadata = Comparer.compareNestedStructures(selectedNoticeTypesData.metadata, comparisonNoticeTypesData.metadata);
+        this.showTreeView(comparisonResults, comparisonResultsMetadata, oldMap, newMap);
     }
 
     flattenToMap(data, map = new Map()) {
@@ -158,7 +167,12 @@ export class NoticeTypesTab extends TabController {
         return map;
     }
 
-    showTreeView(treeData, oldMap, newMap) {
+    showTreeView(contentData, metadataData, oldMap, newMap) {
+        // Check if the tree view is already initialized
+        if (domElements.noticeTypesTree.jstree(true)) {
+            // If already initialized, destroy the existing tree before creating a new one
+            domElements.noticeTypesTree.jstree("destroy");
+        }
         // Remove comparison view if it exists
         $('.notice-types-comparison').hide();
         $('#noticeTypesComparisonContent').hide();
@@ -171,16 +185,18 @@ export class NoticeTypesTab extends TabController {
             id: 'noticeTypesTree'
         }).appendTo('#noticeTypesTreeContainer');
 
-        // initializeNoticeTypesTree(treeData);
-        let jsTreeData = this.processNoticeTypesJsTree(treeData);
+        let contentTreeData = this.processNoticeTypesJsTree(contentData, 'contentRoot');
+        let metadataTreeData = this.processNoticeTypesJsTree(metadataData, 'metadataRoot');
+
+        let jsTreeData = [
+            { id: 'contentRoot', parent: '#', text: 'Content', state: { opened: true } },
+            ...contentTreeData,
+            { id: 'metadataRoot', parent: '#', text: 'Metadata', state: { opened: true } },
+            ...metadataTreeData
+        ];
         $('#noticeTypesComparisonContainer').hide();
         $('#noticeTypesTreeContainer').show();
-
-        // Check if the tree view is already initialized
-        if (domElements.noticeTypesTree.jstree(true)) {
-            // If already initialized, destroy the existing tree before creating a new one
-            domElements.noticeTypesTree.jstree("destroy");
-        }
+        debugger
         domElements.noticeTypesTree.jstree({
             core: {
                 data: jsTreeData,
@@ -211,7 +227,7 @@ export class NoticeTypesTab extends TabController {
 
         domElements.noticeTypesTree.on("select_node.jstree", (e, data) => {
             const selectedFieldId = data.node.id;
-            const fieldDetails = this.findFieldById(treeData, selectedFieldId)
+            const fieldDetails = this.findFieldById(jsTreeData, selectedFieldId)
             this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.noticeTypesDetails);
 
         });
