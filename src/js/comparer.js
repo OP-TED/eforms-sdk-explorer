@@ -92,7 +92,10 @@ export class Comparer {
                 comparisonResults.set(id, { ...oldNode, nodeChange: this.TypeOfChange.REMOVED });
             } else {
                 const newNode = newFlatMap.get(id);
-                const nodeChange = Comparer.#areValuesEquivalent(oldNode, newNode) ? this.TypeOfChange.UNCHANGED : this.TypeOfChange.MODIFIED;
+                const nodeChange = (newNode.contentType === "group")
+                ? this.TypeOfChange.UNCHANGED
+                : Comparer.#areValuesEquivalent(oldNode, newNode) ? this.TypeOfChange.UNCHANGED : this.TypeOfChange.MODIFIED;
+            comparisonResults.set(id, { ...newNode, nodeChange });
                 comparisonResults.set(id, { ...newNode, nodeChange });
             }
         });
