@@ -91,8 +91,12 @@ export class NoticeTypesTab extends TabController {
             const $propertyTemplate = PropertyCard.create(key, newValue, oldValue, item.nodeChange);
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
-            component.setAttribute('status', item.nodeChange);
-
+            if(this.item.nodeChange === Comparer.TypeOfChange.ADDED || this.item.nodeChange === Comparer.TypeOfChange.REMOVED){
+                component.setAttribute('status', item.nodeChange);
+            }else{
+                component.setStatusCallback();
+            }
+            
             if (key === 'subTypeId') {
                 component.setAttribute('title', value);
                 component.setActionHandler((e) => {

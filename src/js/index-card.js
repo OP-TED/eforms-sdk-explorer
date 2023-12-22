@@ -54,13 +54,14 @@ export class IndexCard extends BootstrapWebComponent {
     connectedCallback() {
         super.connectedCallback()
         if (!this.status) {
-            this.status =  this.setStatusCallback();
-            if (this.status) this.render();
+            this.getStatusCallback().then(status => {this.status = status
+             this.render();
+            })
         }
     }
 
     setStatusCallback(statusCallback) {
-        this.statusCallback = statusCallback;
+        this.getStatusCallback = statusCallback;
     }
     
     appendProperty(propertyCard) {
