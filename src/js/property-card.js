@@ -30,36 +30,33 @@ export class PropertyCard extends BootstrapWebComponent {
 
     render() {
         super.render();
-        console.log("PropertyCard render called with nodeChange: ", this.nodeChange);
 
-        this.shadowRoot.querySelector('#property-name').textContent = this.propertyName;
-        this.shadowRoot.querySelector('#new-property-value').innerHTML = this.newPropertyValue;
-        this.shadowRoot.querySelector('#old-property-value').innerHTML = this.oldPropertyValue;
-    
-        // Get the list item element
-        const listItem = this.shadowRoot.querySelector('#list-item');
-    
-        // Clear previous classes that may have been added
-        listItem.classList.remove('added-property', 'removed-property', 'changed-property');
-    
-        // Add classes based on nodeChange
-        if (this.nodeChange === 'added') {
-            listItem.classList.add('added-property');
+        this.shadowRoot.querySelector('#property-name').textContent = this.propertyName; // Show the name
+        this.shadowRoot.querySelector('#new-property-value').innerHTML = this.newPropertyValue; // Show the new value
+        this.shadowRoot.querySelector('#old-property-value').innerHTML = this.oldPropertyValue; // Show the old value
+
+        if (this.oldPropertyValue === undefined) {
+            this.shadowRoot.querySelector('#list-item').classList.add('added-property');
             this.shadowRoot.querySelector('#old-property-value').style.display = 'none';
-        } else if (this.nodeChange === 'removed') {
-            listItem.classList.add('removed-property');
+        } else if (this.newPropertyValue === undefined) {
+            this.shadowRoot.querySelector('#list-item').classList.add('removed-property');
             this.shadowRoot.querySelector('#new-property-value').style.display = 'none';
         } else if (this.newPropertyValue !== this.oldPropertyValue) {
-            listItem.classList.add('changed-property');
-        }
+            this.shadowRoot.querySelector('#list-item').classList.add('changed-property');
+            this.shadowRoot.querySelector('#new-property-value').classList.add('new-property-value');
+            this.shadowRoot.querySelector('#old-property-value').classList.add('old-property-value');
+        } else {
+            this.shadowRoot.querySelector('#old-property-value').style.display = 'none';
+        }    
     }
 
-    static create(propertyName, currentValue, previousValue, nodeChange) {
+    static create(propertyName, currentValue, previousValue) {
+
         const $component = $('<property-card/>');
         $component.attr('property-name', propertyName + ': ');
         $component.attr('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
         $component.attr('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
-        $component.attr('node-change', nodeChange);  // Add this line
+    
         return $component;
     }
 
