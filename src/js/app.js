@@ -21,6 +21,9 @@ export class SdkExplorerApplication {
     /** @type {TabController} */
     #activeTab = null
 
+    /** @type {number} */
+    #spinnerCounter = 0;
+
     /** @returns {string} */
     get newVersion() {
         return appState.newVersion;
@@ -81,7 +84,7 @@ export class SdkExplorerApplication {
     }
 
     async activeTabChanged(activeTabId) {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
             await this.#activeTab?.deactivated();
@@ -91,12 +94,12 @@ export class SdkExplorerApplication {
             this.updateApiStatus(error.message, false);
         }
         finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 
     async versionChanged() {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
             await this.#activeTab?.versionChanged();
@@ -104,16 +107,33 @@ export class SdkExplorerApplication {
             this.updateApiStatus(error.message, false);
         }
         finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 
-    toggleLoadingSpinner(show) {
-        const spinnerElement = $('#centralLoadingSpinner'); 
-        if (show) {
-            spinnerElement.show();
+    static startSpinner() {
+        SdkExplorerApplication.instance.startSpinner();
+    }
+
+    static stopSpinner() {
+        SdkExplorerApplication.instance.stopSpinner();
+    }
+    
+    startSpinner() {
+        this.#spinnerCounter++;
+        this.#toggleSpinner();
+    }
+
+    stopSpinner() {  
+        this.#spinnerCounter--;
+        this.#toggleSpinner();    
+    }
+
+    #toggleSpinner() {
+        if (this.#spinnerCounter > 0) {
+            $('#centralLoadingSpinner').show();
         } else {
-           spinnerElement.hide();
+            $('#centralLoadingSpinner').hide();
         }
     }
 
@@ -165,7 +185,7 @@ export class SdkExplorerApplication {
 
 
     async populateDropdown() {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
             const response = await $.ajax({
@@ -194,7 +214,7 @@ export class SdkExplorerApplication {
             this.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
         } finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 }

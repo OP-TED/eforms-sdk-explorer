@@ -4,6 +4,7 @@ import { Comparer } from "./comparer.js";
 import { TabController } from "./tab-controller.js";
 import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
+import { SdkExplorerApplication } from "./app.js";
 
 export class NoticeTypesTab extends TabController {
 
@@ -338,6 +339,7 @@ export class NoticeTypesTab extends TabController {
      */
     async checkForChanges(noticeSubtype) {
         try {
+            SdkExplorerApplication.startSpinner();
             let fileUrl = this.constructNoticeTypesUrl(appState.newVersion, noticeSubtype + '.json');
             let baseFileUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, noticeSubtype + '.json');
             let fileContent = await $.ajax({ url: fileUrl, dataType: 'text' });
@@ -357,5 +359,8 @@ export class NoticeTypesTab extends TabController {
             console.error(`Error processing files for ${noticeSubtype}.json:`, error);
             return null;
         }
+        finally {
+            SdkExplorerApplication.stopSpinner();
+        }   
     }
 }
