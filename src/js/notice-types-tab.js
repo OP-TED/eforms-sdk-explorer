@@ -26,7 +26,6 @@ export class NoticeTypesTab extends TabController {
                 this.fetchNoticeTypesData(newVersionUrl),
                 this.fetchNoticeTypesData(comparisonVersionUrl)
             ]);
-           const compareFileList = this.fetchVersionFileLists();//fetch the list of files to compare
             this.showComparisonView();
             const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes, newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
             let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
@@ -91,10 +90,11 @@ export class NoticeTypesTab extends TabController {
             const $propertyTemplate = PropertyCard.create(key, newValue, oldValue, item.nodeChange);
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
-            if(this.item.nodeChange === Comparer.TypeOfChange.ADDED || this.item.nodeChange === Comparer.TypeOfChange.REMOVED){
+            if(item.nodeChange === Comparer.TypeOfChange.ADDED || item.nodeChange === Comparer.TypeOfChange.REMOVED){
                 component.setAttribute('status', item.nodeChange);
-            }else{
-                component.setStatusCallback();
+            } else {
+                // we will check for changes in the background
+                component.setStatusCallback(() => Promise.resolve(this.checkForChanges(item.subTypeId)));
             }
             
             if (key === 'subTypeId') {
@@ -328,59 +328,34 @@ export class NoticeTypesTab extends TabController {
         }
     }
 
-    async fetchVersionFileLists() {
-        const baseVersionPath = `${appConfig.noticeTypesFileUrl}?ref=${appState.newVersion}`
-        const comparisonVersionPath = `${appConfig.noticeTypesFileUrl}?ref=${appState.comparisonVersion}`
+    /**
+     * Checks for changes in the notice type file.
+     * It will ignore the values of certain properties that are expected to change between versions: 
+     * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
+     * 
+     * @param {string} noticeSubtype The notice subtype to check for changes
+     * @returns {Promise<Comparer.TypeOfChange>} The type of change detected
+     */
+    async checkForChanges(noticeSubtype) {
         try {
-            const [baseVersionResponse, comparisonVersionResponse] = await Promise.all([
-                $.ajax({ url: baseVersionPath, dataType: 'json' }),
-                $.ajax({ url: comparisonVersionPath, dataType: 'json' })
-            ]);
-            const baseVersionFiles = baseVersionResponse.map(file => file.name);
-            const comparisonVersionFiles = comparisonVersionResponse.map(file => file.name);
-            await this.compareFiles(baseVersionResponse, comparisonVersionResponse);
+            let fileUrl = this.constructNoticeTypesUrl(appState.newVersion, noticeSubtype + '.json');
+            let baseFileUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, noticeSubtype + '.json');
+            let fileContent = await $.ajax({ url: fileUrl, dataType: 'text' });
+            let baseFileContent = await $.ajax({ url: baseFileUrl, dataType: 'text' });
 
-            return {
-                baseVersionFiles: baseVersionFiles,
-                comparisonVersionFiles: comparisonVersionFiles
-            };
-
-        } catch (error) {
-            console.error('Error fetching version file lists:', error);
-            throw new Error('Failed to load version file lists');
-        }
-    }
-
-    async compareFiles(baseVersionResponse, comparisonVersionResponse) {
-        let comparisonResults = [];
-        const comparisonVersionFiles = comparisonVersionResponse.map(file => file.name);
-
-        for (let baseFile of baseVersionResponse) {
-            if (comparisonVersionFiles.includes(baseFile.name)) {
-                let comparisonFile = comparisonVersionResponse.find(file => file.name === baseFile.name);
-
-                try {
-                    let baseFileContent = await $.ajax({ url: baseFile.download_url, dataType: 'text' });
-                    let comparisonFileContent = await $.ajax({ url: comparisonFile.download_url, dataType: 'text' });
-
-                    let { ublVersion, sdkVersion, metadataDatabase, ...baseFileFiltered } = JSON.parse(baseFileContent);
-                    let { ublVersion: _, sdkVersion: __, metadataDatabase: ___, ...comparisonFileFiltered } = JSON.parse(comparisonFileContent);
-
-                    let modifiedBaseContent = JSON.stringify(baseFileFiltered);
-                    let modifiedComparisonContent = JSON.stringify(comparisonFileFiltered);
-
-                    let nodeChange = modifiedBaseContent === modifiedComparisonContent ? Comparer.TypeOfChange.UNCHANGED : Comparer.TypeOfChange.MODIFIED;
-
-                    comparisonResults.push({
-                        ...comparisonFile,
-                        nodeChange: nodeChange
-                    });
-                } catch (error) {
-                    console.error(`Error processing files for ${baseFile.name}:`, error);
-                }
+            let propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
+            for (let property of propertiesToIgnore) {
+                let regex = new RegExp(`(${property} ".*?")`);
+                fileContent = fileContent.replace(regex, `${property} "-"`);
+                baseFileContent = baseFileContent.replace(regex, `${property} "-"`);
             }
-        }
-        return comparisonResults;
-    }
 
+            let nodeChange = fileContent === baseFileContent ? Comparer.TypeOfChange.UNCHANGED : Comparer.TypeOfChange.MODIFIED;
+
+            return nodeChange;
+        } catch (error) {
+            console.error(`Error processing files for ${noticeSubtype}.json:`, error);
+            return null;
+        }
+    }
 }
