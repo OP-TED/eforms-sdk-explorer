@@ -12,21 +12,28 @@ The eForms SDK Explorer is a single-page web application designed to allow busin
 
 The purpose of the application is to help any user identify the changes that occurred between any two SDK versions, to assist them while they assess the effort required to upgrade their applications to a newer version of the eForms SDK.
 
-The goals of the application are:
-1. to make the comparison of SDK versions more intuitive and more practical than the comparison of JSON and XML files.
-2. to be as accessible as possible by being self-contained, easy to download and install on any laptop without requiring any special software or infrastructure.
+The main goal of the application is to make the comparison of SDK versions more intuitive and more practical than the comparison of JSON and XML files.
 
-## Getting Started
+## Using the SDK Explorer
 
-You can download and run the eForms SDK Explorer to your laptop by following these steps:
+The SDK Explorer is integrated in the TED Developer Documentation Portal.
 
-1. Either [download this ZIP file](https://github.com/OP-TED/eforms-sdk-explorer/archive/refs/heads/develop.zip) and extract it in a folder on your computer,
-   
-   **or** clone the GitHub repository to your local machine:
+You can access it here: **https://docs.ted.europa.eu/eforms-sdk-explorer/**
 
-   ```bash
-   git clone https://github.com/OP-TED/eforms-sdk-explorer.git
-   ```
+> [!NOTE]
+> _Initially our intention was to keep the application "as simple as possible" so that it can be downloaded and executed locally in your browser. However, we quickly deviated from our initial intention and decided to integrate the application in the [TED Developer Documentation Portal](https://docs.ted.europa.eu/eforms-sdk-explorer/) instead. This makes accessing the SDK Explorer more convenient for everyone, and allows us to implement it without being restricted by code safety limitations imposed when browsers execute scripts locally on your computer._
 
-2. Open the `src/index.html` file in your web browser.
 
+## Contributing to the SDK Explorer
+
+If you are interested in this application, we welcome your contributions:
+
+- You can suggest features and improvements in [GitHub Issues](https://github.com/OP-TED/eforms-sdk-explorer/issues).
+- You can clone or fork the repository and implement any features or improvements that you would like to add to the SDK Explorer. Please submit your code for merging into the `develop` branch with a GitHub Pull Request. 
+
+> [!IMPORTANT] 
+> _When creating a new feature, or improvement, it is always preferable to first create a GitHub Issue that describes the idea you intend to work on, so that we all have a chance to discuss it and see how it fits in the bigger picture of the application._
+>  
+> _Likewise, for bug fixes, make sure there is a GitHub Issue recoded and labeled as `bug`._
+> 
+> _In your commit messages and pull requests, [reference the issue number](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests). For example `Fixes #7: rest of your commit message here`._
