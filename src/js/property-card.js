@@ -35,10 +35,10 @@ export class PropertyCard extends BootstrapWebComponent {
         this.shadowRoot.querySelector('#new-property-value').innerHTML = this.newPropertyValue; // Show the new value
         this.shadowRoot.querySelector('#old-property-value').innerHTML = this.oldPropertyValue; // Show the old value
 
-        if (this.oldPropertyValue === undefined) {
+        if (this.oldPropertyValue === undefined && this.newPropertyValue !== undefined) {
             this.shadowRoot.querySelector('#list-item').classList.add('added-property');
             this.shadowRoot.querySelector('#old-property-value').style.display = 'none';
-        } else if (this.newPropertyValue === undefined) {
+        } else if (this.newPropertyValue === undefined && this.oldPropertyValue !== undefined) {
             this.shadowRoot.querySelector('#list-item').classList.add('removed-property');
             this.shadowRoot.querySelector('#new-property-value').style.display = 'none';
         } else if (this.newPropertyValue !== this.oldPropertyValue) {

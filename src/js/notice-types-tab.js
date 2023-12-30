@@ -1,6 +1,6 @@
 import { appState } from "./state.js";
 import { appConfig, domElements } from "./config.js";
-import { Comparer } from "./comparer.js";
+import { Diff, DiffEntry } from "./diff.js";
 import { TabController } from "./tab-controller.js";
 import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
@@ -14,106 +14,142 @@ export class NoticeTypesTab extends TabController {
 
     init() {
         $('#overviewLink').on('click', async (e) => {
-            appState.selectedNoticeTypeFile = 'notice-types.json';
+            appState.selectedNoticeTypeFile = 'notice-types';
             await this.fetchAndRender();
         });
     }
 
     async fetchAndRender() {
+        this.fetchAndRenderOverview();
+    }
+
+    async fetchAndRenderOverview() {    
         try {
-            const newVersionUrl = this.constructNoticeTypesUrl(appState.newVersion, appState.selectedNoticeTypeFile);
-            const comparisonVersionUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, appState.selectedNoticeTypeFile);
-            const [newVersionNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
-                this.fetchNoticeTypesData(newVersionUrl),
-                this.fetchNoticeTypesData(comparisonVersionUrl)
+
+            this.showOverview();
+
+            // Get notice-types.json index files for both versions.
+            const [mainVersionData, baseVersionData] = await Promise.all([
+                this.#fetchNoticeTypesIndexFile(appState.mainVersion),
+                this.#fetchNoticeTypesIndexFile(appState.baseVersion)
             ]);
-            this.showComparisonView();
-            const comparisonResults = Comparer.compareDataStructures(comparisonNoticeTypesData.noticeSubTypes, newVersionNoticeTypesData.noticeSubTypes, 'subTypeId', true);
-            let oldMap = new Map(newVersionNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-            let newMap = new Map(comparisonNoticeTypesData.noticeSubTypes.map(node => [node.subTypeId, node]));
-            this.displayNoticeTypeCard(comparisonResults, oldMap, newMap, domElements.noticeTypesComparisonContent, 'subTypeId');
+
+            // Compare the two index files
+            const diff = Diff.fromArrayComparison(mainVersionData.noticeSubTypes, baseVersionData.noticeSubTypes, 'subTypeId');
+
+            // Clear existing index-cards.
+            $(domElements.noticeTypesOverview).empty();
+
+            // Create and add an index-card for each notice type.
+            diff.forEach(entry => {
+                const $card = this.createIndexCard(entry);
+                $(domElements.noticeTypesOverview).append($card);
+            });
+
         } catch (error) {
-            console.error('Error during notice types operation:', error);
+            console.error('Error while generating overview:', error);
             throw new Error('Failed to load notice types');
         }
     }
 
-    async fetchNoticeTypesData(url) {
+    /**
+     * Fetches the notice-types.json index file for the specified SDK version.
+     */
+    async #fetchNoticeTypesIndexFile(sdkVersion) {
+        const url = this.getNoticeTypesIndexFileUrl(sdkVersion);
         try {
             const response = await $.ajax({ url, dataType: 'json' });
             return response;
         } catch (error) {
-            console.error('Error fetching notice types:', error);
+            console.error('Error fetching notice-types.json:', error);
             throw error;
         }
     }
 
-    constructNoticeTypesUrl(tagName, fileName) {
-        return `${appConfig.rawBaseUrl}/${tagName}/notice-types/${fileName}`;
+    /**
+     * Fetches the notice type definition JSON file for the specified notice subtype and SDK version.
+     * 
+     * @param {string} subTypeId 
+     * @param {string} sdkVersion
+     *  
+     * @returns 
+     */
+    async #fetchNoticeTypeDefinition(subTypeId, sdkVersion) {
+        const url = this.getUrlByNoticeSubtypeAndVersion(subTypeId, sdkVersion);
+        try {
+            const response = await $.ajax({ url, dataType: 'json' });
+            return response;
+        } catch (error) {
+            console.error(`Error fetching notice type "${subTypeId}.json" for SDK ${sdkVersion}:  `, error);
+            throw error;
+        }
     }
 
-    showComparisonView() {
+    getUrlByNoticeSubtypeAndVersion(subtypeId, sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/notice-types/${subtypeId}.json`;
+    }
+
+    getNoticeTypesIndexFileUrl(sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/notice-types/notice-types.json`;
+    }
+
+    showOverview() {
         // Hide the tree view and details view
-        $('#noticeTypesTreeContainer').hide();
-        $('#noticeTypesDetails').hide();
+        $('#noticeStructureContainer').hide();
+        $('#noticeStructureElementDetails').hide();
 
         // Show the comparison view
         $('.notice-types-comparison').show();
-        $('#noticeTypesComparisonContent').show();
+        $('#noticeTypesOverview').show();
     }
 
-    displayNoticeTypeCard(data, oldMap, newMap, container, uniqueKey = 'id') {
-
-        // Clear existing content
-        $(container).empty();
-
-        if (Array.isArray(data)) {
-            data.forEach(item => {
-                const $itemTree = this.createTree(item, newMap, oldMap, uniqueKey);
-                $(container).append($itemTree);
-            });
-        } else {
-            const $tree = this.createTree(item, newMap, oldMap, uniqueKey);
-            $(container).append($tree);
-        }
-    }
-
-    createTree(item, newMap, oldMap, uniqueKey) {
-        const uniqueId = item[uniqueKey];
-        const newField = newMap.get(uniqueId);
-        const oldField = oldMap.get(uniqueId);
+    /**
+     * Creates an index-card for the specified notice type.
+     * 
+     * @param {DiffEntry} diffEntry 
+     * @returns 
+     */
+    createIndexCard(diffEntry) {
         const component = document.createElement('index-card');
-        const fieldToIterate = newField || oldField;
+        const item = diffEntry.mainItem || diffEntry.baseItem;
 
-        for (const [key, value] of Object.entries(fieldToIterate)) {
-            const newValue = newField ? newField[key] : undefined;
-            const oldValue = oldField ? oldField[key] : undefined;
-            const $propertyTemplate = PropertyCard.create(key, newValue, oldValue, item.nodeChange);
+        for (const [key, value] of Object.entries(item)) {
+            const mainValue = diffEntry.mainItem ? diffEntry.mainItem[key] : undefined;
+            const baseValue = diffEntry.baseItem ? diffEntry.baseItem[key] : undefined;
+            
+            const $propertyTemplate = PropertyCard.create(key, mainValue, baseValue, diffEntry.typeOfChange);
             component.appendProperty($propertyTemplate);
             component.setAttribute('action-name', 'Compare');
-            if(item.nodeChange === Comparer.TypeOfChange.ADDED || item.nodeChange === Comparer.TypeOfChange.REMOVED){
-                component.setAttribute('status', item.nodeChange);
+
+            if(diffEntry.typeOfChange === Diff.TypeOfChange.ADDED || diffEntry.typeOfChange === Diff.TypeOfChange.REMOVED){
+                // We already know the status of the node, so we can set it directly
+                component.setAttribute('status', diffEntry.typeOfChange);
             } else {
-                // we will check for changes in the background
-                component.setStatusCallback(() => Promise.resolve(this.checkForChanges(item.subTypeId)));
+                // We will need to open the files and check for changes.
+                // We will do that in the background
+                component.setStatusCheckCallback(() => Promise.resolve(this.checkForChanges(diffEntry.id)));
             }
             
             if (key === 'subTypeId') {
-                component.setAttribute('title', value);
+                component.setAttribute('title', value); // Use the subTypeId property as the card's title
                 component.setActionHandler((e) => {
                     e.preventDefault();
-                    this.selectNoticeSubtype(newValue + '.json');
+                    this.selectNoticeSubtype(mainValue);
                 });
             } else if (key === 'type') {
-                component.setAttribute('subtitle', value);
+                component.setAttribute('subtitle', value);  // Use the type property as the card's subtitle
             }
         }
 
-        // Handle removed properties in oldField that are not in newField
-        if (newField) {
-            for (const key in oldField) {
-                if (!newField.hasOwnProperty(key) && key !== 'content') {
-                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, oldField[key]);
+        // Handle removed properties (the ones in baseItem that do not exit in mainItem).
+        if (diffEntry.mainItem) {
+            for (const propertyName in diffEntry.baseItem) {
+                if (propertyName === 'content') {
+                    continue;   // Ignore the content property
+                }
+
+                if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
+                    const $removedPropertyTemplate = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName]);
                     component.appendProperty($removedPropertyTemplate);
                 }
             }
@@ -122,70 +158,74 @@ export class NoticeTypesTab extends TabController {
         return component;
     }
 
-    async selectNoticeSubtype(filename) {
-        const mainUrl = this.constructNoticeTypesUrl(appState.newVersion, filename);
-        const baseUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, filename);
-        const [selectedNoticeTypesData, comparisonNoticeTypesData] = await Promise.all([
-            this.fetchNoticeTypesData(mainUrl),
-            this.fetchNoticeTypesData(baseUrl)
+    async selectNoticeSubtype(subTypeId) {
+        const [mainData, baseData] = await Promise.all([
+            this.#fetchNoticeTypeDefinition(subTypeId, appState.mainVersion),
+            this.#fetchNoticeTypeDefinition(subTypeId, appState.baseVersion)
         ]);
-        let oldMap = this.flattenToMap(selectedNoticeTypesData.content);
-        let newMap = this.flattenToMap(comparisonNoticeTypesData.content);
-        if (selectedNoticeTypesData.metadata) {
-            for (const item of selectedNoticeTypesData.metadata) {
-                oldMap.set(item.id, item);
-            }
-        }
-        if (comparisonNoticeTypesData.metadata) {
-            for (const item of comparisonNoticeTypesData.metadata) {
-                newMap.set(item.id, item);
-            }
-        }
-        const comparisonResults = Comparer.compareNestedStructures(selectedNoticeTypesData.content, comparisonNoticeTypesData.content);
-        const comparisonResultsMetadata = Comparer.compareNestedStructures(selectedNoticeTypesData.metadata, comparisonNoticeTypesData.metadata);
-        this.showTreeView(comparisonResults, comparisonResultsMetadata, oldMap, newMap);
+        const contentDiff = this.#compareNestedHierarchies(mainData.content, baseData.content);
+        const metadataDiff = this.#compareNestedHierarchies(mainData.metadata, baseData.metadata);
+        this.showExplorerView(contentDiff, metadataDiff);
     }
 
-    flattenToMap(data, map = new Map()) {
-        data.forEach(item => {
-            map.set(item.id, item);
-            if (Array.isArray(item.content)) {
-                this.flattenToMap(item.content, map); // Recursively process nested arrays
+    #compareNestedHierarchies(mainNestedHierarchy, baseNestedHierarchy) {
+        const mainArray = this.#flattenNestedHierarchy(mainNestedHierarchy);
+        const baseArray = this.#flattenNestedHierarchy(baseNestedHierarchy);
+        const diff = Diff.fromArrayComparison(mainArray, baseArray, 'id');
+        return diff;
+    }
+
+    #flattenNestedHierarchy(nestedHierarchy, parentId = null) {
+        let flatHierarchy = [];
+    
+        nestedHierarchy.forEach(node => {
+            const { content, ...nodeWithoutContent } = node;
+            flatHierarchy.push({ ...nodeWithoutContent, parentId });
+            if (node.contentType === 'group' && node.content) {
+                const childArray = this.#flattenNestedHierarchy(node.content, node.id);
+                flatHierarchy = flatHierarchy.concat(childArray);
             }
         });
-        return map;
+    
+        return flatHierarchy;
     }
 
-    showTreeView(contentData, metadataData, oldMap, newMap) {
+
+    /**
+     * Shows the tree/detail explorer for the notice type.
+     * 
+     * @param {*} contentData 
+     * @param {*} metadataData 
+     */
+    showExplorerView(contentData, metadataData) {
         // Check if the tree view is already initialized
-        if (domElements.noticeTypesTree.jstree(true)) {
+        if (domElements.noticeStructureTree.jstree(true)) {
             // If already initialized, destroy the existing tree before creating a new one
-            domElements.noticeTypesTree.jstree("destroy");
+            domElements.noticeStructureTree.jstree("destroy");
         }
+
         // Remove comparison view if it exists
         $('.notice-types-comparison').hide();
-        $('#noticeTypesComparisonContent').hide();
+        $('#noticeTypesOverview').hide();
 
         // Show the tree view and details view
-        $('#noticeTypesTreeContainer').show();
-        $('#noticeTypesDetails').show();
+        $('#noticeStructureContainer').show();
+        $('#noticeStructureElementDetails').show();
 
-        $('<div/>', {
-            id: 'noticeTypesTree'
-        }).appendTo('#noticeTypesTreeContainer');
-
-        let contentTreeData = this.processNoticeTypesJsTree(contentData, 'contentRoot');
-        let metadataTreeData = this.processNoticeTypesJsTree(metadataData, 'metadataRoot');
+        let contentTreeData = this.createTreeNodes(contentData, 'contentRoot');
+        let metadataTreeData = this.createTreeNodes(metadataData, 'metadataRoot');
 
         let jsTreeData = [
-            { id: 'contentRoot', parent: '#', text: 'Content', state: { opened: true } },
-            ...contentTreeData,
             { id: 'metadataRoot', parent: '#', text: 'Metadata', state: { opened: true } },
-            ...metadataTreeData
+            ...metadataTreeData,
+            { id: 'contentRoot', parent: '#', text: 'Content', state: { opened: true } },
+            ...contentTreeData
         ];
+
         $('#noticeTypesComparisonContainer').hide();
-        $('#noticeTypesTreeContainer').show();
-        domElements.noticeTypesTree.jstree({
+        $('#noticeStructureContainer').show();
+
+        domElements.noticeStructureTree.jstree({
             core: {
                 data: jsTreeData,
                 check_callback: true
@@ -194,7 +234,6 @@ export class NoticeTypesTab extends TabController {
             'search': {
                 'show_only_matches': true,
                 search_callback: function (str, node) {
-
                     let terms = str.split('::');
                     let status = terms[0];
                     let searchText = terms.length > 1 ? terms[1] : '';
@@ -213,120 +252,92 @@ export class NoticeTypesTab extends TabController {
             }
         });
 
-        domElements.noticeTypesTree.on("select_node.jstree", (e, data) => {
-            const selectedFieldId = data.node.id;
-            const fieldDetails = this.findFieldById(jsTreeData, selectedFieldId)
-            this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.noticeTypesDetails);
-
+        domElements.noticeStructureTree.on("select_node.jstree", (e, data) => {
+            this.displayTreeNodeDetails(data.node.data.diff);
         });
-        $('#noticeTypesTreeContainer').show();
+
+        $('#noticeStructureContainer').show();
 
         $('#notice-tree-search').keyup(searchTree);
         $('#notice-tree-filter').change(searchTree);
 
         function searchTree() {
             let searchString = $('#notice-tree-filter').val() + '::' + $('#notice-tree-search').val();
-            domElements.noticeTypesTree.jstree('search', searchString);
+            domElements.noticeStructureTree.jstree('search', searchString);
         }
     }
 
-    processNoticeTypesJsTree(content, parentId = "#") {
-        let treeData = [];
-        content.forEach(item => {
-            let node = {
-                id: item.id,
-                parent: parentId,
-                text: item.id,
+    /**
+     * 
+     * @param {Diff} diff 
+     * @param {*} parentId 
+     * @returns 
+     */
+    createTreeNodes(diff, parentId = "#") {
+        let treeNodes = [];
+
+        diff.forEach(diffEntry => {
+            let isGroup = diffEntry?.get('contentType') === 'group' ?? false;
+            let treeNode = {
+                id: diffEntry?.id,
+                parent: diffEntry?.get('parentId') || parentId,
+                text: diffEntry?.id,
                 state: { opened: true },
-                type: item.contentType === 'group' ? "default" : "field",
-                li_attr: item.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
-                    item.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        item.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
+                // type: isGroup ? "display-group" : "input-field",
+                icon: isGroup ? "jstree-folder" : "jstree-file",
+                li_attr: { class: `${diffEntry?.typeOfChange}-node` },
                 data: {
-                    btId: item.id,
-                    description: item.description,
-                    status: item.nodeChange
+                    btId: diffEntry?.id,
+                    description: diffEntry?.get('description'),
+                    diff: diffEntry,
+                    status: diffEntry?.typeOfChange
                 }
             };
-            // Adding icon for items with contentType "file"
-            if (item.contentType === "field") {
-                node.icon = 'jstree-file';
-            }
-            treeData.push(node);
-            if (item.contentType === 'group' && item.content) {
-                let children = this.processNoticeTypesJsTree(item.content, item.id);
-                treeData = treeData.concat(children);
-            }
+
+            treeNodes.push(treeNode);
         });
 
-        return treeData;
+        return treeNodes;
     }
 
-    findFieldById(data, fieldId) {
-        let result = null;
-        function searchContent(content) {
-            for (let item of content) {
-                if (item.id === fieldId) {
-                    result = item;
-                    return true;
-                }
-                if (Array.isArray(item.content)) {
-                    if (searchContent(item.content)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+    /**
+     * 
+     * @param {DiffEntry} diffEntry 
+     */
+    displayTreeNodeDetails(diffEntry) {
 
-        searchContent(data);
-        return result;
-    }
-
-    displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') {
-        function createTree(uniqueId) {
-            const newField = newMap.get(uniqueId);
-            const oldField = oldMap.get(uniqueId);
-            const $ul = $('<ul class="list-group">');
-
-            const fieldToIterate = newField || oldField;
-
-            for (const [key, value] of Object.entries(fieldToIterate)) {
-                if (key === 'content') {
-                    continue;
-                }
-                const newValue = newField ? newField[key] : undefined;
-                const oldValue = oldField ? oldField[key] : undefined;
-                const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
-                $ul.append($propertyTemplate);
-            }
-
-            // Handle removed properties in oldField that are not in newField
-            if (newField) {
-                for (const key in oldField) {
-                    if (!newField.hasOwnProperty(key) && key !== 'content') {
-                        const $removedPropertyTemplate = PropertyCard.create(key, undefined, oldField[key]);
-                        $ul.append($removedPropertyTemplate);
-                    }
-                }
-            }
-
-            return $ul;
-        }
+        let mainItem = diffEntry.mainItem; 
+        let baseItem = diffEntry.baseItem;
 
         // Clear existing content
-        $(container).empty();
+        $(domElements.noticeStructureElementDetails).empty();
 
-        if (Array.isArray(data)) {
-            data.forEach(item => {
-                const $itemTree = createTree(item[uniqueKey]);
-                const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
-                $(container).append($itemContainer);
-            });
-        } else {
-            const $tree = createTree(data[uniqueKey]);
-            $(container).append($tree);
+        const $ul = $('<ul class="list-group">');
+
+        const item = mainItem || baseItem;
+
+        for (const [key, value] of Object.entries(item)) {
+            const mainValue = mainItem ? mainItem[key] ?? undefined : undefined;
+            const baseValue = baseItem ? baseItem[key] ?? undefined : undefined;
+
+            if (key === 'parentId' && mainValue === baseValue) {
+                continue;
+            }
+
+            const $propertyTemplate = PropertyCard.create(key, mainValue, baseValue);
+            $ul.append($propertyTemplate);
         }
+
+        // Handle removed properties in oldField that are not in newField
+        if (mainItem) {
+            for (const key in baseItem) {
+                if (!mainItem.hasOwnProperty(key) && key !== 'content') {
+                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, baseItem[key]);
+                    $ul.append($removedPropertyTemplate);
+                }
+            }
+        }
+        $(domElements.noticeStructureElementDetails).append($ul);
     }
 
     /**
@@ -334,29 +345,29 @@ export class NoticeTypesTab extends TabController {
      * It will ignore the values of certain properties that are expected to change between versions: 
      * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
      * 
-     * @param {string} noticeSubtype The notice subtype to check for changes
-     * @returns {Promise<Comparer.TypeOfChange>} The type of change detected
+     * @param {string} noticeSubtypeId The notice subtype to check for changes
+     * @returns {Promise<Diff.TypeOfChange>} The type of change detected
      */
-    async checkForChanges(noticeSubtype) {
+    async checkForChanges(noticeSubtypeId) {
         try {
             SdkExplorerApplication.startSpinner();
-            let fileUrl = this.constructNoticeTypesUrl(appState.newVersion, noticeSubtype + '.json');
-            let baseFileUrl = this.constructNoticeTypesUrl(appState.comparisonVersion, noticeSubtype + '.json');
-            let fileContent = await $.ajax({ url: fileUrl, dataType: 'text' });
-            let baseFileContent = await $.ajax({ url: baseFileUrl, dataType: 'text' });
+            let mainUrl = this.getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.mainVersion);
+            let baseUrl = this.getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.baseVersion);
+            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
+            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
             let propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
             for (let property of propertiesToIgnore) {
                 let regex = new RegExp(`(${property} ".*?")`);
-                fileContent = fileContent.replace(regex, `${property} "-"`);
-                baseFileContent = baseFileContent.replace(regex, `${property} "-"`);
+                mainFile = mainFile.replace(regex, `${property} "-"`);
+                baseFile = baseFile.replace(regex, `${property} "-"`);
             }
 
-            let nodeChange = fileContent === baseFileContent ? Comparer.TypeOfChange.UNCHANGED : Comparer.TypeOfChange.MODIFIED;
+            let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
 
             return nodeChange;
         } catch (error) {
-            console.error(`Error processing files for ${noticeSubtype}.json:`, error);
+            console.error(`Error processing files for ${noticeSubtypeId}.json:`, error);
             return null;
         }
         finally {

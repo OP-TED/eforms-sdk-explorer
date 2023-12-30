@@ -12,8 +12,8 @@ export const domElements = {
     newVersionDropdown: $('#newVersionDropdown'),
     comparisonDropdown: $('#comparisonDropdown'),
     noticeTypesDropdown: $('#noticeTypesDropdown'),
-    noticeTypesTree: $('#noticeTypesTree'),
+    noticeStructureTree: $('#noticeStructureTree'),
     fieldDetailsContent: $('#fieldDetailsContent'),
-    noticeTypesComparisonContent: $('#noticeTypesComparisonContent'),
-    noticeTypesDetails: $('#noticeTypesDetails')
+    noticeTypesOverview: $('#noticeTypesOverview'),
+    noticeStructureElementDetails: $('#noticeStructureElementDetails')
 };

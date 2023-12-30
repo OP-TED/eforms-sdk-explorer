@@ -2,6 +2,11 @@ import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 
 export class IndexCard extends BootstrapWebComponent {
 
+    /**
+     * Array containing the names of all attributes for which the element needs change notifications.
+     * 
+     * @type {string[]}
+     */
     static get observedAttributes() {
         return ['title', 'subtitle', 'action-name', 'status'];
     }
@@ -12,25 +17,36 @@ export class IndexCard extends BootstrapWebComponent {
         this.actionHandler = null;
     }
 
+    /**
+     * Provides a handler that will be called when the action button is clicked.
+     * 
+     * @param {function(Event): void} handler 
+     */
     setActionHandler(handler) {
         this.actionHandler = handler;
     }
 
+    /**
+     * Called when attributes are changed, added, removed, or replaced.
+     * 
+     * @param {string} name 
+     * @param {*} oldValue 
+     * @param {*} newValue 
+     * @returns 
+     */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) {
             return;
         }
 
-        if (name === 'title') {
-            this.title = newValue;
-        } else if (name === 'subtitle') {
-            this.subTitle = newValue;
-        } else if (name === 'action-name') {
-            this.actionName = newValue;
-        } else if (name === 'status') {
-            this.status = newValue;
+        switch (name) {
+            case 'title': this.title = newValue; break;
+            case 'subtitle': this.subTitle = newValue; break;
+            case 'action-name': this.actionName = newValue;  break;
+            case 'status': this.status = newValue; break;
         }
 
+        // If the element is already connected to the DOM, then re-render it.
         if (this.isConnected) {
             this.render();
         }
@@ -51,20 +67,30 @@ export class IndexCard extends BootstrapWebComponent {
         button.onclick = this.actionHandler;
     }
 
+    /**
+     * Called each time the element is added to the document.
+     */
     connectedCallback() {
-        super.connectedCallback()
-        if (!this.status) {
+        super.connectedCallback();
+
+        // If the status is not set, and a callback is provided, then call the callback to get the status.
+        if (!this.status && this.getStatusCallback) {
             this.getStatusCallback().then(status => {
-            this.status = status;
-             this.render();
-            })
+                this.setAttribute('status', status);    // This will also trigger a re-render
+            });
         }
     }
 
-    setStatusCallback(statusCallback) {
-        this.getStatusCallback = statusCallback;
+    /**
+     * Provides a callback that will be called when the status is not set directly.
+     * The idea is that the callback will be invoked asynchronously because it needs to fetch and compare files from GitHub.
+     * 
+     * @param {function(): string} statusCheckCallback 
+     */
+    setStatusCheckCallback(statusCheckCallback) {
+        this.getStatusCallback = statusCheckCallback;
     }
-    
+ 
     appendProperty(propertyCard) {
         this.propertyCards.push(propertyCard[0]);
         if (this.isConnected) {

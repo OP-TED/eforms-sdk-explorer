@@ -26,12 +26,12 @@ export class SdkExplorerApplication {
 
     /** @returns {string} */
     get newVersion() {
-        return appState.newVersion;
+        return appState.mainVersion;
     }
 
     /** @returns {string} */
     getComparisonVersion() {
-        return appState.comparisonVersion;
+        return appState.baseVersion;
     }
 
     constructor() {
@@ -59,17 +59,15 @@ export class SdkExplorerApplication {
         });
 
         domElements.newVersionDropdown.change(function () {
-            appState.newVersion = $(this).val();
+            appState.mainVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.newVersion, appState.comparisonVersion);
-            // fetchDataBasedOnActiveTab();
+            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
         
         domElements.comparisonDropdown.change(function () {
-            appState.comparisonVersion = $(this).val();
+            appState.baseVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.newVersion, appState.comparisonVersion);
-            // fetchDataBasedOnActiveTab();
+            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
     }
 
@@ -206,8 +204,8 @@ export class SdkExplorerApplication {
 
             domElements.newVersionDropdown.val(data[0].name);
             domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-            appState.newVersion = data[0].name;
-            appState.comparisonVersion = data[1].name;
+            appState.mainVersion = data[0].name;
+            appState.baseVersion = data[1].name;
             // await fetchAndDisplayFieldsContent(data[0].name, true);
             // await fetchAndDisplayFieldsContent(data[1].name, false);
         } catch (error) {

@@ -1,7 +1,7 @@
 import { TabController } from "./tab-controller.js";
 import { appState } from "./state.js";
 import { appConfig, domElements } from "./config.js";
-import { Comparer } from "./comparer.js"; 
+import { Diff } from "./diff.js"; 
 import { PropertyCard } from "./property-card.js";
 
 export class FieldsTab extends TabController {
@@ -12,8 +12,8 @@ export class FieldsTab extends TabController {
 
     async fetchAndRender() {
 
-        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.newVersion}/fields/fields.json`;
-        const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.comparisonVersion}/fields/fields.json`;
+        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/fields/fields.json`;
+        const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
 
         try {
             const response1 = await $.ajax({ url: mainVersionUrl, dataType: 'json' });
@@ -27,9 +27,9 @@ export class FieldsTab extends TabController {
             appState.comparisonDataFields = response2.fields;
 
             if (appState.versionData && appState.comparisonData) {
-                const xmlComparisonResults = Comparer.compareDataStructures(appState.comparisonData, appState.versionData, 'id', true);
-                const fieldsComparisonResults = Comparer.compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, 'id', true);
-                this.initializeTree(xmlComparisonResults, fieldsComparisonResults);
+                const nodesDiff = Diff.fromArrayComparison(appState.versionData, appState.comparisonData, 'id');
+                const fieldsDiff = Diff.fromArrayComparison(appState.versionDataFields, appState.comparisonDataFields, 'id');
+                this.initializeTree(nodesDiff, fieldsDiff);
             }
         } catch (error) {
             console.error('Error fetching and displaying fields content:', error);
@@ -38,45 +38,47 @@ export class FieldsTab extends TabController {
     }
 
 
-    buildTreeData(xmlStructure, fieldsComparisonResults) {
+    /**
+     * 
+     * @param {Diff} nodesDiff 
+     * @param {Diff} fieldsDiff 
+     * @returns 
+     */
+    buildTreeData(nodesDiff, fieldsDiff) {
 
-        const treeDataMap = new Map(xmlStructure.map(node => {
-            return [node.id, {
-                id: node.id,
-                parent: node.parentId || "#",
-                text: node.name || node.id,
+        const treeDataMap = new Map(nodesDiff.map(diffEntry => {
+            return [diffEntry.id, {
+                id: diffEntry.id,
+                parent: diffEntry.get('parentId') || "#",
+                text: diffEntry.get('name') || diffEntry.id,
                 state: {
                     opened: true
                 },
-                li_attr: node.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
-                    node.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        node.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
+                li_attr: { class: `${diffEntry.typeOfChange}-node` },
                 data: {
-                    btId: node.btId,
-                    xpathRelative: node.xpathRelative,
-                    status: node.nodeChange
+                    btId: diffEntry.get('btId'),
+                    xpathRelative: diffEntry.get('xpathRelative'),
+                    status: diffEntry.typeOfChange
                 }
             }];
         }));
 
 
-        fieldsComparisonResults.forEach(field => {
-            treeDataMap.set(field.id, {
-                id: field.id,
-                parent: field.parentNodeId,
-                text: field.name || field.id,
+        fieldsDiff.forEach(diffEntry => {
+            treeDataMap.set(diffEntry.id, {
+                id: diffEntry.id,
+                parent: diffEntry.get('parentNodeId'),
+                text: diffEntry.get('name') || diffEntry.id,
                 icon: 'jstree-file',
                 state: {
                     opened: true
                 },
-                li_attr: field.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
-                    field.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        field.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
+                li_attr: { class: `${diffEntry.typeOfChange}-node` },
                 data: {
-                    id: field.id,
-                    btId: field.btId,
-                    xpathRelative: field.xpathRelative,
-                    status: field.nodeChange
+                    id: diffEntry.id,
+                    btId: diffEntry.get('btId'),
+                    xpathRelative: diffEntry.get('xpathRelative'),
+                    status: diffEntry.typeOfChange
                 }
             });
         });
@@ -84,13 +86,13 @@ export class FieldsTab extends TabController {
         return Array.from(treeDataMap.values());
     }
 
-    initializeTree(xmlStructure, fieldsComparisonResults) {
+    initializeTree(xmlStructureDiff, fieldsDiff) {
         if (domElements.xmlStructureTree.jstree(true)) {
             domElements.xmlStructureTree.jstree("destroy");
         }
         domElements.xmlStructureTree.jstree({
             core: {
-                data: this.buildTreeData(xmlStructure, fieldsComparisonResults),
+                data: this.buildTreeData(xmlStructureDiff, fieldsDiff),
                 check_callback: true
             },
             plugins: ["wholerow", "search"],
@@ -119,13 +121,13 @@ export class FieldsTab extends TabController {
 
         domElements.xmlStructureTree.on("select_node.jstree", (e, data) => {
             const selectedFieldId = data.node.id;
-            const fieldDetails = fieldsComparisonResults.find(field => field.id === selectedFieldId);
+            const fieldDetails = fieldsDiff.get(selectedFieldId);
             if (fieldDetails) {
                 let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
                 let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
                 this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
             }
-            const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
+            const nodeDetails = xmlStructureDiff.get(selectedFieldId);
             if (nodeDetails) {
                 let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
                 let newMap = new Map(appState.versionData.map(node => [node.id, node]));
