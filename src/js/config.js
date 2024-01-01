@@ -8,12 +8,10 @@ export const domElements = {
     loadingSpinner: $('#loadingSpinner'),
     noticeTypesSpinner: $('#noticeTypesSpinner'),
     apiStatus: $('#apiStatus'),
-    xmlStructureTree: $('#xmlStructureTree'),
     newVersionDropdown: $('#newVersionDropdown'),
     comparisonDropdown: $('#comparisonDropdown'),
     noticeTypesDropdown: $('#noticeTypesDropdown'),
     noticeStructureTree: $('#noticeStructureTree'),
-    fieldDetailsContent: $('#fieldDetailsContent'),
     noticeTypesOverview: $('#noticeTypesOverview'),
     noticeStructureElementDetails: $('#noticeStructureElementDetails')
 };

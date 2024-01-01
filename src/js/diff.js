@@ -151,9 +151,6 @@ export class DiffEntry {
     /** @type {string} */
     id;
 
-    /** @type {string} */
-    text;
-
     /** @type {Object} */
     mainItem;
 
@@ -200,5 +197,26 @@ export class DiffEntry {
      */
     get(propertyName) {
         return this.getItem()[propertyName];
+    }
+
+    /**
+     * Used to reconstruct a DiffEntry from a deserialized object.
+     * 
+     * We store the DiffEntry objects in the DOM as data attributes, 
+     * which means that they are serialized to strings.
+     * So, we need a way to reconstruct them from the data attributes in order to be able to call methods like {@link DiffEntry#get}.
+     * 
+     * @param {*} obj 
+     * @returns 
+     */
+    static fromObject(obj) {
+        let diffEntry = new DiffEntry(/* appropriate arguments */);
+        // Assign properties from obj to diffEntry
+        for (let prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+                diffEntry[prop] = obj[prop];
+            }
+        }
+        return diffEntry;
     }
 }

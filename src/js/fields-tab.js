@@ -1,13 +1,25 @@
 import { TabController } from "./tab-controller.js";
 import { appState } from "./state.js";
-import { appConfig, domElements } from "./config.js";
-import { Diff } from "./diff.js"; 
+import { appConfig } from "./config.js";
+import { Diff, DiffEntry } from "./diff.js"; 
 import { PropertyCard } from "./property-card.js";
 
 export class FieldsTab extends TabController {
 
     constructor() {
         super('fields-tab');
+    }
+
+    /**
+     * Overridden to hook up event handlers.
+     */
+    init() {
+        super.init();
+
+        // Listen for changes in the search fields
+        $('#fields-tree-search').keyup(this.#searchJsTree);
+        $('#fields-tree-filter').change(this.#searchJsTree);
+
     }
 
     async fetchAndRender() {
@@ -17,34 +29,34 @@ export class FieldsTab extends TabController {
 
         try {
             const response1 = await $.ajax({ url: mainVersionUrl, dataType: 'json' });
-            appState.versionData = response1.xmlStructure;
-            appState.versionDataFields = response1.fields;
-            appState.versionData[0].version = response1.newVersion;
+            const mainVersionNodes = response1.xmlStructure;
+            const mainVersionFields = response1.fields;
 
             const response2 = await $.ajax({ url: comparisonVersionUrl, dataType: 'json' });
-            response2.xmlStructure[0].version = response2.newVersion;
-            appState.comparisonData = response2.xmlStructure;
-            appState.comparisonDataFields = response2.fields;
+            const baseVersionNodes = response2.xmlStructure;
+            const baseVersionFields = response2.fields;
 
-            if (appState.versionData && appState.comparisonData) {
-                const nodesDiff = Diff.fromArrayComparison(appState.versionData, appState.comparisonData, 'id');
-                const fieldsDiff = Diff.fromArrayComparison(appState.versionDataFields, appState.comparisonDataFields, 'id');
-                this.initializeTree(nodesDiff, fieldsDiff);
+            if (mainVersionNodes && baseVersionNodes) {
+                const nodesDiff = Diff.fromArrayComparison(mainVersionNodes, baseVersionNodes, 'id');
+                const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
+                this.initialiseJsTree(nodesDiff, fieldsDiff);
             }
         } catch (error) {
-            console.error('Error fetching and displaying fields content:', error);
+            console.error('Error fetching and displaying fields.json contents: ', error);
             throw new Error('Failed to load data');
-        } 
+        }
     }
 
 
     /**
+     * Creates the tree-nodes for the JsTree from {@link Diff} objects of SDK Nodes and SDK Fields.
      * 
-     * @param {Diff} nodesDiff 
-     * @param {Diff} fieldsDiff 
-     * @returns 
+     * @param {Diff} nodesDiff A Diff object containing the differences between the main and base versions of the SDK Nodes. 
+     * @param {Diff} fieldsDiff A Diff object containing the differences between the main and base versions of the SDK Fields.
+     * 
+     * @returns {Array} An array of tree-nodes ready for loading onto a JsTree. 
      */
-    buildTreeData(nodesDiff, fieldsDiff) {
+    #createJsTreeNodes(nodesDiff, fieldsDiff) {
 
         const treeDataMap = new Map(nodesDiff.map(diffEntry => {
             return [diffEntry.id, {
@@ -55,11 +67,7 @@ export class FieldsTab extends TabController {
                     opened: true
                 },
                 li_attr: { class: `${diffEntry.typeOfChange}-node` },
-                data: {
-                    btId: diffEntry.get('btId'),
-                    xpathRelative: diffEntry.get('xpathRelative'),
-                    status: diffEntry.typeOfChange
-                }
+                data: diffEntry
             }];
         }));
 
@@ -74,124 +82,103 @@ export class FieldsTab extends TabController {
                     opened: true
                 },
                 li_attr: { class: `${diffEntry.typeOfChange}-node` },
-                data: {
-                    id: diffEntry.id,
-                    btId: diffEntry.get('btId'),
-                    xpathRelative: diffEntry.get('xpathRelative'),
-                    status: diffEntry.typeOfChange
-                }
+                data: diffEntry
             });
         });
 
         return Array.from(treeDataMap.values());
     }
 
-    initializeTree(xmlStructureDiff, fieldsDiff) {
-        if (domElements.xmlStructureTree.jstree(true)) {
-            domElements.xmlStructureTree.jstree("destroy");
+    /**
+     * Initiates a search in the JsTree.
+     */
+    #searchJsTree() {
+        // Get the value of the search input field
+        let searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
+
+        // Search the tree
+        $('#xmlStructureTree').jstree('search', searchString);
+    }
+
+    /**
+     * 
+     * @param {DiffEntry} diffEntry 
+     * @param {string} status 
+     * @param {string} searchText
+     * 
+     * @returns {boolean} 
+     */
+    #isEntryMatchingSearchTerms(diffEntry, status, searchText = '') {
+        let textMatch = false;
+
+        if (searchText.length > 0 && !searchText.startsWith('|')) {
+            let combined = (diffEntry?.get('name') || '') + '|' + (diffEntry?.get('btId') || '') + '|' + (diffEntry?.get('id') || '') + '|' + (diffEntry?.get('xpathRelative') || '');
+            textMatch = combined.toLowerCase().indexOf(searchText) > -1;
         }
-        domElements.xmlStructureTree.jstree({
+
+        if (status === 'all') {
+            return textMatch;
+        } else {
+            return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
+        }
+    }
+
+    initialiseJsTree(nodesDiff, fieldsDiff) {
+        if ($('#xmlStructureTree').jstree(true)) {
+            $('#xmlStructureTree').jstree("destroy");
+        }
+        $('#xmlStructureTree').jstree({
             core: {
-                data: this.buildTreeData(xmlStructureDiff, fieldsDiff),
+                data: this.#createJsTreeNodes(nodesDiff, fieldsDiff),
                 check_callback: true
             },
             plugins: ["wholerow", "search"],
-            'search': {
-                'show_only_matches': true,
-                search_callback: function (str, node) {
-
-                    let terms = str.split('::');
-                    let status = terms[0];
-                    let searchText = terms.length > 1 ? terms[1] : '';
-
-                    let textMatch = false;
-                    if (searchText.length > 0 && !searchText.startsWith('|')) {
-                        let combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
-                        textMatch = combined.toLowerCase().indexOf(searchText) > -1;
-                    }
-
-                    if (status === 'all') {
-                        return textMatch;
-                    } else {
-                        return (node?.data?.status === status) && (textMatch || searchText === '');
-                    }
-                }
+            search: {
+                show_only_matches: true,
+                search_callback: (str, node) => this.#isEntryMatchingSearchTerms(DiffEntry.fromObject(node?.data), ...str.split('::'))
             }
         });
-
-        domElements.xmlStructureTree.on("select_node.jstree", (e, data) => {
-            const selectedFieldId = data.node.id;
-            const fieldDetails = fieldsDiff.get(selectedFieldId);
-            if (fieldDetails) {
-                let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
-                let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
-                this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
-            }
-            const nodeDetails = xmlStructureDiff.get(selectedFieldId);
-            if (nodeDetails) {
-                let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
-                let newMap = new Map(appState.versionData.map(node => [node.id, node]));
-                this.displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
-            }
+        
+        // Listen for selection changes in the tree
+        $('#xmlStructureTree').on("select_node.jstree", (e, data) => {
+            this.displayDetails(DiffEntry.fromObject(data.node.data));
         });
-
-        // Listen for changes in the search fields
-        $('#fields-tree-search').keyup(searchTree);
-        $('#fields-tree-filter').change(searchTree);
-
-        function searchTree() {
-            // Get the value of the search input field
-            let searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
-
-            // Search the tree
-            domElements.xmlStructureTree.jstree('search', searchString);
-        }
+        
     }
 
-    displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') {
-        function createTree(uniqueId) {
-            const newField = newMap.get(uniqueId);
-            const oldField = oldMap.get(uniqueId);
-            const $ul = $('<ul class="list-group">');
-    
-            const fieldToIterate = newField || oldField;
-    
-            for (const [key, value] of Object.entries(fieldToIterate)) {
-                if (key === 'content') {
-                    continue;
-                }
-                const newValue = newField ? newField[key] : undefined;
-                const oldValue = oldField ? oldField[key] : undefined;
-                const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
-                $ul.append($propertyTemplate);
-            }
-    
-            // Handle removed properties in oldField that are not in newField
-            if (newField) {
-                for (const key in oldField) {
-                    if (!newField.hasOwnProperty(key) && key !== 'content') {
-                        const $removedPropertyTemplate = PropertyCard.create(key, undefined, oldField[key]);
-                        $ul.append($removedPropertyTemplate);
-                    }
-                }
-            }
-    
-            return $ul;
-        }
+    /**
+     * Called when a tree-node is selected in the JsTree.
+     * Displays the details of the selected node.
+     * 
+     * @param {DiffEntry} diffEntry 
+     */
+    displayDetails(diffEntry) {
     
         // Clear existing content
-        $(container).empty();
+        $('#fieldDetailsContent').empty();
     
-        if (Array.isArray(data)) {
-            data.forEach(item => {
-                const $itemTree = createTree(item[uniqueKey]);
-                const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
-                $(container).append($itemContainer);
-            });
-        } else {
-            const $tree = createTree(data[uniqueKey]);
-            $(container).append($tree);
+        const $ul = $('<ul class="list-group">');
+    
+        for (const [key, value] of Object.entries(diffEntry.getItem())) {
+            if (key === 'content') {
+                continue;
+            }
+            const newValue = diffEntry.mainItem ? diffEntry.mainItem[key] : undefined;
+            const oldValue = diffEntry.baseItem ? diffEntry.baseItem[key] : undefined;
+            const $propertyTemplate = PropertyCard.create(key, diffEntry.mainItem ? newValue : undefined, oldValue);
+            $ul.append($propertyTemplate);
         }
+
+        // Handle removed properties in diffEntry.baseItem that are not in diffEntry.mainItem
+        if (diffEntry.mainItem) {
+            for (const key in diffEntry.baseItem) {
+                if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
+                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
+                    $ul.append($removedPropertyTemplate);
+                }
+            }
+        }
+
+        $('#fieldDetailsContent').append($ul);
     }
-    
 }
