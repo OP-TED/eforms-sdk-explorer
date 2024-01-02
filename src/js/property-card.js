@@ -19,8 +19,8 @@ export class PropertyCard extends BootstrapWebComponent {
         }
         switch (name) {
             case 'property-name': this.propertyName = newValue; break;
-            case 'new-property-value': this.newPropertyValue = newValue; break;
-            case 'old-property-value': this.oldPropertyValue = newValue; break;
+            case 'new-property-value': this.newPropertyValue = newValue === "undefined" ? undefined : newValue; break;
+            case 'old-property-value': this.oldPropertyValue = newValue === "undefined" ? undefined : newValue; break;
         }
 
         if (this.isConnected) {
