@@ -92,10 +92,21 @@ export class IndexCard extends BootstrapWebComponent {
     }
  
     appendProperty(propertyCard) {
-        this.propertyCards.push(propertyCard[0]);
+        this.propertyCards.push(propertyCard);
         if (this.isConnected) {
             this.render();
         }
+    }
+
+    static create(title, subTitle, actionName, status = undefined) {
+        const component = document.createElement('index-card');
+        component.setAttribute('title', title);
+        component.setAttribute('subtitle', subTitle);
+        component.setAttribute('action-name', actionName);
+        if (status) {
+            component.setAttribute('status', status);
+        }
+        return component;
     }
 }
 

@@ -196,7 +196,7 @@ export class DiffEntry {
      * @returns 
      */
     get(propertyName) {
-        return this.getItem()[propertyName];
+        return this.getItem()?.[propertyName];
     }
 
     /**

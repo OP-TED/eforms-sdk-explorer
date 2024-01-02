@@ -39,7 +39,7 @@ export class FieldsTab extends TabController {
             if (mainVersionNodes && baseVersionNodes) {
                 const nodesDiff = Diff.fromArrayComparison(mainVersionNodes, baseVersionNodes, 'id');
                 const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
-                this.initialiseJsTree(nodesDiff, fieldsDiff);
+                this.initialiseJsTree(() => this.#createJsTreeNodes(nodesDiff, fieldsDiff), this.#searchCallback);
             }
         } catch (error) {
             console.error('Error fetching and displaying fields.json contents: ', error);
@@ -108,7 +108,7 @@ export class FieldsTab extends TabController {
      * 
      * @returns {boolean} 
      */
-    #isEntryMatchingSearchTerms(diffEntry, status, searchText = '') {
+    #searchCallback(diffEntry, status, searchText = '') {
         let textMatch = false;
 
         if (searchText.length > 0 && !searchText.startsWith('|')) {
@@ -123,19 +123,19 @@ export class FieldsTab extends TabController {
         }
     }
 
-    initialiseJsTree(nodesDiff, fieldsDiff) {
+    initialiseJsTree(getTreeNodesCallback, searchCallback) {
         if ($('#xmlStructureTree').jstree(true)) {
             $('#xmlStructureTree').jstree("destroy");
         }
         $('#xmlStructureTree').jstree({
             core: {
-                data: this.#createJsTreeNodes(nodesDiff, fieldsDiff),
+                data: getTreeNodesCallback(),
                 check_callback: true
             },
             plugins: ["wholerow", "search"],
             search: {
                 show_only_matches: true,
-                search_callback: (str, node) => this.#isEntryMatchingSearchTerms(DiffEntry.fromObject(node?.data), ...str.split('::'))
+                search_callback: (str, node) => searchCallback(DiffEntry.fromObject(node?.data), ...str.split('::'))
             }
         });
         
@@ -143,7 +143,6 @@ export class FieldsTab extends TabController {
         $('#xmlStructureTree').on("select_node.jstree", (e, data) => {
             this.displayDetails(DiffEntry.fromObject(data.node.data));
         });
-        
     }
 
     /**
@@ -160,21 +159,18 @@ export class FieldsTab extends TabController {
         const $ul = $('<ul class="list-group">');
     
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
-            if (key === 'content') {
-                continue;
-            }
-            const newValue = diffEntry.mainItem ? diffEntry.mainItem[key] : undefined;
-            const oldValue = diffEntry.baseItem ? diffEntry.baseItem[key] : undefined;
-            const $propertyTemplate = PropertyCard.create(key, diffEntry.mainItem ? newValue : undefined, oldValue);
-            $ul.append($propertyTemplate);
+            const mainValue = diffEntry?.mainItem ? diffEntry?.mainItem[key] ?? undefined : undefined;
+            const baseValue = diffEntry?.baseItem ? diffEntry?.baseItem[key] ?? undefined : undefined;
+            const card = PropertyCard.create(key, diffEntry.mainItem ? mainValue : undefined, baseValue);
+            $ul.append(card);
         }
 
         // Handle removed properties in diffEntry.baseItem that are not in diffEntry.mainItem
         if (diffEntry.mainItem) {
             for (const key in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
-                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
-                    $ul.append($removedPropertyTemplate);
+                    const card = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
+                    $ul.append(card);
                 }
             }
         }

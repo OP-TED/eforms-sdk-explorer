@@ -51,13 +51,12 @@ export class PropertyCard extends BootstrapWebComponent {
     }
 
     static create(propertyName, currentValue, previousValue) {
-
-        const $component = $('<property-card/>');
-        $component.attr('property-name', propertyName + ': ');
-        $component.attr('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
-        $component.attr('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
+        const component = document.createElement('property-card');
+        component.setAttribute('property-name', propertyName + ': ');
+        component.setAttribute('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
+        component.setAttribute('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
     
-        return $component;
+        return component;
     }
 
     static #formatPropertyValue(value) {
