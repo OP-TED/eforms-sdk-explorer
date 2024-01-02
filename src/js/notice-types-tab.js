@@ -203,7 +203,11 @@ export class NoticeTypesTab extends TabController {
             this.#splitView().initialise({
                 dataCallback: () => this.#createTreeNodes(metadataDiff, contentDiff), 
                 searchCallback: this.#searchCallback,
-                hiddenProperties: ['parentId']
+                hiddenProperties: ['parentId'],
+                popover: {
+                    title: 'Looking for a particular BT?',
+                    content: 'Search and highlight items by id, BT or description.'
+                }
             });
             this.#switchToExplorerView();
 

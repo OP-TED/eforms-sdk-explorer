@@ -29,7 +29,11 @@ export class FieldsTab extends TabController {
                 const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
                 this.#splitView().initialise({
                     dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
-                    searchCallback: this.#searchCallback
+                    searchCallback: this.#searchCallback,
+                    popover: {
+                        title: 'Looking for a particular BT?',
+                        content: 'Search and highlight items by id, name, BT or relative XPath.'
+                    }
                 });
             }
         } catch (error) {

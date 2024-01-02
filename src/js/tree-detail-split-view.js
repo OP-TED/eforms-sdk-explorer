@@ -39,12 +39,15 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         this.$treeSearch().keyup(this.#searchJsTree.bind(this));
         this.$treeFilter().change(this.#searchJsTree.bind(this));
         
-       this.$treeSearch().popover();
-    }
+        // Show the popover when the element receives focus
+        this.$treeSearch().focus(function () {
+            $(this).popover('show');
+        });
 
-
-    setTreeDataCallback(callback) {
-        this.getTreeDataCallback = callback;
+        // Hide the popover when the element loses focus
+        this.$treeSearch().blur(function () {
+            $(this).popover('hide');
+        });
     }
 
     #treeView() {
@@ -78,6 +81,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
     $detailView() {
         return $(this.#detailView());
     }
+
     /**
      * Initialises the tree-detail-split-view component.
      * 
@@ -85,8 +89,11 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
      * @param {Function(): Array} options.dataCallback - A callback function that should return the nodes for the tree.
      * @param {Function(DiffEntry, string, string): boolean} options.searchCallback - A callback function that should perform a search operation.
      * @param {Array} [options.hiddenProperties=[]] - An optional array of properties to exclude.
+     * @param {Object} [options.popover={}] - An optional object containing the title and content for the popover.
+     * @param {string} [options.popover.title] - The title for the popover.
+     * @param {string} [options.popover.content] - The content for the popover.
      */
-    initialise({ dataCallback, searchCallback, hiddenProperties = [] }) {
+    initialise({ dataCallback, searchCallback, hiddenProperties = [], popover = { title: 'Looking for a particular item?', content: 'Search and highlight items with matching values.' } }) {
         if (this.$treeView().jstree(true)) {
             this.$treeView().jstree("destroy");
         }
@@ -106,6 +113,11 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         this.$treeView().on("select_node.jstree", (e, data) => {
             this.displayDetails(DiffEntry.fromObject(data.node.data), hiddenProperties);
         });   
+
+        this.$treeSearch().popover({
+            title: popover.title,
+            content: popover.content
+        });
     }
 
     /**
