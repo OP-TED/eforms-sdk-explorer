@@ -39,18 +39,9 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         this.$treeSearch().keyup(this.#searchJsTree.bind(this));
         this.$treeFilter().change(this.#searchJsTree.bind(this));
         
-        // this.shadowRoot.querySelector('#tree-data').innerHTML = this.treeData;
-        // this.shadowRoot.querySelector('#detail-data').innerHTML = this.detailData;
+       this.$treeSearch().popover();
     }
 
-    static create(treeData, detailData) {
-
-        const $component = $('<tree-detail-split-view/>');
-        $component.attr('tree-data', treeData);
-        $component.attr('detail-data', detailData);
-    
-        return $component;
-    }
 
     setTreeDataCallback(callback) {
         this.getTreeDataCallback = callback;
