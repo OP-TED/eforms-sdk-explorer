@@ -2,24 +2,12 @@ import { TabController } from "./tab-controller.js";
 import { appState } from "./state.js";
 import { appConfig } from "./config.js";
 import { Diff, DiffEntry } from "./diff.js"; 
-import { PropertyCard } from "./property-card.js";
+import { TreeDetailSplitView } from "./tree-detail-split-view.js";
 
 export class FieldsTab extends TabController {
 
     constructor() {
         super('fields-tab');
-    }
-
-    /**
-     * Overridden to hook up event handlers.
-     */
-    init() {
-        super.init();
-
-        // Listen for changes in the search fields
-        $('#fields-tree-search').keyup(this.#searchJsTree);
-        $('#fields-tree-filter').change(this.#searchJsTree);
-
     }
 
     async fetchAndRender() {
@@ -39,12 +27,23 @@ export class FieldsTab extends TabController {
             if (mainVersionNodes && baseVersionNodes) {
                 const nodesDiff = Diff.fromArrayComparison(mainVersionNodes, baseVersionNodes, 'id');
                 const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
-                this.initialiseJsTree(() => this.#createJsTreeNodes(nodesDiff, fieldsDiff), this.#searchCallback);
+                this.#splitView().initialise({
+                    dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
+                    searchCallback: this.#searchCallback
+                });
             }
         } catch (error) {
             console.error('Error fetching and displaying fields.json contents: ', error);
             throw new Error('Failed to load data');
         }
+    }
+
+    /**
+     * Gets the {@link TreeDetailSplitView} element for this tab.
+     * @returns {TreeDetailSplitView}
+     */
+    #splitView() {
+        return document.getElementById('fields-explorer');
     }
 
 
@@ -56,13 +55,14 @@ export class FieldsTab extends TabController {
      * 
      * @returns {Array} An array of tree-nodes ready for loading onto a JsTree. 
      */
-    #createJsTreeNodes(nodesDiff, fieldsDiff) {
+    #createTreeNodes(nodesDiff, fieldsDiff) {
 
-        const treeDataMap = new Map(nodesDiff.map(diffEntry => {
+        const treeNodes = new Map(nodesDiff.map(diffEntry => {
             return [diffEntry.id, {
                 id: diffEntry.id,
-                parent: diffEntry.get('parentId') || "#",
-                text: diffEntry.get('name') || diffEntry.id,
+                parent: diffEntry.get('parentId') ?? "#",
+                text: diffEntry.get('name') ?? diffEntry.id,
+                icon: 'jstree-folder',
                 state: {
                     opened: true
                 },
@@ -73,10 +73,10 @@ export class FieldsTab extends TabController {
 
 
         fieldsDiff.forEach(diffEntry => {
-            treeDataMap.set(diffEntry.id, {
+            treeNodes.set(diffEntry.id, {
                 id: diffEntry.id,
                 parent: diffEntry.get('parentNodeId'),
-                text: diffEntry.get('name') || diffEntry.id,
+                text: diffEntry.get('name') ?? diffEntry.id,
                 icon: 'jstree-file',
                 state: {
                     opened: true
@@ -86,26 +86,15 @@ export class FieldsTab extends TabController {
             });
         });
 
-        return Array.from(treeDataMap.values());
+        return Array.from(treeNodes.values());
     }
 
     /**
-     * Initiates a search in the JsTree.
-     */
-    #searchJsTree() {
-        // Get the value of the search input field
-        let searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
-
-        // Search the tree
-        $('#xmlStructureTree').jstree('search', searchString);
-    }
-
-    /**
+     * Checks if the {@link DiffEntry} matches the search criteria.
      * 
      * @param {DiffEntry} diffEntry 
      * @param {string} status 
      * @param {string} searchText
-     * 
      * @returns {boolean} 
      */
     #searchCallback(diffEntry, status, searchText = '') {
@@ -121,60 +110,5 @@ export class FieldsTab extends TabController {
         } else {
             return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
         }
-    }
-
-    initialiseJsTree(getTreeNodesCallback, searchCallback) {
-        if ($('#xmlStructureTree').jstree(true)) {
-            $('#xmlStructureTree').jstree("destroy");
-        }
-        $('#xmlStructureTree').jstree({
-            core: {
-                data: getTreeNodesCallback(),
-                check_callback: true
-            },
-            plugins: ["wholerow", "search"],
-            search: {
-                show_only_matches: true,
-                search_callback: (str, node) => searchCallback(DiffEntry.fromObject(node?.data), ...str.split('::'))
-            }
-        });
-        
-        // Listen for selection changes in the tree
-        $('#xmlStructureTree').on("select_node.jstree", (e, data) => {
-            this.displayDetails(DiffEntry.fromObject(data.node.data));
-        });
-    }
-
-    /**
-     * Called when a tree-node is selected in the JsTree.
-     * Displays the details of the selected node.
-     * 
-     * @param {DiffEntry} diffEntry 
-     */
-    displayDetails(diffEntry) {
-    
-        // Clear existing content
-        $('#fieldDetailsContent').empty();
-    
-        const $ul = $('<ul class="list-group">');
-    
-        for (const [key, value] of Object.entries(diffEntry.getItem())) {
-            const mainValue = diffEntry?.mainItem ? diffEntry?.mainItem[key] ?? undefined : undefined;
-            const baseValue = diffEntry?.baseItem ? diffEntry?.baseItem[key] ?? undefined : undefined;
-            const card = PropertyCard.create(key, diffEntry.mainItem ? mainValue : undefined, baseValue);
-            $ul.append(card);
-        }
-
-        // Handle removed properties in diffEntry.baseItem that are not in diffEntry.mainItem
-        if (diffEntry.mainItem) {
-            for (const key in diffEntry.baseItem) {
-                if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
-                    const card = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
-                    $ul.append(card);
-                }
-            }
-        }
-
-        $('#fieldDetailsContent').append($ul);
     }
 }

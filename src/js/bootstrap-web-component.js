@@ -10,15 +10,22 @@ export class BootstrapWebComponent extends HTMLElement {
         this.render();
     }
 
+    requiredCss() {
+        return ['https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'];
+    }
+
     render() {
         const template = document.getElementById(this.templateName);
         const node = document.importNode(template.content, true);
         this.shadowRoot.innerHTML = ''; // Clear the shadow root
 
-        const link = document.createElement('link');
-        link.setAttribute('rel', 'stylesheet');
-        link.setAttribute('href', 'https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css');
-        this.shadowRoot.appendChild(link);
+        let stylesheets = this.requiredCss();
+        stylesheets.forEach(stylesheet => {
+            const link = document.createElement('link');
+            link.setAttribute('rel', 'stylesheet');
+            link.setAttribute('href', stylesheet);
+            this.shadowRoot.appendChild(link);
+        });
 
         this.shadowRoot.appendChild(node);
     }

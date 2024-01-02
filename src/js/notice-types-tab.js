@@ -5,6 +5,7 @@ import { TabController } from "./tab-controller.js";
 import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
 import { SdkExplorerApplication } from "./app.js";
+import { TreeDetailSplitView } from "./tree-detail-split-view.js";
 
 export class NoticeTypesTab extends TabController {
 
@@ -22,10 +23,6 @@ export class NoticeTypesTab extends TabController {
         $('#overview-link').on('click', async (e) => {
             await this.fetchAndRenderOverview();
         });
-
-        // Listen for changes in the search fields
-        $('#notice-tree-search').keyup(this.#searchJsTree);
-        $('#notice-tree-filter').change(this.#searchJsTree);
     }
 
     async fetchAndRender() {
@@ -84,7 +81,7 @@ export class NoticeTypesTab extends TabController {
     }
 
     #switchToOverview() {
-        $('#notice-type-explorer').hide();
+        $('#notice-type-explorer-view').hide();
         $('#notice-types-overview').show();
     }
 
@@ -181,6 +178,14 @@ export class NoticeTypesTab extends TabController {
     // #region Explorer display -----------------------------------------------
 
     /**
+     * 
+     * @returns {TreeDetailSplitView}
+     */
+    #splitView() {
+        return document.getElementById('notice-type-explorer');
+    }
+
+    /**
      * Fetches both versions of notice type definition JSON files for the specified notice subtype and renders the explorer view.
      * 
      * @param {string} subTypeId 
@@ -195,8 +200,11 @@ export class NoticeTypesTab extends TabController {
             ]);
             const contentDiff = this.#compareNestedHierarchies(mainData.content, baseData.content);
             const metadataDiff = this.#compareNestedHierarchies(mainData.metadata, baseData.metadata);
-
-            this.initialiseJsTree(() => this.#createJsTreeNodes(metadataDiff, contentDiff), this.#searchCallback);
+            this.#splitView().initialise({
+                dataCallback: () => this.#createTreeNodes(metadataDiff, contentDiff), 
+                searchCallback: this.#searchCallback,
+                hiddenProperties: ['parentId']
+            });
             this.#switchToExplorerView();
 
         } finally {
@@ -252,7 +260,7 @@ export class NoticeTypesTab extends TabController {
      */
     #switchToExplorerView() {
         $('#notice-types-overview').hide();
-        $('#notice-type-explorer').show();
+        $('#notice-type-explorer-view').show();
     }
 
     
@@ -263,7 +271,7 @@ export class NoticeTypesTab extends TabController {
      * @param {*} metadataDiff 
      * @param {*} contentDiff 
      */
-    #createJsTreeNodes(metadataDiff, contentDiff) {
+    #createTreeNodes(metadataDiff, contentDiff) {
 
         let metadataTreeNodes = createJsTreeNodesForSection('metadataRoot', metadataDiff);
         let contentTreeNodes = createJsTreeNodesForSection('contentRoot', contentDiff);
@@ -305,14 +313,6 @@ export class NoticeTypesTab extends TabController {
     }
 
     /**
-     * Initiates a search in the JsTree.
-     */
-    #searchJsTree() {
-        let searchString = $('#notice-tree-filter').val() + '::' + $('#notice-tree-search').val();
-        $('#noticeStructureTree').jstree('search', searchString);
-    }
-
-    /**
      * Checks if the specified node matches the specified search terms.
      * Used by the search_callback for the JsTree search plugin.
      * 
@@ -334,67 +334,6 @@ export class NoticeTypesTab extends TabController {
         } else {
             return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
         }
-    }
-
-    initialiseJsTree(getTreeNodesCallback, searchCallback) {
-        // Check if the tree view is already initialized
-        if ($('#noticeStructureTree').jstree(true)) {
-            // If already initialized, destroy the existing tree before creating a new one
-            $('#noticeStructureTree').jstree("destroy");
-        }
-
-        $('#noticeStructureTree').jstree({
-            core: {
-                data: getTreeNodesCallback(),
-                check_callback: true
-            },
-            plugins: ["wholerow", "search"],
-            'search': {
-                'show_only_matches': true,
-                search_callback: (str, node) => searchCallback(DiffEntry.fromObject(node?.data), ...str.split('::'))
-            }
-        });
-
-        $('#noticeStructureTree').on("select_node.jstree", (e, data) => {
-            this.displayDetails(DiffEntry.fromObject(data.node.data), ['parentId']);
-        });
-    }
-
-    /**
-     * Called when a tree-node is selected in the JsTree.
-     * Displays the details of the selected node.
-     * 
-     * @param {DiffEntry} diffEntry 
-     */
-    displayDetails(diffEntry, except = []) {
-
-        // Clear existing content
-        $('#noticeStructureElementDetails').empty();
-
-        const $ul = $('<ul class="list-group">');
-
-        for (const [key, value] of Object.entries(diffEntry.getItem())) {
-            const mainValue = diffEntry.mainItem ? diffEntry.mainItem[key] ?? undefined : undefined;
-            const baseValue = diffEntry.baseItem ? diffEntry.baseItem[key] ?? undefined : undefined;
-
-            if (except.includes(key) && mainValue === baseValue) {
-                continue;
-            }
-
-            const card = PropertyCard.create(key, mainValue, baseValue);
-            $ul.append(card);
-        }
-
-        // Handle removed properties in oldField that are not in newField
-        if (diffEntry.mainItem) {
-            for (const key in diffEntry.baseItem) {
-                if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
-                    const card = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
-                    $ul.append(card);
-                }
-            }
-        }
-        $('#noticeStructureElementDetails').append($ul);
     }
 
     #getUrlByNoticeSubtypeAndVersion(subtypeId, sdkVersion) {

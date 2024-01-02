@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="./src/assets/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
     <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <script defer type="module" src="./src/js/script.js"></script>
 </head>
 
 <body>
@@ -95,34 +97,7 @@
         <!-- Fields -->
         <div class="tab-pane h-100 fade show" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
             <div class="container-fluid h-100">
-                <div class="row row-cols-2 h-100">
-
-                    <!-- XML Structure Tree -->
-                    <div class="col h-100">
-                        <header class="font-weight-bold" style="display: flex; flex-direction: row;">
-                            <div style="flex: 1; align-self: self-end;">Fields</div>
-                            <input type="text" id="fields-tree-search" placeholder="Search" class="form-control form-control-sm m-1" style="width: 200px;" data-toggle="popover" data-trigger="focus" data-placement="left" title="Looking for a particular BT?" data-html="true" data-content="Search and highlight nodes and fields with matching name, id, relative xpath, or business term.">
-                            <select id="fields-tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
-                                <option value="all">all</option>
-                                <option value="added">added</option>
-                                <option value="removed">removed</option>
-                                <option value="modified">modified</option>
-                            </select>
-                        </header>
-                        <div id="xmlStructureTreeContainer" class="tree-container mh-100">
-                            <div id="xmlStructureTree"></div>
-                        </div>
-                    </div>
-
-                    <!-- Field & Node Details -->
-                    <div class="col h-100">
-                        <header class="font-weight-bold">Details</header>
-                        <div id="fieldDetailsContent" class="details-container mh-100">
-                            <p class="m-2">Select a field to see details.</p>
-                        </div>
-                    </div>
-
-                </div>
+                <tree-detail-split-view id="fields-explorer"></tree-detail-split-view>
             </div>
         </div>
 
@@ -142,7 +117,7 @@
                 </div>
 
                 <!-- Notice-type Explorer -->
-                <div id="notice-type-explorer" class="container-fluid h-100">
+                <div id="notice-type-explorer-view" class="container-fluid h-100">
 
                     <!-- Breadcrumbs -->
                     <nav aria-label="breadcrumb">
@@ -153,35 +128,7 @@
                     </nav>
 
                     <!-- Content -->
-                    <div class="row row-cols-2 h-100">
-
-                        <!-- Tree -->
-                        <div class="col h-100">
-                            <!-- Tree View Container -->
-                            <header class="font-weight-bold" style="display: flex; flex-direction: row;">
-                            <div style="flex: 1; align-self: self-end;">Notice Structure</div>
-                            <input type="text" id="notice-tree-search" placeholder="Search" class="form-control form-control-sm m-1" style="width: 200px;" data-toggle="popover" data-trigger="focus" data-placement="left" title="Looking for a particular BT?" data-html="true" data-content="Search and highlight nodes and notices types with matching name, id, relative xpath, or business term.">
-                            <select id="notice-tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
-                                <option value="all">all</option>
-                                <option value="added">added</option>
-                                <option value="removed">removed</option>
-                                <option value="modified">modified</option>
-                            </select>
-                        </header>
-                            <div id="noticeStructureContainer" class="tree-container mh-100">
-                                <div id="noticeStructureTree"></div>
-                            </div>
-                        </div>
-
-                        <!-- Details -->
-                        <div class="col h-100">
-                            <header class="font-weight-bold">Details</header>
-                            <div id="noticeStructureElementDetails" class="details-container mh-100">
-                                <p class="m-2">Select a node to see details.</p>
-                            </div>
-                        </div>
-
-                    </div>
+                    <tree-detail-split-view id="notice-type-explorer" />
 
                 </div> <!-- End of notice-type comparison row -->
 
@@ -228,10 +175,6 @@
         <div id="apiStatus" class="alert alert-info" role="alert">
         </div>
     </footer>
-
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
-    <script type="module" src="./src/js/script.js"></script>
 </body>
 
 <!-- Tree Panel Template -->
@@ -248,17 +191,17 @@
 <template id="index-card-template">
     <style>
         .added-card {
-            background-color: #E6FFEC;
+            background-color: var(--added-item-background-color);
             color: black;
         }
 
         .removed-card {
-            background-color: #FFEBE9;
+            background-color: var(--removed-item-background-color);
             color: black;
         }
 
         .modified-card {
-            background-color: #E6E9FF;
+            background-color: var(--modified-item-background-color);
             color: black;
         }
     </style>
@@ -299,7 +242,7 @@
         }
 
         .new-property-value {
-            background-color: #E6FFEC;
+            background-color: var(--added-item-background-color);
             color: black;
             margin: 1px 0px 1px 4px;
             border-radius: 5px;
@@ -310,7 +253,7 @@
         }
 
         .old-property-value {
-            background-color: #FFE6E8;
+            background-color: var(--removed-item-background-color);
             color: black;
             margin: 1px 4px 1px 0px;
             border-radius: 5px;
@@ -321,17 +264,17 @@
         }
 
         .added-property {
-            background-color: #E6FFEC;
+            background-color: var(--added-item-background-color);
             color: black;
         }
 
         .removed-property {
-            background-color: #FFEBE9;
+            background-color: var(--removed-item-background-color);
             color: black;
         }
 
         .changed-property {
-            background-color: #E6E9FF;
+            background-color: var(--modified-item-background-color);
             color: black;
         }
 
@@ -344,6 +287,106 @@
         <div id="old-property-value" class="property-value"></div>
         <div id="new-property-value" class="property-value"></div>
     </li>
+</template>
+
+<template id="tree-detail-split-view-template">
+    <style>
+        .tree-container {
+            padding: 8px;
+            height: calc(100% - var(--split-view-height-adjustment) - 51px);
+        }
+
+        .details-container {
+            padding: 0px;
+            height: calc(100% - var(--split-view-height-adjustment) - 36px);
+        }
+
+        .tree-container,
+        .details-container {
+            flex: 1;
+            overflow-x: hidden;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+            background-color: white;
+            box-shadow: 1px 1px 3px 1px lightgray;
+            margin: 4px;
+        }
+
+        .details-container .list-group {
+            margin: -1px;
+        }
+
+        .removed-node>a {
+            color: black !important;
+            background-color: var(--removed-item-highlight) !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        .added-node>a {
+            background-color: var(--added-item-highlight) !important;
+            color: black !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        .modified-node>a {
+            background-color: var(--modified-item-highlight) !important;
+            color: black !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        /* jQuery Treeview */
+        .jstree-wholerow-ul {
+            background-color: white;
+            display: block;
+        }
+
+        .jstree-default .jstree-wholerow-hovered {
+            height: 24px;
+            background: #fcfcfd;
+        }
+
+        .jstree-default .jstree-wholerow-clicked {
+            height: 24px;
+            background: #d6d6d6;
+        }
+    </style>
+    <div class="row row-cols-2 h-100">
+
+        <!-- Tree -->
+        <div class="col h-100">
+            <header class="font-weight-bold" style="display: flex; flex-direction: row;">
+                <div style="flex: 1; align-self: self-end;">Structure</div>
+                <input type="text" id="tree-search" placeholder="Search" class="form-control form-control-sm m-1"
+                    style="width: 200px;" data-toggle="popover" data-trigger="focus" data-placement="left"
+                    title="Looking for a particular BT?" data-html="true"
+                    data-content="Search and highlight nodes and notices types with matching name, id, relative xpath, or business term.">
+                <select id="tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
+                    <option value="all">all</option>
+                    <option value="added">added</option>
+                    <option value="removed">removed</option>
+                    <option value="modified">modified</option>
+                </select>
+            </header>
+            <!-- Tree View Container -->
+            <div id="treeViewContainer" class="tree-container mh-100">
+                <div id="treeView"></div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="col h-100">
+            <header class="font-weight-bold">Details</header>
+            <div id="detail-view" class="details-container mh-100">
+                <p class="m-2">Select a node to see details.</p>
+            </div>
+        </div>
 </template>
 
 </html>
