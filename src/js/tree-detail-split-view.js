@@ -38,7 +38,16 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         // Listen for changes in the search fields
         this.$treeSearch().keyup(this.#searchJsTree.bind(this));
         this.$treeFilter().change(this.#searchJsTree.bind(this));
-        
+
+        // Listen for changes in the compact view switch
+        this.shadowRoot.querySelector('#compactViewSwitch').addEventListener('change', function(event) {
+            if (event.target.checked) {
+                this.style.setProperty('--compact-view-display', 'none');
+            } else {
+                this.style.setProperty('--compact-view-display', 'flex');
+            }
+        }.bind(this));
+    
         // Show the popover when the element receives focus
         this.$treeSearch().focus(function () {
             $(this).popover('show');

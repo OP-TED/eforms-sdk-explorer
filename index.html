@@ -272,9 +272,13 @@
             color: black;
         }
 
-        .changed-property {
+        .modified-property {
             background-color: var(--modified-item-background-color);
             color: black;
+        }
+
+        .unchanged-property {
+            display: var(--compact-view-display, flex);
         }
 
         :host-context(.list-group-flush) .list-group-item {
@@ -402,7 +406,13 @@
 
         <!-- Details -->
         <div class="col h-100">
-            <header class="font-weight-bold">Details</header>
+            <header class="font-weight-bold" style="display: flex; flex-direction: row;">
+                <div style="flex: 1; align-self: self-end;">Details</div>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                    <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+                  </div>
+            </header>
             <div id="detail-view" class="details-container mh-100">
                 <p class="m-2">Select a node to see details.</p>
             </div>
