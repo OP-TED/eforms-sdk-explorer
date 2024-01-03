@@ -58,7 +58,7 @@ export class Diff {
             if (baseObj === undefined) {
                 entries.push(new DiffEntry(id, mainObj, null, Diff.TypeOfChange.ADDED));
             } else {
-                if (Diff.#areEquivalent(baseObj, mainObj)) {
+                if (Diff.areEquivalent(baseObj, mainObj)) {
                     entries.push(new DiffEntry(id, mainObj, baseObj, Diff.TypeOfChange.UNCHANGED));
                 } else {
                     entries.push(new DiffEntry(id, mainObj, baseObj, Diff.TypeOfChange.MODIFIED));
@@ -78,7 +78,7 @@ export class Diff {
         return new Diff(entries);
     }
 
-    static #areEquivalent(a, b) {
+    static areEquivalent(a, b) {
         if (_.isEqual(a, b)) {
             return true;
         }
@@ -197,6 +197,37 @@ export class DiffEntry {
      */
     get(propertyName) {
         return this.getItem()?.[propertyName];
+    }
+
+    /**
+     * Get the {@link Diff.TypeOfChange} for the specified property.
+     * 
+     * @param {string} propertyName 
+     * @returns {Diff.TypeOfChange | undefined}
+     */
+    propertyChange(propertyName) {
+        if (!this.mainItem?.hasOwnProperty(propertyName) && !this.baseItem?.hasOwnProperty(propertyName)) {
+            return undefined;
+        }
+        if (this.typeOfChange === Diff.TypeOfChange.UNCHANGED) {
+            return Diff.TypeOfChange.UNCHANGED;
+        }
+        if (this.typeOfChange === Diff.TypeOfChange.REMOVED) {
+            return Diff.TypeOfChange.REMOVED;
+        }
+        if (this.typeOfChange === Diff.TypeOfChange.ADDED) {
+            return Diff.TypeOfChange.ADDED;
+        }
+        if (Diff.areEquivalent(this.mainItem?.[propertyName], this.baseItem?.[propertyName])) {
+            return Diff.TypeOfChange.UNCHANGED;
+        }
+        if (this.mainItem?.[propertyName] === undefined) {  
+            return Diff.TypeOfChange.REMOVED;
+        }
+        if (this.baseItem?.[propertyName] === undefined) {
+            return Diff.TypeOfChange.ADDED;
+        }
+        return Diff.TypeOfChange.MODIFIED;
     }
 
     /**

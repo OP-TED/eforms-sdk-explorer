@@ -169,3 +169,13 @@ body > footer {
 #notice-types {
     --split-view-height-adjustment: 65px;
 }
+
+.popover-body code {
+    font-size: 100%;
+    color: blue !important;
+}
+
+.popover-body ul {
+    margin-left: -20px;
+    font-size: 90%;
+}

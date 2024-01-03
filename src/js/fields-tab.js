@@ -31,8 +31,14 @@ export class FieldsTab extends TabController {
                     dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
                     searchCallback: this.#searchCallback,
                     popover: {
-                        title: 'Looking for a particular BT?',
-                        content: 'Search and highlight items by id, name, BT or relative XPath.'
+                        title: 'Looking for a particular item?',
+                        content: 
+                            `<p>Search and highlight items by id, name, BT or relative XPath.</p>
+                            <ul><li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li>
+                            <li>Use space to separate multiple search terms.</li></ul>
+                            <p>Use <code><b>+</b>propertyName</code>, <code><b>-</b>propertyName</code> or <code><b>~</b>propertyName</code> to search for items with the specified property added, removed or modified.</p>
+                            <ul><li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li>
+                            <li>Property names are <code>caseSensitive</code>.</li></ul>`
                     }
                 });
             }
@@ -106,7 +112,21 @@ export class FieldsTab extends TabController {
 
         if (searchText.length > 0 && !searchText.startsWith('|')) {
             let combined = (diffEntry?.get('name') || '') + '|' + (diffEntry?.get('btId') || '') + '|' + (diffEntry?.get('id') || '') + '|' + (diffEntry?.get('xpathRelative') || '');
-            textMatch = combined.toLowerCase().indexOf(searchText) > -1;
+            let searchTerms = searchText.split(' '); // Split the searchText at whitespace
+
+            // Check if any of the search terms are in the combined string
+            // Check if any of the search terms are in the combined string
+            textMatch = searchTerms.some(term => {
+                if (term.startsWith('+')) {
+                    return diffEntry?.propertyChange(term.substring(1)) === 'added';
+                } else if (term.startsWith('-')) {
+                    return diffEntry?.propertyChange(term.substring(1)) === 'removed';
+                } else if (term.startsWith('~')) {
+                    return diffEntry?.propertyChange(term.substring(1)) === 'modified';
+                } else {
+                    return combined.toLowerCase().indexOf(term) > -1;
+                }
+            });
         }
 
         if (status === 'all') {
