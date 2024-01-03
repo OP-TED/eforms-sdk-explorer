@@ -9,7 +9,7 @@ export class ReleaseNotesTab extends TabController {
     }
 
     async fetchAndRender() {
-        const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.sdkVersion}/CHANGELOG.md`;
+        const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/CHANGELOG.md`;
         try {
             const response = await fetch(releaseNotesUrl);
             const markdownContent = await response.text();

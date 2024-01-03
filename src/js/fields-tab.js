@@ -1,8 +1,8 @@
 import { TabController } from "./tab-controller.js";
 import { appState } from "./state.js";
-import { appConfig, domElements } from "./config.js";
-import { Comparer } from "./comparer.js"; 
-import { PropertyCard } from "./property-card.js";
+import { appConfig } from "./config.js";
+import { Diff, DiffEntry } from "./diff.js"; 
+import { TreeDetailSplitView } from "./tree-detail-split-view.js";
 
 export class FieldsTab extends TabController {
 
@@ -11,190 +11,141 @@ export class FieldsTab extends TabController {
     }
 
     async fetchAndRender() {
-        // domElements.tagsDropdown.prop('disabled', true);
-        // domElements.comparisonDropdown.prop('disabled', true);
 
-        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.sdkVersion}/fields/fields.json`;
-        const baseVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
+        const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/fields/fields.json`;
+        const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
 
         try {
             const response1 = await $.ajax({ url: mainVersionUrl, dataType: 'json' });
-            appState.versionData = response1.xmlStructure;
-            appState.versionDataFields = response1.fields;
-            appState.versionData[0].version = response1.sdkVersion;
+            const mainVersionNodes = response1.xmlStructure;
+            const mainVersionFields = response1.fields;
 
-            const response2 = await $.ajax({ url: baseVersionUrl, dataType: 'json' });
-            response2.xmlStructure[0].version = response2.sdkVersion;
-            appState.comparisonData = response2.xmlStructure;
-            appState.comparisonDataFields = response2.fields;
+            const response2 = await $.ajax({ url: comparisonVersionUrl, dataType: 'json' });
+            const baseVersionNodes = response2.xmlStructure;
+            const baseVersionFields = response2.fields;
 
-            if (appState.versionData && appState.comparisonData) {
-                const xmlComparisonResults = Comparer.compareDataStructures(appState.comparisonData, appState.versionData, 'id', true);
-                const fieldsComparisonResults = Comparer.compareDataStructures(appState.comparisonDataFields, appState.versionDataFields, 'id', true);
-                this.initializeTree(xmlComparisonResults, fieldsComparisonResults);
+            if (mainVersionNodes && baseVersionNodes) {
+                const nodesDiff = Diff.fromArrayComparison(mainVersionNodes, baseVersionNodes, 'id');
+                const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
+                this.#splitView().initialise({
+                    dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
+                    searchCallback: this.#searchCallback,
+                    popover: {
+                        title: 'Looking for a particular item?',
+                        content: 
+                            `<p>Search and highlight items by id, name, BT or relative XPath.</p>
+                            <ul><li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li></ul>
+                            <p>Use space or comma (<code>,</code>) to separate multiple search terms:</p>
+                            <ul><li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li></ul>
+                            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to search for items with the specified property added, removed or modified.</p>
+                            <ul><li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li></ul>
+                            <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
+                            <ul><li>Example: search for <code>*codeList</code> to find all items with their "codeList" property added, removed or modified.</li></ul>
+                            <p>Property names are <code>caseSensitive</code>.</p>`
+                    }
+                });
             }
         } catch (error) {
-            console.error('Error fetching and displaying fields content:', error);
+            console.error('Error fetching and displaying fields.json contents: ', error);
             throw new Error('Failed to load data');
-        } finally {
-            // domElements.tagsDropdown.prop('disabled', false);
-            // domElements.comparisonDropdown.prop('disabled', false);
         }
     }
 
+    /**
+     * Gets the {@link TreeDetailSplitView} element for this tab.
+     * @returns {TreeDetailSplitView}
+     */
+    #splitView() {
+        return document.getElementById('fields-explorer');
+    }
 
-    buildTreeData(xmlStructure, fieldsComparisonResults) {
 
-        const treeDataMap = new Map(xmlStructure.map(node => {
-            return [node.id, {
-                id: node.id,
-                parent: node.parentId || "#",
-                text: node.name || node.id,
+    /**
+     * Creates the tree-nodes for the JsTree from {@link Diff} objects of SDK Nodes and SDK Fields.
+     * 
+     * @param {Diff} nodesDiff A Diff object containing the differences between the main and base versions of the SDK Nodes. 
+     * @param {Diff} fieldsDiff A Diff object containing the differences between the main and base versions of the SDK Fields.
+     * 
+     * @returns {Array} An array of tree-nodes ready for loading onto a JsTree. 
+     */
+    #createTreeNodes(nodesDiff, fieldsDiff) {
+
+        const treeNodes = new Map(nodesDiff.map(diffEntry => {
+            return [diffEntry.id, {
+                id: diffEntry.id,
+                parent: diffEntry.get('parentId') ?? "#",
+                text: diffEntry.get('name') ?? diffEntry.id,
+                icon: 'jstree-folder',
                 state: {
                     opened: true
                 },
-                li_attr: node.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
-                    node.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        node.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
-                data: {
-                    btId: node.btId,
-                    xpathRelative: node.xpathRelative,
-                    status: node.nodeChange
-                }
+                li_attr: { class: `${diffEntry.typeOfChange}-node` },
+                data: diffEntry
             }];
         }));
 
 
-        fieldsComparisonResults.forEach(field => {
-            treeDataMap.set(field.id, {
-                id: field.id,
-                parent: field.parentNodeId,
-                text: field.name || field.id,
+        fieldsDiff.forEach(diffEntry => {
+            treeNodes.set(diffEntry.id, {
+                id: diffEntry.id,
+                parent: diffEntry.get('parentNodeId'),
+                text: diffEntry.get('name') ?? diffEntry.id,
                 icon: 'jstree-file',
                 state: {
                     opened: true
                 },
-                li_attr: field.nodeChange === Comparer.TypeOfChange.REMOVED ? { class: 'removed-node' } :
-                    field.nodeChange === Comparer.TypeOfChange.ADDED ? { class: 'added-node' } :
-                        field.nodeChange === Comparer.TypeOfChange.MODIFIED ? { class: 'modified-node' } : {},
-                data: {
-                    id: field.id,
-                    btId: field.btId,
-                    xpathRelative: field.xpathRelative,
-                    status: field.nodeChange
-                }
+                li_attr: { class: `${diffEntry.typeOfChange}-node` },
+                data: diffEntry
             });
         });
 
-        return Array.from(treeDataMap.values());
+        return Array.from(treeNodes.values());
     }
 
-    initializeTree(xmlStructure, fieldsComparisonResults) {
-        if (domElements.xmlStructureTree.jstree(true)) {
-            domElements.xmlStructureTree.jstree("destroy");
-        }
-        domElements.xmlStructureTree.jstree({
-            core: {
-                data: this.buildTreeData(xmlStructure, fieldsComparisonResults),
-                check_callback: true
-            },
-            plugins: ["wholerow", "search"],
-            'search': {
-                'show_only_matches': true,
-                search_callback: function (str, node) {
+    /**
+     * Checks if the {@link DiffEntry} matches the search criteria.
+     * 
+     * @param {DiffEntry} diffEntry 
+     * @param {string} status 
+     * @param {string} searchText
+     * @returns {boolean} 
+     */
+    #searchCallback(diffEntry, status, searchText = '') {
+        let textMatch = false;
 
-                    let terms = str.split('::');
-                    let status = terms[0];
-                    let searchText = terms.length > 1 ? terms[1] : '';
+        searchText = searchText.trim();
+    
+        if (searchText.length > 0 && !searchText.startsWith('|')) {
+            let combined = (diffEntry?.get('name') || '') + '|' + (diffEntry?.get('btId') || '') + '|' + (diffEntry?.get('id') || '') + '|' + (diffEntry?.get('xpathRelative') || '');
+            let orTerms = searchText.split(','); // Split the searchText at comma
+    
+            // Check if any of the OR terms are in the combined string
+            textMatch = orTerms.some(orTerm => {
+                orTerm = orTerm.trim();
+                let andTerms = orTerm.split(' '); // Split the OR term at whitespace
 
-                    let textMatch = false;
-                    if (searchText.length > 0 && !searchText.startsWith('|')) {
-                        let combined = (node?.text || '') + '|' + (node?.data?.btId || '') + '|' + (node?.data?.id || '') + '|' + (node?.data?.xpathRelative || '');
-                        textMatch = combined.toLowerCase().indexOf(searchText) > -1;
+                // Check if all of the AND terms are in the combined string
+                return andTerms.every(term => {
+                    term = term.trim();
+                    if (term === '') {
+                        return true;    // This effectively ignores empty terms (caused by multiple spaces)
                     }
 
-                    if (status === 'all') {
-                        return textMatch;
-                    } else {
-                        return (node?.data?.status === status) && (textMatch || searchText === '');
+                    switch (term.charAt(0)) {
+                        case '+': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.ADDED;
+                        case '-': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.REMOVED;
+                        case '~': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.MODIFIED;
+                        case '*': return [Diff.TypeOfChange.ADDED, Diff.TypeOfChange.REMOVED, Diff.TypeOfChange.MODIFIED].includes(diffEntry?.propertyChange(term.substring(1)));
+                        default: return combined.toLowerCase().indexOf(term.toLowerCase()) > -1;
                     }
-                }
-            }
-        });
-
-        domElements.xmlStructureTree.on("select_node.jstree", (e, data) => {
-            const selectedFieldId = data.node.id;
-            const fieldDetails = fieldsComparisonResults.find(field => field.id === selectedFieldId);
-            if (fieldDetails) {
-                let oldMap = new Map(appState.comparisonDataFields.map(node => [node.id, node]));
-                let newMap = new Map(appState.versionDataFields.map(node => [node.id, node]));
-                this.displayFieldDetails(fieldDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
-            }
-            const nodeDetails = xmlStructure.find(field => field.id === selectedFieldId);
-            if (nodeDetails) {
-                let oldMap = new Map(appState.comparisonData.map(node => [node.id, node]));
-                let newMap = new Map(appState.versionData.map(node => [node.id, node]));
-                this.displayFieldDetails(nodeDetails, oldMap, newMap, domElements.fieldDetailsContent, 'id');
-            }
-        });
-
-        // Listen for changes in the search fields
-        $('#fields-tree-search').keyup(searchTree);
-        $('#fields-tree-filter').change(searchTree);
-
-        function searchTree() {
-            // Get the value of the search input field
-            let searchString = $('#fields-tree-filter').val() + '::' + $('#fields-tree-search').val();
-
-            // Search the tree
-            domElements.xmlStructureTree.jstree('search', searchString);
-        }
-    }
-
-    displayFieldDetails(data, oldMap, newMap, container, uniqueKey = 'id') {
-        function createTree(uniqueId) {
-            const newField = newMap.get(uniqueId);
-            const oldField = oldMap.get(uniqueId);
-            const $ul = $('<ul class="list-group">');
-    
-            const fieldToIterate = newField || oldField;
-    
-            for (const [key, value] of Object.entries(fieldToIterate)) {
-                if (key === 'content') {
-                    continue;
-                }
-                const newValue = newField ? newField[key] : undefined;
-                const oldValue = oldField ? oldField[key] : undefined;
-                const $propertyTemplate = PropertyCard.create(key, newField ? newValue : undefined, oldValue);
-                $ul.append($propertyTemplate);
-            }
-    
-            // Handle removed properties in oldField that are not in newField
-            if (newField) {
-                for (const key in oldField) {
-                    if (!newField.hasOwnProperty(key) && key !== 'content') {
-                        const $removedPropertyTemplate = PropertyCard.create(key, undefined, oldField[key]);
-                        $ul.append($removedPropertyTemplate);
-                    }
-                }
-            }
-    
-            return $ul;
-        }
-    
-        // Clear existing content
-        $(container).empty();
-    
-        if (Array.isArray(data)) {
-            data.forEach(item => {
-                const $itemTree = createTree(item[uniqueKey]);
-                const $itemContainer = $('<div class="notice-type-card mb-3"></div>').append($itemTree);
-                $(container).append($itemContainer);
+                });
             });
+        }
+    
+        if (status === 'all') {
+            return textMatch;
         } else {
-            const $tree = createTree(data[uniqueKey]);
-            $(container).append($tree);
+            return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
         }
     }
-    
 }

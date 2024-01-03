@@ -21,13 +21,16 @@ export class SdkExplorerApplication {
     /** @type {TabController} */
     #activeTab = null
 
+    /** @type {number} */
+    #spinnerCounter = 0;
+
     /** @returns {string} */
-    get sdkVersion() {
-        return appState.sdkVersion;
+    get newVersion() {
+        return appState.mainVersion;
     }
 
     /** @returns {string} */
-    getBaseVersion() {
+    getComparisonVersion() {
         return appState.baseVersion;
     }
 
@@ -55,18 +58,16 @@ export class SdkExplorerApplication {
             SdkExplorerApplication.instance.activeTabChanged(activeTabId);
         });
 
-        domElements.tagsDropdown.change(function () {
-            appState.sdkVersion = $(this).val();
+        domElements.newVersionDropdown.change(function () {
+            appState.mainVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.sdkVersion, appState.baseVersion);
-            // fetchDataBasedOnActiveTab();
+            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
         
         domElements.comparisonDropdown.change(function () {
             appState.baseVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.sdkVersion, appState.baseVersion);
-            // fetchDataBasedOnActiveTab();
+            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
     }
 
@@ -81,7 +82,7 @@ export class SdkExplorerApplication {
     }
 
     async activeTabChanged(activeTabId) {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
             await this.#activeTab?.deactivated();
@@ -91,12 +92,12 @@ export class SdkExplorerApplication {
             this.updateApiStatus(error.message, false);
         }
         finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 
     async versionChanged() {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
             await this.#activeTab?.versionChanged();
@@ -104,16 +105,33 @@ export class SdkExplorerApplication {
             this.updateApiStatus(error.message, false);
         }
         finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 
-    toggleLoadingSpinner(show) {
-        const spinnerElement = $('#centralLoadingSpinner'); 
-        if (show) {
-            spinnerElement.show();
+    static startSpinner() {
+        SdkExplorerApplication.instance.startSpinner();
+    }
+
+    static stopSpinner() {
+        SdkExplorerApplication.instance.stopSpinner();
+    }
+    
+    startSpinner() {
+        this.#spinnerCounter++;
+        this.#toggleSpinner();
+    }
+
+    stopSpinner() {  
+        this.#spinnerCounter--;
+        this.#toggleSpinner();    
+    }
+
+    #toggleSpinner() {
+        if (this.#spinnerCounter > 0) {
+            $('#centralLoadingSpinner').show();
         } else {
-           spinnerElement.hide();
+            $('#centralLoadingSpinner').hide();
         }
     }
 
@@ -165,32 +183,32 @@ export class SdkExplorerApplication {
 
 
     async populateDropdown() {
-        this.toggleLoadingSpinner(true);
+        this.startSpinner();
         this.clearApiStatus();
         try {
-            const repositoryTags = await $.ajax({
-                url: `${appConfig.tagsBaseUrl}/tags`,
+            const response = await $.ajax({
+                url: `${appConfig.eformsBaseUrl}/tags`,
                 dataType: 'json'
             });
-            appState.sortedData = repositoryTags;
-            domElements.tagsDropdown.empty();
+
+            domElements.newVersionDropdown.empty();
             domElements.comparisonDropdown.empty();
 
-            repositoryTags.forEach(item => {
+            response.forEach(item => {
                 const option = $('<option>', { value: item.name, text: item.name });
-                domElements.tagsDropdown.append(option.clone());
+                domElements.newVersionDropdown.append(option.clone());
                 domElements.comparisonDropdown.append(option);
             });
 
-            domElements.tagsDropdown.val(repositoryTags[0].name);
-            domElements.comparisonDropdown.val(repositoryTags.length > 1 ? repositoryTags[1].name : repositoryTags[0].name);
-            appState.sdkVersion = repositoryTags[0].name;
-            appState.baseVersion = repositoryTags[1].name;
+            domElements.newVersionDropdown.val(response[0].name);
+            domElements.comparisonDropdown.val(response.length > 1 ? response[1].name : response[0].name);
+            appState.mainVersion = response[0].name;
+            appState.baseVersion = response[1].name;
         } catch (error) {
             this.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
         } finally {
-            this.toggleLoadingSpinner(false);
+            this.stopSpinner();
         }
     }
 }
