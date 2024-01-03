@@ -49,12 +49,12 @@ export class NoticeTypesTab extends TabController {
             const diff = Diff.fromArrayComparison(mainVersionData.noticeSubTypes, baseVersionData.noticeSubTypes, 'subTypeId');
 
             // Clear existing index-cards.
-            $('#noticeTypesOverview').empty();
+            $('#notice-types-overview-card-group').empty();
 
             // Create and add an index-card for each notice type.
             diff.forEach(entry => {
                 const card = this.#createIndexCard(entry);
-                $('#noticeTypesOverview').append(card);
+                $('#notice-types-overview-card-group').append(card);
             });
 
             this.#switchToOverview();

@@ -190,24 +190,20 @@ export class SdkExplorerApplication {
                 url: `${appConfig.eformsBaseUrl}/tags`,
                 dataType: 'json'
             });
-            const data = response.sort((a, b) => this.compareVersions(a.name, b.name));
 
-            appState.sortedData = data;
             domElements.newVersionDropdown.empty();
             domElements.comparisonDropdown.empty();
 
-            data.forEach(item => {
+            response.forEach(item => {
                 const option = $('<option>', { value: item.name, text: item.name });
                 domElements.newVersionDropdown.append(option.clone());
                 domElements.comparisonDropdown.append(option);
             });
 
-            domElements.newVersionDropdown.val(data[0].name);
-            domElements.comparisonDropdown.val(data.length > 1 ? data[1].name : data[0].name);
-            appState.mainVersion = data[0].name;
-            appState.baseVersion = data[1].name;
-            // await fetchAndDisplayFieldsContent(data[0].name, true);
-            // await fetchAndDisplayFieldsContent(data[1].name, false);
+            domElements.newVersionDropdown.val(response[0].name);
+            domElements.comparisonDropdown.val(response.length > 1 ? response[1].name : response[0].name);
+            appState.mainVersion = response[0].name;
+            appState.baseVersion = response[1].name;
         } catch (error) {
             this.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
