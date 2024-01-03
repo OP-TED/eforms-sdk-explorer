@@ -203,6 +203,8 @@ export class NoticeTypesTab extends TabController {
             this.#splitView().initialise({
                 dataCallback: () => this.#createTreeNodes(metadataDiff, contentDiff), 
                 searchableProperties: ['id', 'description'],
+                titleProperty: 'id',
+                subtitleProperty: 'contentType',
                 hiddenProperties: ['parentId']
             });
             this.#switchToExplorerView();

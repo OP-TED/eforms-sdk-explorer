@@ -29,7 +29,9 @@ export class FieldsTab extends TabController {
                 const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
                 this.#splitView().initialise({
                     dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
-                    searchableProperties: ['id', 'btId', 'name', 'xpathRelative']
+                    searchableProperties: ['id', 'btId', 'name', 'xpathRelative'],
+                    titleProperty: 'id',
+                    subtitleProperty: 'type',
                 });
             }
         } catch (error) {

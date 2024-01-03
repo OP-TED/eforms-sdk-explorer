@@ -42,9 +42,11 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         // Listen for changes in the compact view switch
         this.shadowRoot.querySelector('#compactViewSwitch').addEventListener('change', function(event) {
             if (event.target.checked) {
-                this.style.setProperty('--compact-view-display', 'none');
+                this.style.setProperty('--compact-view-warning-display', 'block');
+                this.style.setProperty('--compact-view-unchanged-display', 'none');
             } else {
-                this.style.setProperty('--compact-view-display', 'flex');
+                this.style.setProperty('--compact-view-warning-display', 'none');
+                this.style.setProperty('--compact-view-unchanged-display', 'flex');
             }
         }.bind(this));
     
@@ -91,6 +93,22 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         return $(this.#detailView());
     }
 
+    #detailTitle() {
+        return this.shadowRoot.querySelector('#detail-title');
+    }
+
+    $detailTitle() {
+        return $(this.#detailTitle());
+    }
+
+    #detailSubtitle() {
+        return this.shadowRoot.querySelector('#detail-subtitle');
+    }
+
+    $detailSubtitle() {
+        return $(this.#detailSubtitle());
+    }
+
     /**
      * Initialises the tree-detail-split-view component.
      * 
@@ -102,7 +120,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
      * @param {string} [options.popover.title] - The title for the popover.
      * @param {string} [options.popover.content] - The content for the popover.
      */
-    initialise({ dataCallback, searchableProperties = [], hiddenProperties = [] }) {
+    initialise({ dataCallback, searchableProperties = [], hiddenProperties = [], titleProperty = 'id', subtitleProperty = null}) {
         if (this.$treeView().jstree(true)) {
             this.$treeView().jstree("destroy");
         }
@@ -120,7 +138,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         
         // Listen for selection changes in the tree
         this.$treeView().on("select_node.jstree", (e, data) => {
-            this.displayDetails(DiffEntry.fromObject(data.node.data), hiddenProperties);
+            this.displayDetails(DiffEntry.fromObject(data.node.data), titleProperty, subtitleProperty, hiddenProperties);
         });   
 
         let titleSlot = this.shadowRoot.querySelector('slot[name="search-popover-title"]');
@@ -201,12 +219,18 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
      * 
      * @param {DiffEntry} diffEntry 
      */
-    displayDetails(diffEntry, except = []) {
+    displayDetails(diffEntry, titleProperty, subtitleProperty, except = []) {
+
+        if (titleProperty) {
+            this.$detailTitle().text(diffEntry.get(titleProperty));
+        }
+
+        if (subtitleProperty) {
+            this.$detailSubtitle().text(diffEntry.get(subtitleProperty));
+        }
 
         // Clear existing content
         this.$detailView().empty();
-
-        const $ul = $('<ul class="list-group">');
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
 
@@ -218,7 +242,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             }
 
             const $propertyTemplate = PropertyCard.create(key, diffEntry.mainItem ? mainValue : undefined, baseValue);
-            $ul.append($propertyTemplate);
+            this.$detailView().append($propertyTemplate);
         }
 
         // Handle removed properties in diffEntry.baseItem that are not in diffEntry.mainItem
@@ -226,12 +250,10 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             for (const key in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
                     const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
-                    $ul.append($removedPropertyTemplate);
+                    this.$detailView().append($removedPropertyTemplate);
                 }
             }
         }
-
-        this.$detailView().append($ul);
     }
 
 }
