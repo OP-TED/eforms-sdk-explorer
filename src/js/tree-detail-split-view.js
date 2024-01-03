@@ -1,5 +1,5 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
-import { DiffEntry } from "./diff.js";
+import { Diff, DiffEntry } from "./diff.js";
 import { PropertyCard } from "./property-card.js";
 
 export class TreeDetailSplitView extends BootstrapWebComponent {
@@ -93,7 +93,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
      * @param {string} [options.popover.title] - The title for the popover.
      * @param {string} [options.popover.content] - The content for the popover.
      */
-    initialise({ dataCallback, searchCallback, hiddenProperties = [], popover = { title: 'Looking for a particular item?', content: 'Search and highlight items with matching values.' } }) {
+    initialise({ dataCallback, searchableProperties = [], hiddenProperties = [] }) {
         if (this.$treeView().jstree(true)) {
             this.$treeView().jstree("destroy");
         }
@@ -105,7 +105,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             plugins: ["wholerow", "search"],
             search: {
                 show_only_matches: true,
-                search_callback: (str, node) => searchCallback(DiffEntry.fromObject(node?.data), ...str.split('::'))
+                search_callback: (str, node) => this.#searchCallback(DiffEntry.fromObject(node?.data), ...str.split('::'), searchableProperties)
             }
         });
         
@@ -114,12 +114,67 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             this.displayDetails(DiffEntry.fromObject(data.node.data), hiddenProperties);
         });   
 
+        let titleSlot = this.shadowRoot.querySelector('slot[name="search-popover-title"]');
+        let titleSlotNodes = titleSlot.assignedNodes();
+        let popoverTitle = titleSlotNodes.length > 0 ? titleSlotNodes[0].innerHTML : titleSlot.innerHTML;
+
+        let contentSlot = this.shadowRoot.querySelector('slot[name="search-popover-content"]');
+        let contentSlotNodes = contentSlot.assignedNodes();
+        let popoverContent = contentSlotNodes.length > 0 ? contentSlotNodes[0].innerHTML : contentSlot.innerHTML;
+ 
         this.$treeSearch().popover({
-            title: popover.title,
-            content: popover.content
+            title: popoverTitle,
+            content: popoverContent.replace("{searchableProperties}", searchableProperties.map(p => `<code>${p}</code>`).join(', ')),
         });
     }
 
+    /**
+     * Checks if the {@link DiffEntry} matches the search criteria.
+     * 
+     * @param {DiffEntry} diffEntry 
+     * @param {string} status 
+     * @param {string} searchText
+     * @returns {boolean} 
+     */
+    #searchCallback(diffEntry, status, searchText = '', searchableProperties = []) {
+        let textMatch = false;
+
+        searchText = searchText.trim();
+
+        if (searchText.length > 0 && !searchText.startsWith('|')) {
+            let combined = searchableProperties.map(prop => diffEntry?.get(prop) || '').join('|');
+            let orTerms = searchText.split(','); // Split the searchText at comma
+
+            // Check if any of the OR terms are in the combined string
+            textMatch = orTerms.some(orTerm => {
+                orTerm = orTerm.trim();
+                let andTerms = orTerm.split(' '); // Split the OR term at whitespace
+
+                // Check if all of the AND terms are in the combined string
+                return andTerms.every(term => {
+                    term = term.trim();
+                    if (term === '') {
+                        return true;    // This effectively ignores empty terms (caused by multiple spaces)
+                    }
+
+                    switch (term.charAt(0)) {
+                        case '+': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.ADDED;
+                        case '-': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.REMOVED;
+                        case '~': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.MODIFIED;
+                        case '*': return [Diff.TypeOfChange.ADDED, Diff.TypeOfChange.REMOVED, Diff.TypeOfChange.MODIFIED].includes(diffEntry?.propertyChange(term.substring(1)));
+                        default: return combined.toLowerCase().indexOf(term.toLowerCase()) > -1;
+                    }
+                });
+            });
+        }
+
+        if (status === 'all') {
+            return textMatch;
+        } else {
+            return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
+        }
+    }
+    
     /**
      * Initiates a search in the JsTree.
      */

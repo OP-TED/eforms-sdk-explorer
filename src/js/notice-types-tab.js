@@ -202,12 +202,8 @@ export class NoticeTypesTab extends TabController {
             const metadataDiff = this.#compareNestedHierarchies(mainData.metadata, baseData.metadata);
             this.#splitView().initialise({
                 dataCallback: () => this.#createTreeNodes(metadataDiff, contentDiff), 
-                searchCallback: this.#searchCallback,
-                hiddenProperties: ['parentId'],
-                popover: {
-                    title: 'Looking for a particular BT?',
-                    content: 'Search and highlight items by id, BT or description.'
-                }
+                searchableProperties: ['id', 'description'],
+                hiddenProperties: ['parentId']
             });
             this.#switchToExplorerView();
 
@@ -313,30 +309,6 @@ export class NoticeTypesTab extends TabController {
             });
 
             return treeNodes;
-        }
-    }
-
-    /**
-     * Checks if the specified node matches the specified search terms.
-     * Used by the search_callback for the JsTree search plugin.
-     * 
-     * @param {DiffEntry} diffEntry The {@link DiffEntry} that the node represents.
-     * @param {string} status The status to filter by (added, removed, modified, unchanged, all)
-     * @param {string} searchText The search text to match against.
-     * @returns {boolean} True if the node matches the search terms, false otherwise.
-     */
-    #searchCallback(diffEntry, status, searchText = '') {
-        let textMatch = false;
-
-        if (searchText.length > 0 && !searchText.startsWith('|')) {
-            let combined = (diffEntry?.get('description') || '') + '|' + '|' + (diffEntry?.get('id') || '');
-            textMatch = combined.toLowerCase().indexOf(searchText) > -1;
-        }
-
-        if (status === 'all') {
-            return textMatch;
-        } else {
-            return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
         }
     }
 

@@ -127,7 +127,7 @@
                     </nav>
 
                     <!-- Content -->
-                    <tree-detail-split-view id="notice-type-explorer" />
+                    <tree-detail-split-view id="notice-type-explorer"></tree-detail-split-view>
 
                 </div> <!-- End of notice-type comparison row -->
 
@@ -357,7 +357,30 @@
         }
     </style>
     <div class="row row-cols-2 h-100">
-
+        <slot name="search-popover-title" style="display: none;">Looking for a particular item?</slot>
+        <slot name="search-popover-content" style="display: none;">
+            <p>Search and highlight items by {searchableProperties}.</p>
+            <ul>
+                <li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li>
+            </ul>
+            <p>Use space or comma (<code>,</code>) to separate multiple search terms:</p>
+            <ul>
+                <li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li>
+            </ul>
+            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to search
+                for items with the specified property added, removed or modified.</p>
+            <ul>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.
+                </li>
+            </ul>
+            <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
+            <ul>
+                <li>Example: search for <code>*codeList</code> to find all items with their "codeList" property added,
+                    removed or modified.</li>
+            </ul>
+            <p>Property names are <code>caseSensitive</code>.</p>
+        </slot>
+    
         <!-- Tree -->
         <div class="col h-100">
             <header class="font-weight-bold" style="display: flex; flex-direction: row;">
