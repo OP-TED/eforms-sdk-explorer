@@ -11,11 +11,9 @@ export class ViewTemplatesTab extends TabController {
         super('view-templates-tab');
     }
 
-  
     async fetchAndRender() {
         this.fetchAndRenderOverview();
     }
-
 
     /**
      * Fetches view-templates.json index files for both versions and renders the overview display.
@@ -131,7 +129,7 @@ export class ViewTemplatesTab extends TabController {
             let baseUrl = this.#getUrlViewTemplatesListsAndVersion(filename, appState.baseVersion);
             let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
             let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
-            
+
             let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
             return nodeChange;
         } catch (error) {
@@ -143,7 +141,6 @@ export class ViewTemplatesTab extends TabController {
             SdkExplorerApplication.stopSpinner();
         }
     }
-
 
     #getUrlViewTemplatesListsAndVersion(filename, sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${filename}`;
