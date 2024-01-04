@@ -136,8 +136,16 @@
 
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
-            <p>TODO: Add UI comparing codelists.json and displaying only added/removed codelists or codelists with
-                different version numbers.</p>
+                  <!-- Code-lists overview -->
+                  <div id="code-lists-overview" class="container-fluid h-100 mb-3">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <div id="code-lists-overview-card-group" class="card-group"></div>
+                </div>
+
         </div>
 
         <!-- Schemas -->
@@ -207,10 +215,9 @@
     <div class="card">
         <div class="card-body" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
             <div style="flex: 1;">
-                <h1 id="title" class="card-title"></h1>
+                <h2 id="title" class="card-title"></h2>
                 <h5 id="subtitle" class="card-subtitle"></h5>
             </div>
-            <button id="action-button" type="button" class="btn btn-outline-primary"></button>
         </div>
         <ul id="property-list" class="list-group list-group-flush">
         </ul>

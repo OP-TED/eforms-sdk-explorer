@@ -42,7 +42,7 @@ export class IndexCard extends BootstrapWebComponent {
         switch (name) {
             case 'title': this.title = newValue; break;
             case 'subtitle': this.subTitle = newValue; break;
-            case 'action-name': this.actionName = newValue;  break;
+            case 'action-name': this.actionName = newValue; break;
             case 'status': this.status = newValue; break;
         }
 
@@ -90,7 +90,7 @@ export class IndexCard extends BootstrapWebComponent {
     setStatusCheckCallback(statusCheckCallback) {
         this.getStatusCallback = statusCheckCallback;
     }
- 
+
     appendProperty(propertyCard) {
         this.propertyCards.push(propertyCard);
         if (this.isConnected) {
