@@ -29,8 +29,6 @@ export class ViewTemplatesTab extends TabController {
                 this.#fetch1viewTemplateIndexFile(appState.mainVersion),
                 this.#fetch1viewTemplateIndexFile(appState.baseVersion)
             ]);
-            debugger
-
             // Compare the two index files
             const diff = Diff.fromArrayComparison(mainVersionData.viewTemplates, baseVersionData.viewTemplates, 'id');
 
@@ -133,9 +131,8 @@ export class ViewTemplatesTab extends TabController {
             let baseUrl = this.#getUrlViewTemplatesListsAndVersion(filename, appState.baseVersion);
             let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
             let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
-
+            
             let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
-
             return nodeChange;
         } catch (error) {
 
@@ -149,6 +146,6 @@ export class ViewTemplatesTab extends TabController {
 
 
     #getUrlViewTemplatesListsAndVersion(filename, sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/viewtemplates/${filename}`;
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${filename}`;
     }
 }
