@@ -37,11 +37,12 @@ export class CodelistsTab extends TabController {
             $('#code-lists-overview-card-group').empty();
 
             // Create and add an index-card for each code list.
-            diff.forEach(entry => {
-                const card = this.#createIndexCard(entry);
-                $('#code-lists-overview-card-group').append(card);
+            diff.forEach((entry, index) => {
+                setTimeout(() => {
+                    const card = this.#createIndexCard(entry);
+                    $('#code-lists-overview-card-group').append(card);
+                }, 0);
             });
-
              this.#switchToOverview();
         } catch (error) {
             console.error('Error while generating overview:', error);
