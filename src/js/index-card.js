@@ -76,9 +76,9 @@ export class IndexCard extends BootstrapWebComponent {
         if (this.actionName && this.actionHandler) {
             button.textContent = this.actionName;
             button.onclick = this.actionHandler;
-            button.style.display = ''; // Show the button
+            button.style.display = ''; 
         } else {
-            button.style.display = 'none'; // Hide the button
+            button.style.display = 'none';
         }
     }
     
