@@ -42,7 +42,7 @@ export class IndexCard extends BootstrapWebComponent {
         switch (name) {
             case 'title': this.title = newValue; break;
             case 'subtitle': this.subTitle = newValue; break;
-            case 'action-name': this.actionName = newValue;  break;
+            case 'action-name': this.actionName = newValue; break;
             case 'status': this.status = newValue; break;
         }
 
@@ -54,18 +54,34 @@ export class IndexCard extends BootstrapWebComponent {
 
     render() {
         super.render();
-
+    
         const propertyList = this.shadowRoot.querySelector('#property-list');
         this.propertyCards.forEach(propertyCard => propertyList.append(propertyCard));
-
+    
         this.shadowRoot.querySelector('#title').textContent = this.title;
         this.shadowRoot.querySelector('#subtitle').textContent = this.subTitle;
         this.shadowRoot.querySelector('#card-header').classList.add(this.status + '-card');
-
-        const button = this.shadowRoot.querySelector('#action-button');
-        button.textContent = this.actionName;
-        button.onclick = this.actionHandler;
+    
+        // Retrieve or create the button element
+        let button = this.shadowRoot.querySelector('#action-button');
+        if (!button) {
+            button = document.createElement('button');
+            button.setAttribute('id', 'action-button');
+            button.setAttribute('type', 'button');
+            button.classList.add('btn', 'btn-outline-primary');
+            this.shadowRoot.querySelector('#card-header').appendChild(button);
+        }
+    
+        // Conditionally configure and display the button
+        if (this.actionName && this.actionHandler) {
+            button.textContent = this.actionName;
+            button.onclick = this.actionHandler;
+            button.style.display = ''; 
+        } else {
+            button.style.display = 'none';
+        }
     }
+    
 
     /**
      * Called each time the element is added to the document.
@@ -90,7 +106,7 @@ export class IndexCard extends BootstrapWebComponent {
     setStatusCheckCallback(statusCheckCallback) {
         this.getStatusCallback = statusCheckCallback;
     }
- 
+
     appendProperty(propertyCard) {
         this.propertyCards.push(propertyCard);
         if (this.isConnected) {

@@ -53,8 +53,10 @@ export class NoticeTypesTab extends TabController {
 
             // Create and add an index-card for each notice type.
             diff.forEach(entry => {
-                const card = this.#createIndexCard(entry);
-                $('#notice-types-overview-card-group').append(card);
+                setTimeout(() => {
+                    const card = this.#createIndexCard(entry);
+                    $('#notice-types-overview-card-group').append(card);
+                }, 0);
             });
 
             this.#switchToOverview();
