@@ -81,7 +81,7 @@ export class ViewTemplatesTab extends TabController {
     * @returns 
     */
     #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('parentId') ?? '', 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
         // Not needed for now
         // component.setActionHandler((e) => {
         //     e.preventDefault();
@@ -130,6 +130,10 @@ export class ViewTemplatesTab extends TabController {
             let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
             let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
+            let commentLineRegex = /^\/\/.*$/gm;
+            mainFile = mainFile.replace(commentLineRegex, '');
+            baseFile = baseFile.replace(commentLineRegex, '');
+            
             let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
             return nodeChange;
         } catch (error) {

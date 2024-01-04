@@ -11,8 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="./src/assets/style.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
     <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
     <script defer type="module" src="./src/js/script.js"></script>
@@ -147,16 +146,15 @@
 
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
-                  <!-- Code-lists overview -->
-                  <div id="code-lists-overview" class="container-fluid h-100 mb-3">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item" aria-current="page">Overview</li>
-                        </ol>
-                    </nav>
-                    <div id="code-lists-overview-card-group" class="card-group"></div>
-                </div>
-
+            <!-- Code-lists overview -->
+            <div id="code-lists-overview" class="container-fluid h-100 mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item" aria-current="page">Overview</li>
+                    </ol>
+                </nav>
+                <div id="code-lists-overview-card-group" class="card-group"></div>
+            </div>
         </div>
 
         <!-- Schemas -->
@@ -174,7 +172,7 @@
 
         <!-- View Templates -->
         <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="viewtemplates-tab">
-            <!-- Code-lists overview -->
+            <!-- View-templates overview -->
             <div id="view-templates-overview" class="container-fluid h-100 mb-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
@@ -270,7 +268,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-    </style>   <div class="card">
+    </style>
+    <div class="card">
         <div class="card-header" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
             <div style="flex: 1;">
                 <h2 id="title" class="card-title"></h2>
@@ -438,12 +437,9 @@
                 <li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li>
             </ul>
             <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to
-                search
-                for items with the specified property added, removed or modified.</p>
+                search for items with the specified property added, removed or modified.</p>
             <ul>
-                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property
-                    modified.
-                </li>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li>
             </ul>
             <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
             <ul>
