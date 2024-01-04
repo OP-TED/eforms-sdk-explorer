@@ -1,12 +1,15 @@
 /* style.css */
 :root {
-    --split-view-height-adjustment: 0px;
     --added-item-highlight: #CCFFD8;
     --removed-item-highlight: #FFCCD0;
     --modified-item-highlight: #CCD3FF;
     --added-item-background-color: #E6FFEC;
     --removed-item-background-color: #FFEBE9;
     --modified-item-background-color: #E6E9FF;
+    --op-green-color: #2c862d;
+    --dark-background-color: #EEEEEE;
+    --light-background-color: #f8f9fa;
+    --border-color: #ddd;
 }
 
 
@@ -64,8 +67,8 @@ body {
 }
 
 body > header {
-    background-color: #EEEEEE;
-    border-bottom: 6px solid #2c862d;
+    background-color: var(--dark-background-color);
+    border-bottom: 6px solid var(--op-green-color);
     height: 84px;
 }
 
@@ -122,8 +125,8 @@ body > footer {
     align-items: center;
     padding: 10px;
     width: 100%;
-    background-color: #f8f9fa; /* To match tab content background */
-    border-top: 1px solid #ddd;
+    background-color: var(--light-background-color);
+    border-top: 1px solid var(--border-color);
 }
 
 .legend-title {
@@ -133,29 +136,29 @@ body > footer {
 .legend-item {
     display: inline-block;
     padding: 2px 6px;
-    color: #fff;
+    color: white;
     margin-right: 5px;
     border-radius: 4px;
     font-size: 0.875rem;
 }
 .legend-item.added {
     background-color: var(--added-item-highlight);
-    color: #000000;
+    color: black;
 }
 .legend-item.removed {
     background-color: var(--removed-item-highlight);
-    color: #000000;
+    color: black;
 }
 .legend-item.modified {
     background-color: var(--modified-item-highlight);
-    color: #000000;
+    color: black;
 }
 
 .card-group {
     height: calc(100vh - 290px);
     overflow-y: auto;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
+    background-color: var(--light-background-color);
+    border: 1px solid var(--border-color);
     padding: 15px;
     display: flex;
     flex-wrap: wrap;
@@ -164,10 +167,6 @@ body > footer {
 .card-group index-card {
     flex: 1 0 300px;
     margin: 10px;
-}
-
-#notice-types {
-    --split-view-height-adjustment: 65px;
 }
 
 .popover-body code {

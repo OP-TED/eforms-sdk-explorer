@@ -29,20 +29,9 @@ export class FieldsTab extends TabController {
                 const fieldsDiff = Diff.fromArrayComparison(mainVersionFields, baseVersionFields, 'id');
                 this.#splitView().initialise({
                     dataCallback: () => this.#createTreeNodes(nodesDiff, fieldsDiff),
-                    searchCallback: this.#searchCallback,
-                    popover: {
-                        title: 'Looking for a particular item?',
-                        content: 
-                            `<p>Search and highlight items by id, name, BT or relative XPath.</p>
-                            <ul><li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li></ul>
-                            <p>Use space or comma (<code>,</code>) to separate multiple search terms:</p>
-                            <ul><li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li></ul>
-                            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to search for items with the specified property added, removed or modified.</p>
-                            <ul><li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li></ul>
-                            <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
-                            <ul><li>Example: search for <code>*codeList</code> to find all items with their "codeList" property added, removed or modified.</li></ul>
-                            <p>Property names are <code>caseSensitive</code>.</p>`
-                    }
+                    searchableProperties: ['id', 'btId', 'name', 'xpathRelative'],
+                    titleProperty: 'id',
+                    subtitleProperty: 'type',
                 });
             }
         } catch (error) {
@@ -100,52 +89,5 @@ export class FieldsTab extends TabController {
         });
 
         return Array.from(treeNodes.values());
-    }
-
-    /**
-     * Checks if the {@link DiffEntry} matches the search criteria.
-     * 
-     * @param {DiffEntry} diffEntry 
-     * @param {string} status 
-     * @param {string} searchText
-     * @returns {boolean} 
-     */
-    #searchCallback(diffEntry, status, searchText = '') {
-        let textMatch = false;
-
-        searchText = searchText.trim();
-    
-        if (searchText.length > 0 && !searchText.startsWith('|')) {
-            let combined = (diffEntry?.get('name') || '') + '|' + (diffEntry?.get('btId') || '') + '|' + (diffEntry?.get('id') || '') + '|' + (diffEntry?.get('xpathRelative') || '');
-            let orTerms = searchText.split(','); // Split the searchText at comma
-    
-            // Check if any of the OR terms are in the combined string
-            textMatch = orTerms.some(orTerm => {
-                orTerm = orTerm.trim();
-                let andTerms = orTerm.split(' '); // Split the OR term at whitespace
-
-                // Check if all of the AND terms are in the combined string
-                return andTerms.every(term => {
-                    term = term.trim();
-                    if (term === '') {
-                        return true;    // This effectively ignores empty terms (caused by multiple spaces)
-                    }
-
-                    switch (term.charAt(0)) {
-                        case '+': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.ADDED;
-                        case '-': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.REMOVED;
-                        case '~': return diffEntry?.propertyChange(term.substring(1)) === Diff.TypeOfChange.MODIFIED;
-                        case '*': return [Diff.TypeOfChange.ADDED, Diff.TypeOfChange.REMOVED, Diff.TypeOfChange.MODIFIED].includes(diffEntry?.propertyChange(term.substring(1)));
-                        default: return combined.toLowerCase().indexOf(term.toLowerCase()) > -1;
-                    }
-                });
-            });
-        }
-    
-        if (status === 'all') {
-            return textMatch;
-        } else {
-            return (diffEntry?.typeOfChange === status) && (textMatch || searchText === '');
-        }
     }
 }

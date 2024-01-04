@@ -116,10 +116,10 @@
                 </div>
 
                 <!-- Notice-type Explorer -->
-                <div id="notice-type-explorer-view" class="container-fluid h-100">
+                <div id="notice-type-explorer-view" class="container-fluid d-flex flex-column h-100">
 
                     <!-- Breadcrumbs -->
-                    <nav aria-label="breadcrumb">
+                    <nav aria-label="breadcrumb" class="flex-shrink-0">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="#" id="overview-link">Overview</a></li>
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
@@ -127,7 +127,7 @@
                     </nav>
 
                     <!-- Content -->
-                    <tree-detail-split-view id="notice-type-explorer" />
+                    <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
 
                 </div> <!-- End of notice-type comparison row -->
 
@@ -272,9 +272,13 @@
             color: black;
         }
 
-        .changed-property {
+        .modified-property {
             background-color: var(--modified-item-background-color);
             color: black;
+        }
+
+        .unchanged-property {
+            display: var(--compact-view-unchanged-display, flex);
         }
 
         :host-context(.list-group-flush) .list-group-item {
@@ -292,17 +296,14 @@
     <style>
         .tree-container {
             padding: 8px;
-            height: calc(100% - var(--split-view-height-adjustment) - 51px);
         }
 
         .details-container {
             padding: 0px;
-            height: calc(100% - var(--split-view-height-adjustment) - 36px);
         }
 
         .tree-container,
         .details-container {
-            flex: 1;
             overflow-x: hidden;
             overflow-y: auto;
             border: 1px solid #ddd;
@@ -310,10 +311,6 @@
             background-color: white;
             box-shadow: 1px 1px 3px 1px lightgray;
             margin: 4px;
-        }
-
-        .details-container .list-group {
-            margin: -1px;
         }
 
         .removed-node>a {
@@ -340,6 +337,14 @@
             border-right: 1px solid white;
         }
 
+        .card-header {
+            border-bottom-width: 5px;
+        }
+        
+        #compact-view-warning {
+            display: var(--compact-view-warning-display, none);
+        }
+
         /* jQuery Treeview */
         .jstree-wholerow-ul {
             background-color: white;
@@ -357,10 +362,33 @@
         }
     </style>
     <div class="row row-cols-2 h-100">
-
+        <slot name="search-popover-title" style="display: none;">Looking for a particular item?</slot>
+        <slot name="search-popover-content" style="display: none;">
+            <p>Search and highlight items by {searchableProperties}.</p>
+            <ul>
+                <li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li>
+            </ul>
+            <p>Use space or comma (<code>,</code>) to separate multiple search terms:</p>
+            <ul>
+                <li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li>
+            </ul>
+            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to search
+                for items with the specified property added, removed or modified.</p>
+            <ul>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.
+                </li>
+            </ul>
+            <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
+            <ul>
+                <li>Example: search for <code>*codeList</code> to find all items with their "codeList" property added,
+                    removed or modified.</li>
+            </ul>
+            <p>Property names are <code>caseSensitive</code>.</p>
+        </slot>
+    
         <!-- Tree -->
-        <div class="col h-100">
-            <header class="font-weight-bold" style="display: flex; flex-direction: row;">
+        <div class="col d-flex flex-column h-100">
+            <header class="d-flex flex-grow-0 flex-shrink-0 font-weight-bold">
                 <div style="flex: 1; align-self: self-end;">Structure</div>
                 <input type="text" id="tree-search" placeholder="Search" class="form-control form-control-sm m-1"
                     style="width: 200px;" data-toggle="popover" data-trigger="manual" data-placement="left" data-html="true">
@@ -372,18 +400,33 @@
                 </select>
             </header>
             <!-- Tree View Container -->
-            <div id="treeViewContainer" class="tree-container mh-100">
+            <div id="treeViewContainer" class="tree-container flex-grow-1 overflow-auto">
                 <div id="treeView"></div>
             </div>
         </div>
 
         <!-- Details -->
-        <div class="col h-100">
-            <header class="font-weight-bold">Details</header>
-            <div id="detail-view" class="details-container mh-100">
-                <p class="m-2">Select a node to see details.</p>
+        <div class="col d-flex flex-column h-100 overflow-x-hidden">
+            <header class="d-flex flex-shrink-0 font-weight-bold">
+                <div style="flex: 1; align-self: self-end;">Details</div>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                    <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+                  </div>
+            </header>
+            <div class="card details-container flex-grow-1">
+                <div class="card-header" style="flex:none">
+                    <h5 id="detail-title" class="card-title"></h5>
+                    <h6 id="detail-subtitle" class="card-subtitle">Select a node to see details.</h6>
+                </div>
+                <ul id="detail-view" class="list-group list-group-flush">
+                </ul>
+                <div id="compact-view-warning" class="card-body" style="flex:none">
+                    <div class="alert alert-warning" role="alert">Unchanged properties are hidden in compact view.</div>
+                </div> 
             </div>
         </div>
+    </div>
 </template>
 
 </html>
