@@ -83,7 +83,7 @@ export class CodelistsTab extends TabController {
      * @returns 
      */
      #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('_label'), 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('parentId') ?? '', 'Compare', diffEntry.typeOfChange);
         // Not needed for now
         // component.setActionHandler((e) => {
         //     e.preventDefault();
