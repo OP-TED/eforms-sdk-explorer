@@ -28,10 +28,14 @@
             </a>
             <div class="d-flex align-items-center">
                 <div class="version-text mr-2">Explore SDK</div>
-                <select id="newVersionDropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover" data-placement="left" title="Select SDK version to explore" data-html="true" data-content="Typically this is a newer version of the SDK. For example, items that only exist in this version are indicated as 'added'.">
+                <select id="newVersionDropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
+                    data-placement="left" title="Select SDK version to explore" data-html="true"
+                    data-content="Typically this is a newer version of the SDK. For example, items that only exist in this version are indicated as 'added'.">
                 </select>
                 <div class="comparison-text mr-2">in comparison with</div>
-                <select id="comparisonDropdown" class="custom-select"  data-toggle="popover" data-trigger="hover" data-placement="left" title="Select version to compare with" data-html="true" data-content="Typically this will be an older SDK version. For example, items that only exist in this version are indicated as 'removed'.">
+                <select id="comparisonDropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
+                    data-placement="left" title="Select version to compare with" data-html="true"
+                    data-content="Typically this will be an older SDK version. For example, items that only exist in this version are indicated as 'removed'.">
                 </select>
             </div>
         </div>
@@ -45,32 +49,33 @@
                     type="button" role="tab" aria-controls="home-tab-content" aria-selected="true">Home</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content" type="button"
-                    role="tab" aria-controls="fields-tab-content" aria-selected="false">Fields</button>
+                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
+                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="false">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types" type="button"
-                    role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types"
+                    type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
                     role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button" role="tab"
-                    aria-controls="schemas" aria-selected="false">Schemas</button>
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button"
+                    role="tab" aria-controls="schemas" aria-selected="false">Schemas</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations" type="button"
-                    role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations"
+                    type="button" role="tab" aria-controls="translations" aria-selected="false">Translations</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
-                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View Templates</button>
+                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View
+                    Templates</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes" type="button"
-                    role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes"
+                    type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
             </li>
             <div class="spinner-grow spinner-grow-sm text-info ml-auto" role="status" id="centralLoadingSpinner"
                 style="display: none;">
@@ -83,15 +88,19 @@
 
         <!-- Home -->
         <div class="tab-pane h-100 fade show active" id="home-tab-content" role="tabpanel" aria-labelledby="home-tab">
-            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is an early preview of the SDK Explorer. Some features may not be fully functional.</div>
+            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is an early preview of the SDK
+                Explorer. Some features may not be fully functional.</div>
             <div class="jumbotron">
-                    <h1 class="display-4">SDK Explorer</h1>
-                    <p class="lead">Explore and compare different versions of the eForms SDK.</p>
+                <h1 class="display-4">SDK Explorer</h1>
+                <p class="lead">Explore and compare different versions of the eForms SDK.</p>
                 <hr class="my-4">
-                <p>The eForms SDK Explorer is a web application that allows you to explore the contents as well as changes between any two versions of the eForms SDK.
-                    The application is being developed by the Publications Office of the EU and is available as open source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>.</p>
-                    <p>We welcome your feedback, suggestions for improvement as well as your contributions to the project.</p>
-              </div>
+                <p>The eForms SDK Explorer is a web application that allows you to explore the contents as well as
+                    changes between any two versions of the eForms SDK.
+                    The application is being developed by the Publications Office of the EU and is available as open
+                    source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>.</p>
+                <p>We welcome your feedback, suggestions for improvement as well as your contributions to the project.
+                </p>
+            </div>
         </div>
 
         <!-- Fields -->
@@ -127,7 +136,8 @@
                     </nav>
 
                     <!-- Content -->
-                    <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
+                    <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1"
+                        style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
 
                 </div> <!-- End of notice-type comparison row -->
 
@@ -136,16 +146,15 @@
 
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
-                  <!-- Code-lists overview -->
-                  <div id="code-lists-overview" class="container-fluid h-100 mb-3">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item" aria-current="page">Overview</li>
-                        </ol>
-                    </nav>
-                    <div id="code-lists-overview-card-group" class="card-group"></div>
-                </div>
-
+            <!-- Code-lists overview -->
+            <div id="code-lists-overview" class="container-fluid h-100 mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item" aria-current="page">Overview</li>
+                    </ol>
+                </nav>
+                <div id="code-lists-overview-card-group" class="card-group"></div>
+            </div>
         </div>
 
         <!-- Schemas -->
@@ -156,17 +165,27 @@
 
         <!-- Translations -->
         <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="codelists-tab">
-            <p>TODO: Provide an overview of changed translations files and link to GitHub compare page for detailed comparison.
+            <p>TODO: Provide an overview of changed translations files and link to GitHub compare page for detailed
+                comparison.
             </p>
         </div>
 
         <!-- View Templates -->
-        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="codelists-tab">
-            <p>TODO: Provide an overview of changed view templates and link to GitHub compare page for detailed comparison.</p>
+        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="viewtemplates-tab">
+            <!-- View-templates overview -->
+            <div id="view-templates-overview" class="container-fluid h-100 mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item" aria-current="page">Overview</li>
+                    </ol>
+                </nav>
+                <div id="view-templates-overview-card-group" class="card-group"></div>
+            </div>
         </div>
 
         <!-- Release notes -->
-        <div class="tab-pane fade mh-100 overflow-auto p-3" id="release-notes" role="tabpanel" aria-labelledby="release-notes-tab">
+        <div class="tab-pane fade mh-100 overflow-auto p-3" id="release-notes" role="tabpanel"
+            aria-labelledby="release-notes-tab">
             <!-- Release Notes will appear here -->
         </div>
     </main>
@@ -249,7 +268,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-    </style>   <div class="card">
+    </style>
+    <div class="card">
         <div class="card-header" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
             <div style="flex: 1;">
                 <h2 id="title" class="card-title"></h2>
@@ -384,7 +404,7 @@
         .card-header {
             border-bottom-width: 5px;
         }
-        
+
         #compact-view-warning {
             display: var(--compact-view-warning-display, none);
         }
@@ -416,11 +436,10 @@
             <ul>
                 <li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li>
             </ul>
-            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to search
-                for items with the specified property added, removed or modified.</p>
+            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to
+                search for items with the specified property added, removed or modified.</p>
             <ul>
-                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.
-                </li>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li>
             </ul>
             <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
             <ul>
@@ -429,13 +448,14 @@
             </ul>
             <p>Property names are <code>caseSensitive</code>.</p>
         </slot>
-    
+
         <!-- Tree -->
         <div class="col d-flex flex-column h-100">
             <header class="d-flex flex-grow-0 flex-shrink-0 font-weight-bold">
                 <div style="flex: 1; align-self: self-end;">Structure</div>
                 <input type="text" id="tree-search" placeholder="Search" class="form-control form-control-sm m-1"
-                    style="width: 200px;" data-toggle="popover" data-trigger="manual" data-placement="left" data-html="true">
+                    style="width: 200px;" data-toggle="popover" data-trigger="manual" data-placement="left"
+                    data-html="true">
                 <select id="tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
                     <option value="all">all</option>
                     <option value="added">added</option>
@@ -456,7 +476,7 @@
                 <div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
                     <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
-                  </div>
+                </div>
             </header>
             <div class="card details-container flex-grow-1">
                 <div class="card-header" style="flex:none">
@@ -467,7 +487,7 @@
                 </ul>
                 <div id="compact-view-warning" class="card-body" style="flex:none">
                     <div class="alert alert-warning" role="alert">Unchanged properties are hidden in compact view.</div>
-                </div> 
+                </div>
             </div>
         </div>
     </div>
