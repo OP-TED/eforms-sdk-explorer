@@ -211,14 +211,46 @@
             background-color: var(--modified-item-background-color);
             color: black;
         }
+
+        .unchanged-card {
+            background-color: var(--unchanged-item-background-color);
+            color: black;
+        }
+
+        .card {
+            box-shadow: 1px 1px 3px 1px lightgray;
+        }
+
+        .card-header {
+            animation: fadeToWhite 1s infinite;
+            border-bottom-width: 5px;
+        }
+
+        .card-header.added-card,
+        .card-header.removed-card,
+        .card-header.modified-card,
+        .card-header.unchanged-card {
+            animation: none;
+        }
+
+        @keyframes fadeToWhite {
+            0%,
+            100% {
+                background-color: var(--light-background-color);
+            }
+
+            50% {
+                background-color: white;
+            }
+        }
+
         h2 {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-    </style>
-    <div class="card">
-        <div class="card-body" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
+    </style>   <div class="card">
+        <div class="card-header" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
             <div style="flex: 1;">
                 <h2 id="title" class="card-title"></h2>
                 <h5 id="subtitle" class="card-subtitle"></h5>
