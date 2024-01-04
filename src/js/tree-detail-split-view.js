@@ -221,13 +221,8 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
      */
     displayDetails(diffEntry, titleProperty, subtitleProperty, except = []) {
 
-        if (titleProperty) {
-            this.$detailTitle().text(diffEntry.get(titleProperty));
-        }
-
-        if (subtitleProperty) {
-            this.$detailSubtitle().text(diffEntry.get(subtitleProperty));
-        }
+        this.$detailTitle().text(diffEntry.get(titleProperty) ?? '');
+        this.$detailSubtitle().text(diffEntry.get(subtitleProperty) ?? '');
 
         // Clear existing content
         this.$detailView().empty();
