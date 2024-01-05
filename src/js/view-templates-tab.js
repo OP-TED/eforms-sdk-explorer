@@ -65,8 +65,8 @@ export class ViewTemplatesTab extends TabController {
     }
 
     /**
- * Fetches the view-templates.json index file for the specified SDK version.
- */
+     * Fetches the view-templates.json index file for the specified SDK version.
+     */
     async #fetchIndexFile(sdkVersion) {
         const url = this.#getIndexFileUrl(sdkVersion);
         try {
@@ -85,7 +85,7 @@ export class ViewTemplatesTab extends TabController {
 
 
     #switchToOverview() {
-        //$('#view-templates-explorer-view').hide();
+        $('#view-templates-diff-view').hide();
         $('#view-templates-overview').show();
     }
 
@@ -219,7 +219,7 @@ export class ViewTemplatesTab extends TabController {
      */
     #switchToDiffView() {
         $('#view-templates-overview').hide();
-        $('#view-templates-overview-view').show();
+        $('#view-templates-diff-view').show();
     }
 
     #getUrlByViewTemplateIdAndVersion(id, sdkVersion) {
