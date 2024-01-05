@@ -11,32 +11,44 @@ export class CodelistsTab extends TabController {
     constructor() {
         super('codelists-tab');
     }
+    /**
+     * Overridden to hook up event handlers.
+     */
+    init() {
+        super.init();
+
+        // Handle clicks on the "Overview" link to return to the Overview display.
+        $('#code-lists-overview-link').on('click', async (e) => {
+            await this.fetchAndRenderOverview();
+        });
+    }
 
     async fetchAndRender() {
+        // Render the overview display by default
         this.fetchAndRenderOverview();
     }
 
+    // #region Overview display -----------------------------------------------
 
     /**
-     * Fetches thecodelists.json index files for both versions and renders the overview display.
+     * Fetches the codelists.json index files for both versions and renders the overview display.
      */
     async fetchAndRenderOverview() {    
         SdkExplorerApplication.startSpinner();
         try {
 
-            // Get code-lists.json index files for both versions.
+            // Get codelists.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchCodeListsIndexFile(appState.mainVersion),
-                this.#fetchCodeListsIndexFile(appState.baseVersion)
+                this.#fetchIndexFile(appState.mainVersion),
+                this.#fetchIndexFile(appState.baseVersion)
             ]);
-
             // Compare the two index files
             const diff = Diff.fromArrayComparison(mainVersionData.codelists, baseVersionData.codelists, 'id');
 
             // Clear existing index-cards.
             $('#code-lists-overview-card-group').empty();
 
-            // Create and add an index-card for each code list.
+            // Create and add an index-card for each codelist.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
                     const card = this.#createIndexCard(entry);
@@ -46,34 +58,34 @@ export class CodelistsTab extends TabController {
              this.#switchToOverview();
         } catch (error) {
             console.error('Error while generating overview:', error);
-            throw new Error('Failed to load code list');
+            throw new Error('Failed to load codelists');
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
     }
 
-        /**
+    /**
      * Fetches the code-lists.json index file for the specified SDK version.
      */
-        async #fetchCodeListsIndexFile(sdkVersion) {
-            const url = this.#getCodeListsIndexFileUrl(sdkVersion);
-            try {
-                const response = await $.ajax({ url, dataType: 'json' });
-                return response;
-            } catch (error) {
-                console.error('Error fetching code-lists.json:', error);
-                throw error;
-            }
+    async #fetchIndexFile(sdkVersion) {
+        const url = this.#getIndexFileUrl(sdkVersion);
+        try {
+            const response = await $.ajax({ url, dataType: 'json' });
+            return response;
+        } catch (error) {
+            console.error('Error fetching code-lists.json:', error);
+            throw error;
         }
+    }
 
-        
-    #getCodeListsIndexFileUrl(sdkVersion) {
+
+    #getIndexFileUrl(sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/codelists/codelists.json`;
     }
 
-    
+
     #switchToOverview() {
-        //$('#code-lists-explorer-view').hide();
+        $('#code-lists-diff-view').hide();
         $('#code-lists-overview').show();
     }
 
@@ -85,15 +97,16 @@ export class CodelistsTab extends TabController {
      */
      #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('parentId') ?? '', 'Compare', diffEntry.typeOfChange);
-        // Not needed for now
-        // component.setActionHandler((e) => {
-        //     e.preventDefault();
-        //     this.fetchAndRenderExplorerView(diffEntry.get('id'));
-        // });
+        component.setActionHandler((e) => {
+            e.preventDefault();
+            this.fetchAndRenderDiffView(diffEntry.get('filename'));
+        });
         // If the code list is not new or removed, then we will need to check for changes inside the code list file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
+            // We will need to open the files and check for changes.
+            // We will do that in the background
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.get('filename'))));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -128,28 +141,24 @@ export class CodelistsTab extends TabController {
      async #checkForChanges(filename) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getUrlCodeListsAndVersion(filename, appState.mainVersion);
-            let baseUrl = this.#getUrlCodeListsAndVersion(filename, appState.baseVersion);
+            let mainUrl = this.#getCodelistUrlForVersion(filename, appState.mainVersion);
+            let baseUrl = this.#getCodelistUrlForVersion(filename, appState.baseVersion);
             let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
             let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
-            let versionRegex = /<Version>(.*?)<\/Version>/;
+            let versionRegex = /<Version>(.*?)<\/Version>/; // Remove the global flag to replace only the first match
+
+            // Replace version information in the XML content
+            let mainFileModified = mainFile.replace(versionRegex, '<Version>-</Version>');
+            let baseFileModified = baseFile.replace(versionRegex, '<Version>-</Version>');
+            let commentRegex = /<!--[\s\S]*?-->/g; // Matches all XML comments
+
+            // Remove all XML comments from the content
+            mainFileModified = mainFileModified.replace(commentRegex, '');
+            baseFileModified = baseFileModified.replace(commentRegex, '');
             
-            // Extract version information from the XML content
-            let mainVersionMatch = mainFile.match(versionRegex);
-            let baseVersionMatch = baseFile.match(versionRegex);
-    
-            // If version tag is not found, return null to indicate an error or unknown state
-            if (!mainVersionMatch || !baseVersionMatch) {
-                console.error(`Version tag not found in one of the files for ${filename}.json`);
-                return null;
-            }
-    
-            let mainVersion = mainVersionMatch[1];
-            let baseVersion = baseVersionMatch[1];
-    
-            let nodeChange = mainVersion === baseVersion ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
-            
+            let nodeChange = mainFileModified === baseFileModified ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
             return nodeChange;
         } catch (error) {
             
@@ -162,7 +171,62 @@ export class CodelistsTab extends TabController {
     }
     
 
-    #getUrlCodeListsAndVersion(filename, sdkVersion) {
+    #getCodelistUrlForVersion(filename, sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/codelists/${filename}`;
     }
+
+    // #endregion Overview display
+
+
+    // #region Diff display -----------------------------------------------
+
+        /**
+     * Fetches both versions of notice type definition JSON files for the specified notice subtype and renders the explorer view.
+     * 
+     * @param {string} filename 
+     */
+        async fetchAndRenderDiffView(filename) {
+            SdkExplorerApplication.startSpinner();
+            try {
+    
+                const [mainData, baseData] = await Promise.all([
+                    this.#fetchCodelist(filename, appState.mainVersion),
+                    this.#fetchCodelist(filename, appState.baseVersion)
+                ]);
+                Diff.injectTextDiff(mainData, baseData, 'code-list-diff', `${filename}`);
+                this.#switchToDiffView();
+    
+            } finally {
+                SdkExplorerApplication.stopSpinner();
+            }
+        }
+
+        /**
+         * Fetches the codelist GC file for the specified id and SDK version.
+         * 
+         * @param {string} filename 
+         * @param {string} sdkVersion
+         *  
+         * @returns 
+         */
+        async #fetchCodelist(filename, sdkVersion) {
+            const url = this.#getCodelistUrlForVersion(filename, sdkVersion);
+            try {
+                const response = await $.ajax({ url, dataType: 'text' });
+                return response;
+            } catch (error) {
+                console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
+                throw error;
+            }
+        }
+    /**
+     * Shows the tree/detail explorer for the notice type.
+     */
+    #switchToDiffView() {
+        $('#code-lists-overview').hide();
+        $('#code-lists-diff-view').show();
+    }
+
+    // #endregion Diff display
+
 }

@@ -11,6 +11,11 @@
     --dark-background-color: #EEEEEE;
     --light-background-color: #f8f9fa;
     --border-color: #ddd;
+    /* diff2html color overrides */
+    --d2h-ins-highlight-bg-color: var(--added-item-highlight) !important;
+    --d2h-del-highlight-bg-color: var(--removed-item-highlight) !important;
+    --d2h-ins-bg-color: var(--added-item-background-color) !important;
+    --d2h-del-bg-color: var(--removed-item-background-color) !important
 }
 
 
@@ -179,3 +184,21 @@ body > footer {
     margin-left: -20px;
     font-size: 90%;
 }
+
+.tab-pane {
+    height: 100%;
+}
+
+/* diff2html style overrides */
+
+.d2h-code-side-linenumber {
+    position: relative !important;
+    display: table-cell !important;
+  }
+  .d2h-code-side-line {
+    padding: 0 0.5em !important;
+  }
+
+  .d2h-file-list-wrapper {
+    display: none !important;
+  }

@@ -141,6 +141,30 @@ export class Diff {
             yield entry;
         }
     }
+
+    /**
+     * Uses JsDiff to create a diff between two strings. 
+     * It then uses Diff2Html to render the  patch as HTML.
+     * Finally, ti injects the generated HTML in the specified container element.
+     * 
+     * @param {string} text1 
+     * @param {string} text2 
+     * @param {string} containerElementId 
+     * @param {string} filename Just used as a title to indicate which file's versions are being compared.
+     */
+    static injectTextDiff(text1, text2, containerElementId, filename ='') {
+
+        const patch = window.Diff.createPatch(filename, text1, text2);
+
+        // Create a new Diff2Html instance
+        const diff = Diff2Html.html(patch,{
+            drawFileList: true,
+            matching: 'lines',
+            outputFormat: 'side-by-side',
+          });
+
+        document.getElementById(containerElementId).innerHTML = diff;
+    }
 }
 
 /**
