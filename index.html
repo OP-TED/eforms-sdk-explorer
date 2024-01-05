@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
     <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.0.0/diff.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>    
     <script defer type="module" src="./src/js/script.js"></script>
 </head>
 
@@ -130,7 +133,7 @@
                     <!-- Breadcrumbs -->
                     <nav aria-label="breadcrumb" class="flex-shrink-0">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#" id="overview-link">Overview</a></li>
+                            <li class="breadcrumb-item"><a href="#" id="notice-types-overview-link">Overview</a></li>
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
@@ -181,6 +184,23 @@
                 </nav>
                 <div id="view-templates-overview-card-group" class="card-group"></div>
             </div>
+
+            <!-- View-template diff -->
+            <div id="view-templates-diff-view" class="container-fluid d-flex flex-column h-100">
+        
+                <!-- Breadcrumbs -->
+                <nav aria-label="breadcrumb" class="flex-shrink-0">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#" id="view-templates-overview-link">Overview</a></li>
+                        <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                    </ol>
+                </nav>
+        
+                <!-- Content -->
+                <div id="view-template-diff"  class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></div>
+        
+            </div> <!-- End of View-template diff -->
+        
         </div>
 
         <!-- Release notes -->

@@ -11,9 +11,24 @@ export class ViewTemplatesTab extends TabController {
         super('view-templates-tab');
     }
 
+    /**
+     * Overridden to hook up event handlers.
+     */
+    init() {
+        super.init();
+
+        // Handle clicks on the "Overview" link to return to the Overview display.
+        $('#view-templates-overview-link').on('click', async (e) => {
+            await this.fetchAndRenderOverview();
+        });
+    }
+
     async fetchAndRender() {
+        // Render the overview display by default
         this.fetchAndRenderOverview();
     }
+
+    // #region Overview display -----------------------------------------------
 
     /**
      * Fetches view-templates.json index files for both versions and renders the overview display.
@@ -24,8 +39,8 @@ export class ViewTemplatesTab extends TabController {
 
             // Get view-templates.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetch1viewTemplateIndexFile(appState.mainVersion),
-                this.#fetch1viewTemplateIndexFile(appState.baseVersion)
+                this.#fetchIndexFile(appState.mainVersion),
+                this.#fetchIndexFile(appState.baseVersion)
             ]);
             // Compare the two index files
             const diff = Diff.fromArrayComparison(mainVersionData.viewTemplates, baseVersionData.viewTemplates, 'id');
@@ -52,8 +67,8 @@ export class ViewTemplatesTab extends TabController {
     /**
  * Fetches the view-templates.json index file for the specified SDK version.
  */
-    async #fetch1viewTemplateIndexFile(sdkVersion) {
-        const url = this.#getViewTemplatesIndexFileUrl(sdkVersion);
+    async #fetchIndexFile(sdkVersion) {
+        const url = this.#getIndexFileUrl(sdkVersion);
         try {
             const response = await $.ajax({ url, dataType: 'json' });
             return response;
@@ -64,7 +79,7 @@ export class ViewTemplatesTab extends TabController {
     }
 
 
-    #getViewTemplatesIndexFileUrl(sdkVersion) {
+    #getIndexFileUrl(sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/view-templates.json`;
     }
 
@@ -75,22 +90,24 @@ export class ViewTemplatesTab extends TabController {
     }
 
     /**
-    * Creates an index-card for the specified view templates.
+    * Creates an index-card for the specified view template.
     * 
     * @param {DiffEntry} diffEntry 
     * @returns 
     */
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
-        // Not needed for now
-        // component.setActionHandler((e) => {
-        //     e.preventDefault();
-        //     this.fetchAndRenderExplorerView(diffEntry.get('id'));
-        // });
-        // If the view templates is not new or removed, then we will need to check for changes inside the view templates file.
+  
+        component.setActionHandler((e) => {
+            e.preventDefault();
+            this.fetchAndRenderDiffView(diffEntry.get('id'));
+        });
+        // If the view template is not new or removed, then we will need to check for changes inside the view template file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
+            // We will need to open the files and check for changes.
+            // We will do that in the background
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.id)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -115,18 +132,18 @@ export class ViewTemplatesTab extends TabController {
     }
 
     /**
-    * Checks for changes in the view templates file.
+    * Checks for changes in the view template file.
     * It will ignore the values of certain properties that are expected to change between versions: 
     * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
     * 
-    * @param {string} filename The view templates file to check for changes
+    * @param {string} id The view template file to check for changes
     * @returns {Promise<Diff.TypeOfChange>} The type of change detected
     */
-    async #checkForChanges(filename) {
+    async #checkForChanges(id) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getUrlViewTemplatesListsAndVersion(filename, appState.mainVersion);
-            let baseUrl = this.#getUrlViewTemplatesListsAndVersion(filename, appState.baseVersion);
+            let mainUrl = this.#getUrlViewTemplateIdAndVersion(id, appState.mainVersion);
+            let baseUrl = this.#getUrlViewTemplateIdAndVersion(id, appState.baseVersion);
             let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
             let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
@@ -138,7 +155,7 @@ export class ViewTemplatesTab extends TabController {
             return nodeChange;
         } catch (error) {
 
-            console.error(`Error processing files for ${filename}.json:`, error);
+            console.error(`Error processing files for ${id}.efx:`, error);
             return null;
         }
         finally {
@@ -146,7 +163,69 @@ export class ViewTemplatesTab extends TabController {
         }
     }
 
-    #getUrlViewTemplatesListsAndVersion(filename, sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${filename}`;
+    #getUrlViewTemplateIdAndVersion(id, sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${id}.efx`;
     }
+
+
+    // #endregion Overview display
+
+
+    // #region Diff display -----------------------------------------------
+
+    /**
+     * Fetches both versions of notice type definition JSON files for the specified notice subtype and renders the explorer view.
+     * 
+     * @param {string} id 
+     */
+    async fetchAndRenderDiffView(id) {
+        SdkExplorerApplication.startSpinner();
+        try {
+
+            const [mainData, baseData] = await Promise.all([
+                this.#fetchViewTemplate(id, appState.mainVersion),
+                this.#fetchViewTemplate(id, appState.baseVersion)
+            ]);
+            Diff.injectTextDiff(mainData, baseData, 'view-template-diff', `${id}.efx`);
+            this.#switchToDiffView();
+
+        } finally {
+            SdkExplorerApplication.stopSpinner();
+        }
+    }
+
+    /**
+     * Fetches the view template EFX file for the specified id and SDK version.
+     * 
+     * @param {string} id 
+     * @param {string} sdkVersion
+     *  
+     * @returns 
+     */
+    async #fetchViewTemplate(id, sdkVersion) {
+        const url = this.#getUrlByViewTemplateIdAndVersion(id, sdkVersion);
+        try {
+            const response = await $.ajax({ url, dataType: 'text' });
+            return response;
+        } catch (error) {
+            console.error(`Error fetching view template "${id}.efx" for SDK ${sdkVersion}:  `, error);
+            throw error;
+        }
+    }
+
+    
+    /**
+     * Shows the tree/detail explorer for the notice type.
+     */
+    #switchToDiffView() {
+        $('#view-templates-overview').hide();
+        $('#view-templates-overview-view').show();
+    }
+
+    #getUrlByViewTemplateIdAndVersion(id, sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${id}.efx`;
+    }
+    
+    // #endregion Diff display
+
 }

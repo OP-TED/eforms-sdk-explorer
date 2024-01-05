@@ -20,7 +20,7 @@ export class NoticeTypesTab extends TabController {
         super.init();
 
         // Handle clicks on the "Overview" link to return to the Overview display.
-        $('#overview-link').on('click', async (e) => {
+        $('#notice-types-overview-link').on('click', async (e) => {
             await this.fetchAndRenderOverview();
         });
     }
@@ -41,8 +41,8 @@ export class NoticeTypesTab extends TabController {
 
             // Get notice-types.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchNoticeTypesIndexFile(appState.mainVersion),
-                this.#fetchNoticeTypesIndexFile(appState.baseVersion)
+                this.#fetchIndexFile(appState.mainVersion),
+                this.#fetchIndexFile(appState.baseVersion)
             ]);
 
             // Compare the two index files
@@ -71,8 +71,8 @@ export class NoticeTypesTab extends TabController {
     /**
      * Fetches the notice-types.json index file for the specified SDK version.
      */
-    async #fetchNoticeTypesIndexFile(sdkVersion) {
-        const url = this.#getNoticeTypesIndexFileUrl(sdkVersion);
+    async #fetchIndexFile(sdkVersion) {
+        const url = this.#getIndexFileUrl(sdkVersion);
         try {
             const response = await $.ajax({ url, dataType: 'json' });
             return response;
@@ -169,7 +169,7 @@ export class NoticeTypesTab extends TabController {
         }   
     }
 
-    #getNoticeTypesIndexFileUrl(sdkVersion) {
+    #getIndexFileUrl(sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/notice-types/notice-types.json`;
     }
 
