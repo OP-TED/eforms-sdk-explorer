@@ -266,6 +266,11 @@
         .unchanged-card {
             background-color: var(--unchanged-item-background-color);
             color: black;
+            animation: none;
+        }
+
+        :host(.unchanged-card) {
+            display: var(--compact-view-unchanged-display, block);
         }
 
         .card {
@@ -274,7 +279,7 @@
 
         .card-header {
             animation: fadeToWhite 1s infinite;
-            border-bottom-width: 5px;
+            /* border-bottom-width: 5px; */
         }
 
         .card-header.added-card,
@@ -549,6 +554,15 @@
             margin: 10px;
         }
     </style>
-    <div id="cards-container" class="card-group"></div>
-</template>
+    <div class="col d-flex flex-column h-100 overflow-x-hidden">
+        <header class="d-flex flex-shrink-0 font-weight-bold">
+            <div style="flex: 1; align-self: self-end;"></div>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+            </div>
+        </header>
+        <div id="cards-container" class="card-group"></div>
+    </div>
+    </template>
 </html>

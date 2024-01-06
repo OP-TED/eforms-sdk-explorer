@@ -51,6 +51,17 @@ export class CardGroup extends BootstrapWebComponent {
     render() {
         super.render();
 
+        // Listen for changes in the compact view switch
+        this.shadowRoot.querySelector('#compactViewSwitch').addEventListener('change', function (event) {
+            if (event.target.checked) {
+                this.style.setProperty('--compact-view-warning-display', 'block');
+                this.style.setProperty('--compact-view-unchanged-display', 'none');
+            } else {
+                this.style.setProperty('--compact-view-warning-display', 'none');
+                this.style.setProperty('--compact-view-unchanged-display', 'block');
+            }
+        }.bind(this));
+
         this.indexCards.forEach(indexCard => this.#renderCard(indexCard));
     }
 
