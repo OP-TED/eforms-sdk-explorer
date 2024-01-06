@@ -6,6 +6,7 @@ import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
 import { SdkExplorerApplication } from "./app.js";
 import { TreeDetailSplitView } from "./tree-detail-split-view.js";
+import { CardGroup } from "./card-group.js";
 
 export class NoticeTypesTab extends TabController {
 
@@ -33,6 +34,14 @@ export class NoticeTypesTab extends TabController {
     // #region Overview display -----------------------------------------------
 
     /**
+     * 
+     * @returns {CardGroup}
+     */
+    #cardGroup() {
+        return document.getElementById('notice-types-overview-card-group');
+    }
+
+    /**
      * Fetches the notice-types.json index files for both versions and renders the overview display.
      */
     async fetchAndRenderOverview() {    
@@ -49,13 +58,13 @@ export class NoticeTypesTab extends TabController {
             const diff = Diff.fromArrayComparison(mainVersionData.noticeSubTypes, baseVersionData.noticeSubTypes, 'subTypeId');
 
             // Clear existing index-cards.
-            $('#notice-types-overview-card-group').empty();
+            this.#cardGroup().empty();
 
             // Create and add an index-card for each notice type.
             diff.forEach(entry => {
                 setTimeout(() => {
                     const card = this.#createIndexCard(entry);
-                    $('#notice-types-overview-card-group').append(card);
+                    this.#cardGroup().appendCard(card);
                 }, 0);
             });
 

@@ -5,7 +5,7 @@ import { TabController } from "./tab-controller.js";
 import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
 import { SdkExplorerApplication } from "./app.js";
-
+import { CardGroup } from "./card-group.js";
 export class TranslationsTab extends TabController {
 
     constructor() {
@@ -16,6 +16,15 @@ export class TranslationsTab extends TabController {
         this.fetchAndRenderOverview();
     }
 
+
+    /**
+     * 
+     * @returns {CardGroup}
+     */
+    #cardGroup() {
+        return document.getElementById('translations-overview-card-group');
+    }
+    
     /**
      * Fetches translations.json index files for both versions and renders the overview display.
      */
@@ -32,13 +41,13 @@ export class TranslationsTab extends TabController {
             const diff = Diff.fromArrayComparison(mainVersionData.files, baseVersionData.files, 'filename');
 
             // Clear existing index-cards.
-            $('#translations-overview-card-group').empty();
+            this.#cardGroup().empty();
 
             // Create and add an index-card for each Translations.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
                     const card = this.#createIndexCard(entry);
-                    $('#translations-overview-card-group').append(card);
+                    this.#cardGroup().appendCard(card);
                 }, 0);
             });
             this.#switchToOverview();
