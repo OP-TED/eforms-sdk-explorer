@@ -28,6 +28,7 @@ export class TranslationsTab extends TabController {
                 this.#fetch1TranslationsIndexFile(appState.mainVersion),
                 this.#fetch1TranslationsIndexFile(appState.baseVersion)
             ]);
+
             // Compare the two index files
             const diff = Diff.fromArrayComparison(mainVersionData.files, baseVersionData.files, 'filename');
 
@@ -56,24 +57,67 @@ export class TranslationsTab extends TabController {
     async #fetch1TranslationsIndexFile(sdkVersion) {
         const url = this.#getTranslationsIndexFileUrl(sdkVersion);
         try {
-            const response = await $.ajax({ 
-                url: url, 
-                dataType: 'json', 
-                statusCode: {
-                    404: () => {
-                        console.warn(`translations.json not found for SDK version ${sdkVersion}`);
-                        // Handle the file not found case
-                        return null; // or a default object
-                    }
-                }
+            const response = await $.ajax({
+                url: url,
+                dataType: 'json'
             });
             return response;
         } catch (error) {
+            if (error.status === 404) {
+                console.warn(`translations.json not found for SDK version ${sdkVersion}, fetching filenames from translations folder`);
+                return this.#fetchFilenamesFromTranslationsFolder(sdkVersion);
+            }
             console.error('Error fetching translations.json:', error);
             throw error;
         }
     }
 
+
+    async #fetchFilenamesFromTranslationsFolder(sdkVersion) {
+        const apiUrl = `https://api.github.com/repos/OP-TED/eForms-SDK/contents/translations?ref=${sdkVersion}`;
+        try {
+            const response = await $.ajax({
+                url: apiUrl,
+                headers: { 'Accept': 'application/vnd.github.v3+json' },
+            });
+            return this.#processFilenames(response.map(file => file.name));
+        } catch (error) {
+            console.error('Error fetching filenames from GitHub API:', error);
+            throw error;
+        }
+    }
+
+    async  fetchCountryCodeMappings() {
+        const response = await fetch('./src/assets/eu_countries_three_letter_code_mappings.json');
+        if (!response.ok) {
+            throw new Error('Failed to fetch country codes');
+        }
+        const mappings = await response.json();
+        return mappings;
+    }
+    
+
+    async #processFilenames(filenames) {
+        const euCountriesCodeMappings = await this.fetchCountryCodeMappings();
+            const processedFilenames = filenames.map(filename => {
+            const parts = filename.split('_');
+            const assetType = parts[0];
+            const twoLetterCode = parts[1].split('.')[0];
+            const threeLetterCode = euCountriesCodeMappings[twoLetterCode] || 'unknown';
+    
+            return {
+                assetType: assetType,
+                twoLetterCode: twoLetterCode,
+                threeLetterCode: threeLetterCode,
+                filename: filename
+            };
+        });
+    
+        const resolvedFilenames = await Promise.all(processedFilenames);
+    
+        return { files: resolvedFilenames };
+    }
+    
 
     #getTranslationsIndexFileUrl(sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/translations/translations.json`;
