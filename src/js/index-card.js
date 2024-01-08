@@ -1,4 +1,5 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
+import { PropertyCard } from "./property-card.js";
 
 export class IndexCard extends BootstrapWebComponent {
 
@@ -11,9 +12,17 @@ export class IndexCard extends BootstrapWebComponent {
         return ['title', 'subtitle', 'action-name', 'status'];
     }
 
+    /**
+     * Maintains a list of {@link PropertyCard} instances that are part of the index card.
+     * The data is stored in a Map so that it can be accessed by property name so that we 
+     * can later retrieve the values of specific properties.
+     *  
+     * @type {Map<string, PropertyCard>} 
+     */
+    propertyCards = new Map();
+
     constructor() {
         super('index-card-template');
-        this.propertyCards = [];
         this.actionHandler = null;
     }
 
@@ -52,17 +61,23 @@ export class IndexCard extends BootstrapWebComponent {
         }
     }
 
+    #propertyListContainer() {
+        return this.shadowRoot.querySelector('#property-list');
+    }
+
+
     render() {
         super.render();
     
-        const propertyList = this.shadowRoot.querySelector('#property-list');
-        this.propertyCards.forEach(propertyCard => propertyList.append(propertyCard));
+        this.propertyCards.forEach((propertyCard, key) => this.#propertyListContainer().append(propertyCard));
     
         this.shadowRoot.querySelector('#title').textContent = this.title;
         this.shadowRoot.querySelector('#subtitle').textContent = this.subTitle;
         this.shadowRoot.querySelector('#card-header').classList.add(this.status + '-card');
-        this.classList.add(this.status + '-card');
-    
+        if (this.status) {
+            this.classList.add(this.status + '-card');
+        }
+
         // Retrieve or create the button element
         let button = this.shadowRoot.querySelector('#action-button');
         if (!button) {
@@ -108,13 +123,41 @@ export class IndexCard extends BootstrapWebComponent {
         this.getStatusCallback = statusCheckCallback;
     }
 
+    /**
+     * Returns the value of the specified property.
+     * 
+     * @param {string} propertyName 
+     * @returns 
+     */
+    getPropertyValue(propertyName)  {
+        const propertyCard = this.propertyCards.get(propertyName);
+        if (propertyCard) {
+            return propertyCard.getPropertyValue();
+        }
+        return undefined;
+    }
+
+    /**
+     * Adds a {@link PropertyCard} to the index card.
+     * 
+     * @param {PropertyCard} propertyCard 
+     */
     appendProperty(propertyCard) {
-        this.propertyCards.push(propertyCard);
+        this.propertyCards.set(propertyCard.getPropertyName(), propertyCard);
         if (this.isConnected) {
-            this.render();
+            this.#propertyListContainer().append(propertyCard);
         }
     }
 
+    /**
+     * Creates a new index card.
+     * 
+     * @param {string} title 
+     * @param {string} subTitle 
+     * @param {string} actionName 
+     * @param {string} status 
+     * @returns {IndexCard}
+     */
     static create(title, subTitle, actionName, status = undefined) {
         const component = document.createElement('index-card');
         component.setAttribute('title', title);

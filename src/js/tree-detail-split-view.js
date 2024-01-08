@@ -46,7 +46,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
                 this.style.setProperty('--compact-view-unchanged-display', 'none');
             } else {
                 this.style.setProperty('--compact-view-warning-display', 'none');
-                this.style.setProperty('--compact-view-unchanged-display', 'flex');
+                this.style.removeProperty('--compact-view-unchanged-display');
             }
         }.bind(this));
     

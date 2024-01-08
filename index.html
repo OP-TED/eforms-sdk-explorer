@@ -124,7 +124,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="notice-types-overview-card-group"></card-group>
+                    <card-group id="notice-types-overview-card-group" filter-property="formType"></card-group>
                 </div>
 
                 <!-- Notice-type Explorer -->
@@ -156,7 +156,7 @@
                         <li class="breadcrumb-item" aria-current="page">Overview</li>
                     </ol>
                 </nav>
-                <card-group id="code-lists-overview-card-group"></card-group>
+                <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
             </div>
 
             <!-- Codelist  diff -->
@@ -191,7 +191,7 @@
                         <li class="breadcrumb-item" aria-current="page">Overview</li>
                     </ol>
                 </nav>
-                <card-group id="translations-overview-card-group"></card-group>
+                <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
             </div>
         </div>
 
@@ -539,6 +539,10 @@
 <!-- Card-group template - used by card-group.js -->
 <template id="card-group-template">
     <style>
+        :root {
+            --filter-all: block;
+        }
+
         .card-group {
             height: calc(100vh - 290px);
             overflow-y: auto;
@@ -547,22 +551,46 @@
             padding: 15px;
             display: flex;
             flex-wrap: wrap;
+            align-content: flex-start;
         }
 
         .card-group index-card {
             flex: 1 0 300px;
             margin: 10px;
         }
+
+        .nav-link {
+            padding: .3rem;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+        }
     </style>
-    <div class="col d-flex flex-column h-100 overflow-x-hidden">
-        <header class="d-flex flex-shrink-0 font-weight-bold">
-            <div style="flex: 1; align-self: self-end;"></div>
+    <div class="col h-100 overflow-x-hidden" style="height: 100%;">
+        <header class="d-flex flex-shrink-0 font-weight-normal" style="align-items: center;">
+            <div style="flex:1;"></div>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
                 <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
             </div>
         </header>
-        <div id="cards-container" class="card-group"></div>
+        <div class="row flex-grow-1" style="height: 100%;">
+            <div id="nav" class="col-auto" style="height: 100%; overflow-y: auto;">
+                <label id="filter-property-name">xxx</label>
+                <ul id="filter-options" class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="this.getRootNode().host.selectAll(this)" href="#">(all)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="this.getRootNode().host.selectBlank(this)" href="#">(blank)</a>
+                    </li>
+                    <li class="nav-item">
+                </ul>
+            </div>
+            <div id="cards-container" class="col card-group"></div>
+        </div>
     </div>
-    </template>
+</template>
+
 </html>
