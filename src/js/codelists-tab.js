@@ -11,6 +11,7 @@ export class CodelistsTab extends TabController {
     constructor() {
         super('codelists-tab');
     }
+
     /**
      * Overridden to hook up event handlers.
      */
@@ -189,8 +190,8 @@ export class CodelistsTab extends TabController {
 
     // #region Diff display -----------------------------------------------
 
-        /**
-     * Fetches both versions of notice type definition JSON files for the specified notice subtype and renders the explorer view.
+    /**
+     * Fetches both versions of codelist files and renders the diff view.
      * 
      * @param {string} filename 
      */
