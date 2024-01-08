@@ -30,6 +30,15 @@ export class CodelistsTab extends TabController {
 
     // #region Overview display -----------------------------------------------
 
+
+    /**
+     * 
+     * @returns {CardGroup}
+     */
+    #cardGroup() {
+        return document.getElementById('code-lists-overview-card-group');
+    }
+
     /**
      * Fetches the codelists.json index files for both versions and renders the overview display.
      */
@@ -46,13 +55,13 @@ export class CodelistsTab extends TabController {
             const diff = Diff.fromArrayComparison(mainVersionData.codelists, baseVersionData.codelists, 'id');
 
             // Clear existing index-cards.
-            $('#code-lists-overview-card-group').empty();
+            this.#cardGroup().empty();
 
             // Create and add an index-card for each codelist.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
                     const card = this.#createIndexCard(entry);
-                    $('#code-lists-overview-card-group').append(card);
+                    this.#cardGroup().appendCard(card);
                 }, 0);
             });
              this.#switchToOverview();
