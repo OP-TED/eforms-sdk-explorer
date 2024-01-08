@@ -6,8 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="./src/assets/style.css">
@@ -124,7 +124,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <div id="notice-types-overview-card-group" class="card-group"></div>
+                    <card-group id="notice-types-overview-card-group" filter-property="formType"></card-group>
                 </div>
 
                 <!-- Notice-type Explorer -->
@@ -156,7 +156,7 @@
                         <li class="breadcrumb-item" aria-current="page">Overview</li>
                     </ol>
                 </nav>
-                <div id="code-lists-overview-card-group" class="card-group"></div>
+                <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
             </div>
 
             <!-- Codelist  diff -->
@@ -191,7 +191,7 @@
                         <li class="breadcrumb-item" aria-current="page">Overview</li>
                     </ol>
                 </nav>
-                <div id="translations-overview-card-group" class="card-group"></div>
+                <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
             </div>
         </div>
 
@@ -204,7 +204,7 @@
                         <li class="breadcrumb-item" aria-current="page">Overview</li>
                     </ol>
                 </nav>
-                <div id="view-templates-overview-card-group" class="card-group"></div>
+                <card-group id="view-templates-overview-card-group"></card-group>
             </div>
 
             <!-- View-template diff -->
@@ -245,16 +245,6 @@
     </footer>
 </body>
 
-<!-- Tree Panel Template -->
-<template>
-
-</template>
-
-<!-- Details Panel template -->
-<template>
-
-</template>
-
 <!-- Index Card Template - used by idex-card.js -->
 <template id="index-card-template">
     <style>
@@ -276,6 +266,11 @@
         .unchanged-card {
             background-color: var(--unchanged-item-background-color);
             color: black;
+            animation: none;
+        }
+
+        :host(.unchanged-card) {
+            display: var(--compact-view-unchanged-display, block);
         }
 
         .card {
@@ -284,7 +279,7 @@
 
         .card-header {
             animation: fadeToWhite 1s infinite;
-            border-bottom-width: 5px;
+            /* border-bottom-width: 5px; */
         }
 
         .card-header.added-card,
@@ -403,6 +398,7 @@
     </li>
 </template>
 
+<!-- Tree/Detail split-view template - used by tree-detail-split-view-.js -->
 <template id="tree-detail-split-view-template">
     <style>
         .tree-container {
@@ -536,6 +532,63 @@
                     <div class="alert alert-warning" role="alert">Unchanged properties are hidden in compact view.</div>
                 </div>
             </div>
+        </div>
+    </div>
+</template>
+
+<!-- Card-group template - used by card-group.js -->
+<template id="card-group-template">
+    <style>
+        :root {
+            --filter-all: block;
+        }
+
+        .card-group {
+            height: calc(100vh - 290px);
+            overflow-y: auto;
+            background-color: var(--light-background-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        .card-group index-card {
+            flex: 1 0 300px;
+            margin: 10px;
+        }
+
+        .nav-link {
+            padding: .3rem;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+        }
+    </style>
+    <div class="col h-100 overflow-x-hidden" style="height: 100%;">
+        <header class="d-flex flex-shrink-0 font-weight-normal" style="align-items: center;">
+            <div style="flex:1;"></div>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+            </div>
+        </header>
+        <div class="row flex-grow-1" style="height: 100%;">
+            <div id="nav" class="col-auto" style="height: 100%; overflow-y: auto;">
+                <label id="filter-property-name">xxx</label>
+                <ul id="filter-options" class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="this.getRootNode().host.selectAll(this)" href="#">(all)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="this.getRootNode().host.selectBlank(this)" href="#">(blank)</a>
+                    </li>
+                    <li class="nav-item">
+                </ul>
+            </div>
+            <div id="cards-container" class="col card-group"></div>
         </div>
     </div>
 </template>

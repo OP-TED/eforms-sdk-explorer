@@ -5,6 +5,7 @@ import { TabController } from "./tab-controller.js";
 import { PropertyCard } from "./property-card.js";
 import { IndexCard } from "./index-card.js";
 import { SdkExplorerApplication } from "./app.js";
+import { CardGroup } from "./card-group.js";
 export class ViewTemplatesTab extends TabController {
 
     constructor() {
@@ -31,6 +32,14 @@ export class ViewTemplatesTab extends TabController {
     // #region Overview display -----------------------------------------------
 
     /**
+     * 
+     * @returns {CardGroup}
+     */
+    #cardGroup() {
+        return document.getElementById('view-templates-overview-card-group');
+    }
+
+    /**
      * Fetches view-templates.json index files for both versions and renders the overview display.
      */
     async fetchAndRenderOverview() {
@@ -46,13 +55,13 @@ export class ViewTemplatesTab extends TabController {
             const diff = Diff.fromArrayComparison(mainVersionData.viewTemplates, baseVersionData.viewTemplates, 'id');
 
             // Clear existing index-cards.
-            $('#view-templates-overview-card-group').empty();
+            this.#cardGroup().empty();
 
             // Create and add an index-card for each view templates.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
                     const card = this.#createIndexCard(entry);
-                    $('#view-templates-overview-card-group').append(card);
+                    this.#cardGroup().appendCard(card);
                 }, 0);
             });
             this.#switchToOverview();

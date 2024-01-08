@@ -1,4 +1,5 @@
 import { BootstrapWebComponent } from './bootstrap-web-component.js';
+import { Diff } from './diff.js';
 
 export class PropertyCard extends BootstrapWebComponent {
 
@@ -28,6 +29,29 @@ export class PropertyCard extends BootstrapWebComponent {
         }
     }
 
+    getPropertyName() {
+        return this.propertyName;
+    }
+
+    getPropertyValue() {
+        if (this.getTypeOfChange() === Diff.TypeOfChange.REMOVED) {
+            return this.getOldPropertyValue();
+        }
+        return this.getNewPropertyValue();
+    }
+
+    getNewPropertyValue() {
+        return this.newPropertyValue;
+    }
+
+    getOldPropertyValue() {
+        return this.oldPropertyValue;
+    }
+
+    getTypeOfChange() {
+        return this.nodeChange;
+    }
+
     render() {
         super.render();
 
@@ -51,9 +75,16 @@ export class PropertyCard extends BootstrapWebComponent {
         }    
     }
 
+    /**
+     * 
+     * @param {*} propertyName 
+     * @param {*} currentValue 
+     * @param {*} previousValue 
+     * @returns {PropertyCard}
+     */
     static create(propertyName, currentValue, previousValue) {
         const component = document.createElement('property-card');
-        component.setAttribute('property-name', propertyName + ': ');
+        component.setAttribute('property-name', propertyName);
         component.setAttribute('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
         component.setAttribute('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
     

@@ -160,21 +160,6 @@ body > footer {
     color: black;
 }
 
-.card-group {
-    height: calc(100vh - 290px);
-    overflow-y: auto;
-    background-color: var(--light-background-color);
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.card-group index-card {
-    flex: 1 0 300px;
-    margin: 10px;
-}
-
 .popover-body code {
     font-size: 100%;
     color: blue !important;
