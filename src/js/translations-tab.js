@@ -95,7 +95,7 @@ export class TranslationsTab extends TabController {
 
 
     async #fetchFilenamesFromTranslationsFolder(sdkVersion) {
-        const apiUrl = `https://api.github.com/repos/OP-TED/eForms-SDK/contents/translations?ref=${sdkVersion}`;
+        const apiUrl = `${appConfig.contentsFileUrl}/translations?ref=${sdkVersion}`;
         try {
             const response = await $.ajax({
                 url: apiUrl,

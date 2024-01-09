@@ -177,9 +177,16 @@
         </div>
 
         <!-- Schemas -->
-        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
-            <p>TODO: Provide an overview of changed XSDs and link to GitHub compare page for detailed comparison.
-            </p>
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="schemas-tab">
+            <!-- schemas overview -->
+            <div id="schemas-overview" class="container-fluid h-100 mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#" id="schemas-overview-link">Overview</a></li>
+                     </ol>
+                </nav>
+                <card-group id="schemas-overview-card-group" filter-property="parentId"></card-group>
+            </div>
         </div>
 
         <!-- Translations -->
