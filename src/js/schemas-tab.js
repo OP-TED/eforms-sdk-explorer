@@ -48,8 +48,8 @@ export class SchemasTab extends TabController {
         try {
 
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchFilenamesFromSchemasFolder(appState.mainVersion),
-                this.#fetchFilenamesFromSchemasFolder(appState.baseVersion)
+                this.#fetchTranslationsIndexFile(appState.mainVersion),
+                this.#fetchTranslationsIndexFile(appState.baseVersion)
             ]);
             const diff = Diff.fromArrayComparison(mainVersionData, baseVersionData, 'filename');
 
@@ -74,6 +74,32 @@ export class SchemasTab extends TabController {
 
     #switchToOverview() {
         $('#schemas-overview').show();
+    }
+
+      /**
+     * Fetches the schema.json index file for the specified SDK version.
+     */
+      async #fetchTranslationsIndexFile(sdkVersion) {
+        const url = this.#getSchemasIndexFileUrl(sdkVersion);
+        try {
+            const response = await this.ajaxRequest({ 
+                url: url, 
+                dataType: 'json'
+            });
+            return response;
+        } catch (error) {
+            if (error.status === 404) {
+                console.warn(`schema.json not found for SDK version ${sdkVersion}, fetching filenames from schema folder`);
+                return this.#fetchFilenamesFromSchemasFolder(sdkVersion);
+            }
+            console.error('Error fetching schema.json:', error);
+            throw error;
+        }
+    }
+
+
+    #getSchemasIndexFileUrl(sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/schemas.json`;
     }
 
     async #fetchFilenamesFromSchemasFolder(sdkVersion) {
