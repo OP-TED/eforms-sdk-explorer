@@ -78,7 +78,6 @@ export class SchemasTab extends TabController {
 
     async #fetchFilenamesFromSchemasFolder(sdkVersion) {
         const apiUrl = `${appConfig.contentsFileUrl}/schemas?ref=${sdkVersion}`;
-        debugger
         try {
             const directoryStructure = await this.#fetchGithubDirectory(apiUrl, '');
             const directoryStructureConst = Object.assign({}, directoryStructure);
@@ -138,7 +137,10 @@ export class SchemasTab extends TabController {
   */
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
-
+        component.setActionHandler((e) => {
+            e.preventDefault();
+            this.fetchAndRenderDiffView(diffEntry.get('file'));
+        });
         // If the Schemas is not new or removed, then we will need to check for changes inside the Schemas file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
@@ -194,4 +196,54 @@ export class SchemasTab extends TabController {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/${filename}`;
     }
 
+    
+    /**
+     * Fetches both versions of label files and renders the diff view.
+     * 
+     * @param {string} filename 
+     */
+    async fetchAndRenderDiffView(filename) {
+        SdkExplorerApplication.startSpinner();
+        try {
+            
+            const [mainData, baseData] = await Promise.all([
+                this.#fetchLabels(filename, appState.mainVersion),
+                this.#fetchLabels(filename, appState.baseVersion)
+            ]);
+            
+            Diff.injectTextDiff(mainData, baseData, 'schemas-diff', `${filename}`);
+            this.#switchToDiffView();
+
+        } finally {
+            SdkExplorerApplication.stopSpinner();
+        }
+    }
+        /**
+         * Fetches the labels XML file for the specified SDK version.
+         * 
+         * @param {string} filename 
+         * @param {string} sdkVersion
+         *  
+         * @returns 
+         */
+            async #fetchLabels(filename, sdkVersion) {
+                const url = this.#getUrSchemasListsAndVersion(filename, sdkVersion);
+                
+                try {
+                    const response = await $.ajax({ url, dataType: 'text' });
+                    return response;
+                } catch (error) {
+                    console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
+                    throw error;
+                }
+            }
+
+    /**
+     * Shows the tree/detail explorer for the notice type.
+     */
+    #switchToDiffView() {
+        $('#schemas-overview').hide();
+        $('#schemas-diff-view').show();
+    }
+    
 }

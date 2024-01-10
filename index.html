@@ -187,6 +187,21 @@
                 </nav>
                 <card-group id="schemas-overview-card-group" filter-property="parentId"></card-group>
             </div>
+
+             <!-- schemas  diff -->
+             <div id="schemas-diff-view" class="container-fluid d-flex flex-column h-100">
+        
+                <!-- Breadcrumbs -->
+                <nav aria-label="breadcrumb" class="flex-shrink-0">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#" id="schemas-overview-link">Overview</a></li>
+                        <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                    </ol>
+                </nav>
+        
+                <!-- Content -->
+                <div id="schemas-diff"  class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></div>
+        
         </div>
 
         <!-- Translations -->
