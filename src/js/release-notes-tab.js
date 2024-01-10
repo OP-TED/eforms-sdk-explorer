@@ -11,8 +11,7 @@ export class ReleaseNotesTab extends TabController {
     async fetchAndRender() {
         const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/CHANGELOG.md`;
         try {
-            const response = await fetch(releaseNotesUrl);
-            const markdownContent = await response.text();
+            const markdownContent = await this.ajaxRequest({ url: releaseNotesUrl, dataType: 'text' });
             this.#displayMarkdownAsHtml(markdownContent);
         } catch (error) {
             console.error('Error fetching release notes:', error);

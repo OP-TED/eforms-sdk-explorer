@@ -577,10 +577,6 @@
 <!-- Card-group template - used by card-group.js -->
 <template id="card-group-template">
     <style>
-        :root {
-            --filter-all: block;
-        }
-
         .card-group {
             height: calc(100vh - 290px);
             overflow-y: auto;
@@ -616,17 +612,9 @@
         <div class="row flex-grow-1" style="height: 100%;">
             <div id="nav" class="col-auto" style="height: 100%; overflow-y: auto;">
                 <label id="filter-property-name">xxx</label>
-                <ul id="filter-options" class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" onclick="this.getRootNode().host.selectAll(this)" href="#">(all)</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" onclick="this.getRootNode().host.selectBlank(this)" href="#">(blank)</a>
-                    </li>
-                    <li class="nav-item">
-                </ul>
+                <ul id="filter-options" class="nav flex-column"></ul>
             </div>
-            <div id="cards-container" class="col card-group"></div>
+            <div id="cards-container" class="col card-group" style="--filter-all: block;"></div>
         </div>
     </div>
 </template>

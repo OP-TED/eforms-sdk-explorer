@@ -15,19 +15,24 @@ export class TranslationsTab extends TabController {
     /**
      * Overridden to hook up event handlers.
      */
-        init() {
-            super.init();
-    
-            // Handle clicks on the "Overview" link to return to the Overview display.
-            $('#translations-overview-link').on('click', async (e) => {
-                await this.fetchAndRenderOverview();
-            });
-        }
+    init() {
+        super.init();
+
+        // Handle clicks on the "Overview" link to return to the Overview display.
+        $('#translations-overview-link').on('click', async (e) => {
+            this.#switchToOverview();
+        });
+    }
 
     async fetchAndRender() {
         this.fetchAndRenderOverview();
     }
 
+    deactivated() {
+        super.deactivated();
+        this.#cardGroup().dispose();
+        this.$diffContainer().empty();
+    }
 
     /**
      * 
@@ -35,6 +40,14 @@ export class TranslationsTab extends TabController {
      */
     #cardGroup() {
         return document.getElementById('translations-overview-card-group');
+    }
+
+    #diffContainer() {
+        return document.getElementById('translations-diff');
+    }
+
+    $diffContainer() {
+        return $(this.#diffContainer());
     }
     
     /**
@@ -46,8 +59,8 @@ export class TranslationsTab extends TabController {
 
             // Get translations.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetch1TranslationsIndexFile(appState.mainVersion),
-                this.#fetch1TranslationsIndexFile(appState.baseVersion)
+                this.#fetchTranslationsIndexFile(appState.mainVersion),
+                this.#fetchTranslationsIndexFile(appState.baseVersion)
             ]);
 
             // Compare the two index files
@@ -59,8 +72,10 @@ export class TranslationsTab extends TabController {
             // Create and add an index-card for each Translations.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
-                    const card = this.#createIndexCard(entry);
-                    this.#cardGroup().appendCard(card);
+                    if (!this.aborting) {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    }
                 }, 0);
             });
             this.#switchToOverview();
@@ -73,13 +88,13 @@ export class TranslationsTab extends TabController {
     }
 
     /**
- * Fetches the translations.json index file for the specified SDK version.
- */
-    async #fetch1TranslationsIndexFile(sdkVersion) {
+     * Fetches the translations.json index file for the specified SDK version.
+     */
+    async #fetchTranslationsIndexFile(sdkVersion) {
         const url = this.#getTranslationsIndexFileUrl(sdkVersion);
         try {
-            const response = await $.ajax({
-                url: url,
+            const response = await this.ajaxRequest({ 
+                url: url, 
                 dataType: 'json'
             });
             return response;
@@ -97,7 +112,7 @@ export class TranslationsTab extends TabController {
     async #fetchFilenamesFromTranslationsFolder(sdkVersion) {
         const apiUrl = `${appConfig.contentsFileUrl}/translations?ref=${sdkVersion}`;
         try {
-            const response = await $.ajax({
+            const response = await this.ajaxRequest({
                 url: apiUrl,
                 headers: { 'Accept': 'application/vnd.github.v3+json' },
             });
@@ -108,24 +123,21 @@ export class TranslationsTab extends TabController {
         }
     }
 
-    async  fetchCountryCodeMappings() {
-        const response = await fetch('./src/assets/eu_countries_three_letter_code_mappings.json');
-        if (!response.ok) {
-            throw new Error('Failed to fetch country codes');
-        }
-        const mappings = await response.json();
-        return mappings;
+    #fetchCountryCodeMappings() {
+        return this.ajaxRequest({ 
+            url: './src/assets/eu_countries_three_letter_code_mappings.json', 
+            dataType: 'json' 
+        });
     }
     
-
     async #processFilenames(filenames) {
-        const euCountriesCodeMappings = await this.fetchCountryCodeMappings();
-            const processedFilenames = filenames.map(filename => {
+        const euCountriesCodeMappings = await this.#fetchCountryCodeMappings();
+        const processedFilenames = filenames.map(filename => {
             const parts = filename.split('_');
             const assetType = parts[0];
             const twoLetterCode = parts[1].split('.')[0];
-            const threeLetterCode = euCountriesCodeMappings[twoLetterCode] || 'unknown';
-    
+            const threeLetterCode = euCountriesCodeMappings[twoLetterCode] || '';
+
             return {
                 assetType: assetType,
                 twoLetterCode: twoLetterCode,
@@ -133,10 +145,7 @@ export class TranslationsTab extends TabController {
                 filename: filename
             };
         });
-    
-        const resolvedFilenames = await Promise.all(processedFilenames);
-    
-        return { files: resolvedFilenames };
+        return { files: processedFilenames };
     }
     
 
@@ -148,6 +157,7 @@ export class TranslationsTab extends TabController {
     #switchToOverview() {
         $('#translations-diff-view').hide();
         $('#translations-overview').show();
+        this.$diffContainer().empty();
     }
 
     /**
@@ -200,15 +210,29 @@ export class TranslationsTab extends TabController {
     async #checkForChanges(filename) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getLabelsUrlForVersion(filename, appState.mainVersion);
-            let baseUrl = this.#getLabelsUrlForVersion(filename, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
-            let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Get the two versions of the file.
+            const mainUrl = this.#getLabelsUrlForVersion(filename, appState.mainVersion);
+            const baseUrl = this.#getLabelsUrlForVersion(filename, appState.baseVersion);
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);         
+
+            // Compare to determine the type of change.
+            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Nullify the two variables holding the file contents to free up memory.
+            mainFile = null;
+            baseFile = null;
+
             return nodeChange;
         } catch (error) {
-
-            console.error(`Error processing files for ${filename}.json:`, error);
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                console.error(`Error processing files for ${filename}.json:`, error);
+            }
             return null;
         }
         finally {
@@ -242,24 +266,18 @@ export class TranslationsTab extends TabController {
             SdkExplorerApplication.stopSpinner();
         }
     }
-        /**
-         * Fetches the labels XML file for the specified SDK version.
-         * 
-         * @param {string} filename 
-         * @param {string} sdkVersion
-         *  
-         * @returns 
-         */
-            async #fetchLabels(filename, sdkVersion) {
-                const url = this.#getLabelsUrlForVersion(filename, sdkVersion);
-                try {
-                    const response = await $.ajax({ url, dataType: 'text' });
-                    return response;
-                } catch (error) {
-                    console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
-                    throw error;
-                }
-            }
+    /**
+     * Fetches the labels XML file for the specified SDK version.
+     * 
+     * @param {string} filename 
+     * @param {string} sdkVersion
+     *  
+     * @returns 
+     */
+    async #fetchLabels(filename, sdkVersion) {
+        const url = this.#getLabelsUrlForVersion(filename, sdkVersion);
+        return this.ajaxRequest({ url, dataType: 'text' });
+    }
 
     /**
      * Shows the tree/detail explorer for the notice type.

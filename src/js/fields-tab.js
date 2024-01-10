@@ -16,11 +16,13 @@ export class FieldsTab extends TabController {
         const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
 
         try {
-            const response1 = await $.ajax({ url: mainVersionUrl, dataType: 'json' });
+            const [response1, response2] = await Promise.all([
+                this.ajaxRequest({ url: mainVersionUrl, dataType: 'json' }),
+                this.ajaxRequest({ url: comparisonVersionUrl, dataType: 'json' })
+            ]);
+
             const mainVersionNodes = response1.xmlStructure;
             const mainVersionFields = response1.fields;
-
-            const response2 = await $.ajax({ url: comparisonVersionUrl, dataType: 'json' });
             const baseVersionNodes = response2.xmlStructure;
             const baseVersionFields = response2.fields;
 

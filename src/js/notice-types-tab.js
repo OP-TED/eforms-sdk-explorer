@@ -22,7 +22,7 @@ export class NoticeTypesTab extends TabController {
 
         // Handle clicks on the "Overview" link to return to the Overview display.
         $('#notice-types-overview-link').on('click', async (e) => {
-            await this.fetchAndRenderOverview();
+            this.#switchToOverview();
         });
     }
 
@@ -31,6 +31,15 @@ export class NoticeTypesTab extends TabController {
         this.fetchAndRenderOverview();
     }
 
+    /**
+     * Overridden to dispose of the card group and diff view.
+     */
+    deactivated() {
+        super.deactivated();
+        this.#cardGroup().dispose();
+        this.#splitView().dispose();
+    }
+    
     // #region Overview display -----------------------------------------------
 
     /**
@@ -63,8 +72,10 @@ export class NoticeTypesTab extends TabController {
             // Create and add an index-card for each notice type.
             diff.forEach(entry => {
                 setTimeout(() => {
-                    const card = this.#createIndexCard(entry);
-                    this.#cardGroup().appendCard(card);
+                    if (!this.aborting) {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    }
                 }, 0);
             });
 
@@ -82,13 +93,7 @@ export class NoticeTypesTab extends TabController {
      */
     async #fetchIndexFile(sdkVersion) {
         const url = this.#getIndexFileUrl(sdkVersion);
-        try {
-            const response = await $.ajax({ url, dataType: 'json' });
-            return response;
-        } catch (error) {
-            console.error('Error fetching notice-types.json:', error);
-            throw error;
-        }
+        return this.ajaxRequest({ url, dataType: 'json' });
     }
 
     #switchToOverview() {
@@ -154,23 +159,37 @@ export class NoticeTypesTab extends TabController {
     async #checkForChanges(noticeSubtypeId) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.mainVersion);
-            let baseUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
-            let propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
+            // Get the notice type files for both versions.
+            const mainUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.mainVersion);
+            const baseUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.baseVersion);
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);
+
+            // Ignore version information when comparing
+            const propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
             for (let property of propertiesToIgnore) {
-                let regex = new RegExp(`(${property} ".*?")`);
+                const regex = new RegExp(`(${property} ".*?")`);
                 mainFile = mainFile.replace(regex, `${property} "-"`);
                 baseFile = baseFile.replace(regex, `${property} "-"`);
             }
 
-            let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+            // Compare to determine the type of change.
+            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Nullify the two variables holding the file contents to free up memory.
+            mainFile = null;
+            baseFile = null;
 
             return nodeChange;
         } catch (error) {
-            console.error(`Error processing files for ${noticeSubtypeId}.json:`, error);
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                console.error(`Error processing files for ${noticeSubtypeId}.json:`, error);
+            }
             return null;
         }
         finally {
@@ -235,13 +254,7 @@ export class NoticeTypesTab extends TabController {
      */
     async #fetchNoticeTypeDefinition(subTypeId, sdkVersion) {
         const url = this.#getUrlByNoticeSubtypeAndVersion(subTypeId, sdkVersion);
-        try {
-            const response = await $.ajax({ url, dataType: 'json' });
-            return response;
-        } catch (error) {
-            console.error(`Error fetching notice type "${subTypeId}.json" for SDK ${sdkVersion}:  `, error);
-            throw error;
-        }
+        return this.ajaxRequest({ url, dataType: 'json' });
     }
 
 
