@@ -15,6 +15,10 @@ export class BootstrapWebComponent extends HTMLElement {
     }
 
     render() {
+        this.#resetShadowDom();
+    }
+
+    #resetShadowDom() {
         const template = document.getElementById(this.templateName);
         const node = document.importNode(template.content, true);
         this.shadowRoot.innerHTML = ''; // Clear the shadow root
@@ -28,5 +32,8 @@ export class BootstrapWebComponent extends HTMLElement {
         });
 
         this.shadowRoot.appendChild(node);
+    }
+
+    dispose() {
     }
 }
