@@ -7,6 +7,15 @@ export class TabController {
     /** @type {string} */
     #id = null;
 
+    /** @type {Array} */
+    #ajaxRequests = [];
+
+    /** @type {Array} */
+    #listeners = [];
+
+    /** @type {boolean} */
+    aborting = false;
+
     /**
      * @returns {string}
      */
@@ -15,7 +24,7 @@ export class TabController {
     }
 
     constructor(tabId) {
-        this.#id = tabId;        
+        this.#id = tabId;
     }
 
     /**
@@ -29,6 +38,7 @@ export class TabController {
      * No need to override this method.
      */
     async activated() {
+        this.aborting = false;
         await this.fetchAndRender();
     }
 
@@ -37,6 +47,9 @@ export class TabController {
      * Override this method to clean up any resources.
      */
     async deactivated() {
+        this.aborting = true;
+        $(this.#id).tab('dispose');
+        this.cancelRequests();
     }
 
     /**
@@ -52,5 +65,34 @@ export class TabController {
      * Throw an exception with the message that you want to display to the user if the operation fails.
      */
     async fetchAndRender() {
+    }
+
+    /**
+     * Make an AJAX request and keep track of it.
+     * @param {Object} options - The options to pass to $.ajax().
+     * @returns {Promise} - A promise that resolves with the AJAX response.
+     */
+    ajaxRequest(options) {
+        const jqXHR = $.ajax(options);
+        this.#ajaxRequests.push(jqXHR);
+
+        // Remove the jqXHR object from the list when the request completes or fails
+        jqXHR.always(() => {
+            this.#ajaxRequests = this.#ajaxRequests.filter(request => request !== jqXHR);
+        });
+
+        return jqXHR;
+    }
+
+    /**
+     * Cancel all ongoing AJAX requests.
+     */
+    cancelRequests() {
+        this.#ajaxRequests.forEach(jqXHR => {
+            if (jqXHR) {
+                jqXHR.abort();
+            }
+        });
+        this.#ajaxRequests = [];
     }
 }

@@ -20,13 +20,22 @@ export class ViewTemplatesTab extends TabController {
 
         // Handle clicks on the "Overview" link to return to the Overview display.
         $('#view-templates-overview-link').on('click', async (e) => {
-            await this.fetchAndRenderOverview();
+            this.#switchToOverview();
         });
     }
 
     async fetchAndRender() {
         // Render the overview display by default
         this.fetchAndRenderOverview();
+    }
+
+    /**
+     * Overridden to dispose of the card group and diff view.
+     */
+    deactivated() { 
+        super.deactivated();
+        this.#cardGroup().dispose();
+        this.$diffContainer().empty();
     }
 
     // #region Overview display -----------------------------------------------
@@ -37,6 +46,22 @@ export class ViewTemplatesTab extends TabController {
      */
     #cardGroup() {
         return document.getElementById('view-templates-overview-card-group');
+    }
+
+    /**
+     * 
+     * @returns {HTMLElement}
+     */
+    #diffContainer() {
+        return document.getElementById('view-templates-diff');
+    }
+
+    /**
+     * 
+     * @returns {JQuery<HTMLElement>}
+     */
+    $diffContainer() {
+        return $(this.#diffContainer());
     }
 
     /**
@@ -60,8 +85,10 @@ export class ViewTemplatesTab extends TabController {
             // Create and add an index-card for each view templates.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
-                    const card = this.#createIndexCard(entry);
-                    this.#cardGroup().appendCard(card);
+                    if (!this.aborting) {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    }
                 }, 0);
             });
             this.#switchToOverview();
@@ -78,13 +105,7 @@ export class ViewTemplatesTab extends TabController {
      */
     async #fetchIndexFile(sdkVersion) {
         const url = this.#getIndexFileUrl(sdkVersion);
-        try {
-            const response = await $.ajax({ url, dataType: 'json' });
-            return response;
-        } catch (error) {
-            console.error('Error fetching view-templates.json:', error);
-            throw error;
-        }
+        return this.ajaxRequest({ url, dataType: 'json' });
     }
 
 
@@ -96,6 +117,7 @@ export class ViewTemplatesTab extends TabController {
     #switchToOverview() {
         $('#view-templates-diff-view').hide();
         $('#view-templates-overview').show();
+        this.$diffContainer().empty();
     }
 
     /**
@@ -151,20 +173,34 @@ export class ViewTemplatesTab extends TabController {
     async #checkForChanges(id) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getUrlViewTemplateIdAndVersion(id, appState.mainVersion);
-            let baseUrl = this.#getUrlViewTemplateIdAndVersion(id, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
 
-            let commentLineRegex = /^\/\/.*$/gm;
+            // Get the two versions of the view template file.
+            const  mainUrl = this.#getUrlByIdAndSdkVersion(id, appState.mainVersion);
+            const  baseUrl = this.#getUrlByIdAndSdkVersion(id, appState.baseVersion);
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);
+
+            // Remove EFX comments before comparing the files.
+            const commentLineRegex = /^\/\/.*$/gm;
             mainFile = mainFile.replace(commentLineRegex, '');
             baseFile = baseFile.replace(commentLineRegex, '');
             
-            let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+            // Compare the two files to determine the type of change.
+            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Nullify the two variables holding the file contents to free up memory.
+            mainFile = null;
+            baseFile = null;
+
             return nodeChange;
         } catch (error) {
-
-            console.error(`Error processing files for ${id}.efx:`, error);
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                console.error(`Error processing files for ${id}.efx:`, error);
+            }
             return null;
         }
         finally {
@@ -172,10 +208,9 @@ export class ViewTemplatesTab extends TabController {
         }
     }
 
-    #getUrlViewTemplateIdAndVersion(id, sdkVersion) {
+    #getUrlByIdAndSdkVersion(id, sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${id}.efx`;
     }
-
 
     // #endregion Overview display
 
@@ -195,6 +230,7 @@ export class ViewTemplatesTab extends TabController {
                 this.#fetchViewTemplate(id, appState.mainVersion),
                 this.#fetchViewTemplate(id, appState.baseVersion)
             ]);
+ 
             Diff.injectTextDiff(mainData, baseData, 'view-template-diff', `${id}.efx`);
             this.#switchToDiffView();
 
@@ -212,16 +248,9 @@ export class ViewTemplatesTab extends TabController {
      * @returns 
      */
     async #fetchViewTemplate(id, sdkVersion) {
-        const url = this.#getUrlByViewTemplateIdAndVersion(id, sdkVersion);
-        try {
-            const response = await $.ajax({ url, dataType: 'text' });
-            return response;
-        } catch (error) {
-            console.error(`Error fetching view template "${id}.efx" for SDK ${sdkVersion}:  `, error);
-            throw error;
-        }
+        const url = this.#getUrlByIdAndSdkVersion(id, sdkVersion);
+        return this.ajaxRequest({ url, dataType: 'text' });
     }
-
     
     /**
      * Shows the tree/detail explorer for the notice type.
@@ -231,10 +260,6 @@ export class ViewTemplatesTab extends TabController {
         $('#view-templates-diff-view').show();
     }
 
-    #getUrlByViewTemplateIdAndVersion(id, sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${id}.efx`;
-    }
-    
     // #endregion Diff display
 
 }
