@@ -140,7 +140,8 @@ export class CardGroup extends BootstrapWebComponent {
         if (!this.filterValues.includes('(all)')) {
             this.filterValues.push('(all)');
             if (this.isConnected) {
-                this.#renderFilterOption('(all)');
+                const filterOption = this.#renderFilterOption('(all)');
+                this.#highlightNavLink(filterOption.firstElementChild);
             }
         }
     }
@@ -184,6 +185,8 @@ export class CardGroup extends BootstrapWebComponent {
             // Highlight the selected filter option
             this.#highlightNavLink(event.target);
         });
+
+        return filterOption;
     }
 
     /**
