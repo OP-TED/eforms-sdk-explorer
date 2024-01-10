@@ -20,6 +20,17 @@ export class CardGroup extends BootstrapWebComponent {
     }
 
     /**
+     * Overridden to free up resources.
+     */
+    dispose() {
+        super.dispose();
+        this.indexCards = [];
+        this.filterValues = [];
+        this.$filterOptions().empty();
+        this.$cardsContainer().empty();
+    }
+
+    /**
      * Called when attributes are changed, added, removed, or replaced.
      * 
      * @param {string} name 
@@ -41,6 +52,14 @@ export class CardGroup extends BootstrapWebComponent {
         if (this.isConnected) {
             this.render();
         }
+    }
+
+    #filterOptions() {
+        return this.shadowRoot.querySelector('#filter-options');
+    }
+
+    $filterOptions() {
+        return $(this.#filterOptions());
     }
 
     #cardsContainer() {
@@ -67,8 +86,11 @@ export class CardGroup extends BootstrapWebComponent {
 
         if (this.filterProperty) {
             this.shadowRoot.querySelector('#filter-property-name').textContent = this.filterProperty;
+            if (this.filterValues.length > 1) {
+                this.filterValues.push('(all)');
+            }
             this.filterValues.forEach(filterValue => {
-                this.#renderFilterValue(filterValue);
+                this.#renderFilterOption(filterValue);
             });
         } else {
             this.shadowRoot.querySelector('#nav').style.display = 'none';
@@ -96,22 +118,39 @@ export class CardGroup extends BootstrapWebComponent {
             this.#renderCard(indexCard);
         }
 
-        const filterValue = indexCard.getPropertyValue(this.filterProperty);
-        if ( filterValue !== undefined && !this.filterValues.includes(filterValue)) {
+        const filterValue = indexCard.getPropertyValue(this.filterProperty) ?? '(blank)';
+        if (!this.filterValues.includes(filterValue)) {
+            if (this.filterValues.length === 1) {
+                this.#addNoFilterOption();
+            }
             this.filterValues.push(filterValue);
             if (this.isConnected) {
-                this.#renderFilterValue(filterValue);
+                this.#renderFilterOption(filterValue);
             }
         }
 
-        // Set a CSS variable on the indexCard based on the filter value
-        this.#cardsContainer().style.setProperty(`--filter-all`, 'block');
-
         // Use CSS variables to show/hide the indexCard based on the filter value
-        indexCard.style.display = `var(--filter-${filterValue}, var(--filter-all, none))`;
+        indexCard.style.display = `var(${this.#filterValueToCssVariableName(filterValue)}, var(--filter-all, none))`;
     }
 
-    #renderFilterValue(filterValue) {
+    /**
+     * Adds the (all) filter option if it doesn't exist yet.
+     */
+    #addNoFilterOption() {
+        if (!this.filterValues.includes('(all)')) {
+            this.filterValues.push('(all)');
+            if (this.isConnected) {
+                this.#renderFilterOption('(all)');
+            }
+        }
+    }
+
+    /**
+     * Adds a filter option to the nav links for the specified filter value.
+     * 
+     * @param {string} filterValue 
+     */
+    #renderFilterOption(filterValue) {
         const filterOption = document.createElement('li');
         filterOption.classList.add('nav-item');
         const link = document.createElement('a');
@@ -119,59 +158,71 @@ export class CardGroup extends BootstrapWebComponent {
         link.setAttribute('href', '#');
         link.textContent = filterValue;
         filterOption.appendChild(link);
-        this.shadowRoot.querySelector('#filter-options').appendChild(filterOption);
+
+        // Keep the filter options sorted alphabetically.
+        // Get the index at which to insert the new option.
+        const index = this.#findNavLink(filterValue);
+        if (index === -1) {
+            // If no such index is found, append the option at the end
+            this.#filterOptions().appendChild(filterOption);
+        } else {
+            // Otherwise, insert the option at the found index
+            this.#filterOptions().insertBefore(filterOption, this.#filterOptions().children[index]);
+        }
 
         // Add a click listener to apply selected filter
-        filterOption.addEventListener('click', function (event) {
+        filterOption.addEventListener('click', (event) => {
             event.preventDefault();
-            
+
             // Loop through the filterValues and remove the corresponding CSS properties
             this.filterValues.forEach(filterValue => {
-                this.#cardsContainer().style.removeProperty(`--filter-${filterValue}`);
+                this.#cardsContainer().style.removeProperty(`${this.#filterValueToCssVariableName(filterValue)}`);
             });
 
-            this.#cardsContainer().style.removeProperty(`--filter-all`);
-            this.#cardsContainer().style.removeProperty(`--filter-undefined`); // these correspond to the blank filter option
-            this.#cardsContainer().style.setProperty(`--filter-${filterValue}`, 'block');
+            this.#cardsContainer().style.setProperty(`${this.#filterValueToCssVariableName(filterValue)}`, 'block');
 
-            this.#indicateActiveItem(event.target);
-        }.bind(this));
-    }
-
-    selectAll(clickedItem) {
-        // Loop through the filterValues and remove the corresponding CSS properties
-        this.filterValues.forEach(filterValue => {
-            this.#cardsContainer().style.removeProperty(`--filter-${filterValue}`);
+            // Highlight the selected filter option
+            this.#highlightNavLink(event.target);
         });
-
-        this.#cardsContainer().style.removeProperty(`--filter-undefined`);
-        this.#cardsContainer().style.setProperty(`--filter-all`, 'block');
-        this.#indicateActiveItem(clickedItem);
     }
 
-    selectBlank(clickedItem) {
-        // Loop through the filterValues and remove the corresponding CSS properties
-        this.filterValues.forEach(filterValue => {
-            this.#cardsContainer().style.removeProperty(`--filter-${filterValue}`);
-        });
-
-        this.#cardsContainer().style.removeProperty(`--filter-all`);
-        this.#cardsContainer().style.setProperty(`--filter-undefined`, 'block');
-
-        this.#indicateActiveItem(clickedItem);
+    /**
+     * CSS variables are used to show/hide the indexCards based on the filter value.
+     * 
+     * @param {string} filterOption 
+     * @returns 
+     */
+    #filterValueToCssVariableName(filterOption) {
+        return `--filter-${filterOption === '(all)' ? 'all' : filterOption === '(blank)' ? 'undefined' : filterOption}`;
     }
 
-    #indicateActiveItem(activeItem) {
-        // Get all nav links
-        var navLinks = this.shadowRoot.querySelectorAll('#filter-options .nav-link');
+    /**
+     * Gets the index at which to insert the new option to keep the filter options sorted alphabetically.
+     * 
+     * @param {string} filterValue 
+     * @returns 
+     */
+    #findNavLink(filterValue) {
+        // Find the index at which to insert the new option
+        return Array.from(this.#filterOptions().children).findIndex(option => option.textContent > filterValue);
+    }
 
-        // Remove active class from all nav links
+    /**
+     * Highlights the selected filter option.
+     * 
+     * @param {string} filterOption 
+     */
+    #highlightNavLink(filterOption) {
+        // Get active nav links
+        var navLinks = this.#filterOptions().querySelectorAll('.nav-link.active');
+
+        // Remove active class from all nav links that have it
         navLinks.forEach(function(navLink) {
             navLink.classList.remove('active');
         });
 
         // Add active class to the clicked nav link
-        activeItem.classList.add('active');
+        filterOption.classList.add('active');
     }
 }
 
