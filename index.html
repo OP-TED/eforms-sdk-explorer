@@ -247,19 +247,23 @@
             <!-- Release Notes will appear here -->
         </div>
     </main>
-
-    <footer>
+    
+    <footer class="d-flex w-100">
         <!-- Legend -->
-        <div class="legend-container">
+        <div class="legend-container flex-grow-1 ml-3">
             <span class="legend-title">Legend:</span>
             <span class="legend-item added">added</span>
             <span class="legend-item removed">removed</span>
             <span class="legend-item modified">modified</span>
         </div>
+        <div class="progress mr-3" style="width: 200px;">
+            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;" aria-valuenow="5" aria-valuemin="0"
+                aria-valuemax="100"></div>
+        </div>
         <div id="apiStatus" class="alert alert-info" role="alert">
         </div>
     </footer>
-</body>
+    </body>
 
 <!-- Index Card Template - used by idex-card.js -->
 <template id="index-card-template">

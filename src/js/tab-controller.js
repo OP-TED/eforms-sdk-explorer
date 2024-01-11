@@ -10,6 +10,9 @@ export class TabController {
     /** @type {Array} */
     #ajaxRequests = [];
 
+    /** @type {number} */
+    #totalRequests = 0;
+
     /** @type {Array} */
     #listeners = [];
 
@@ -73,15 +76,65 @@ export class TabController {
      * @returns {Promise} - A promise that resolves with the AJAX response.
      */
     ajaxRequest(options) {
+        // Track the number of pending requests to indicate progress
+        this.#totalRequests++;
+
+        // Make the AJAX request and keep track of it
         const jqXHR = $.ajax(options);
         this.#ajaxRequests.push(jqXHR);
 
         // Remove the jqXHR object from the list when the request completes or fails
         jqXHR.always(() => {
+
+            // Remove the request from the pending requests list
             this.#ajaxRequests = this.#ajaxRequests.filter(request => request !== jqXHR);
+
+            // Reset the total number of requests when there are no more pending requests
+            if (this.#ajaxRequests.length === 0) {
+                this.#totalRequests = 0;
+            }
+
+            // Indicate progress
+            this.#showProgress();
         });
 
-        return jqXHR;
+        // Return the promise
+        return jqXHR;   
+    }
+
+    /**
+     * Shows the progress bar and updates its width to reflect the progress.
+     */
+    #showProgress() {
+        if (this.#totalRequests === 0) {
+            this.#hideProgress(); // Hide the progress bar if there are no pending requests
+            return; // to avoid division by zero
+        }
+
+        // Calculate the percentage of completed requests
+        var percentComplete = (this.#totalRequests - this.#ajaxRequests.length) / this.#totalRequests;
+
+        // Don't update progress bar if the progress is less than 1%
+        if (percentComplete >= 0.01) {
+            var percentCompleteStr = (100 * percentComplete).toFixed(0) + '%'; // Round to nearest whole number
+
+            // SetTimeout is needed to give a chance to the browser to render the progress bar
+            setTimeout(() => {
+                $('.progress').show();
+                $('.progress-bar').css({ width: percentCompleteStr });
+            }, 0);
+        }
+    }
+
+    /**
+     * Hides the progress bar.
+     */
+    #hideProgress() {
+            // SetTimeout is needed to give a chance to the browser to render the progress bar
+            setTimeout(() => {
+            $('.progress').hide();
+            $('.progress-bar').css({ width: '0%' });
+        }, 0);
     }
 
     /**

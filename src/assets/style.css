@@ -92,6 +92,9 @@ body > main {
 
 body > footer {
     height: 42px;
+    background-color: var(--light-background-color);
+    border-top: 1px solid var(--border-color);
+    align-items: center;
 }
 
 #fields-tab-content {
@@ -129,10 +132,6 @@ body > footer {
 .legend-container {
     display: flex;
     align-items: center;
-    padding: 10px;
-    width: 100%;
-    background-color: var(--light-background-color);
-    border-top: 1px solid var(--border-color);
 }
 
 .legend-title {
