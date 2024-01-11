@@ -155,8 +155,8 @@ export class TranslationsTab extends TabController {
 
 
     #switchToOverview() {
-        $('#translations-diff-view').hide();
-        $('#translations-overview').show();
+        $('#translations-diff-view').addClass('hide-important');
+        $('#translations-overview').removeClass('hide-important');
         this.$diffContainer().empty();
     }
 
@@ -283,8 +283,8 @@ export class TranslationsTab extends TabController {
      * Shows the tree/detail explorer for the notice type.
      */
     #switchToDiffView() {
-        $('#translations-overview').hide();
-        $('#translations-diff-view').show();
+        $('#translations-overview').addClass('hide-important');
+        $('#translations-diff-view').removeClass('hide-important');
     }
     
     // #endregion Diff display

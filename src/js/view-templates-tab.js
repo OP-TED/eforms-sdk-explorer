@@ -115,8 +115,8 @@ export class ViewTemplatesTab extends TabController {
 
 
     #switchToOverview() {
-        $('#view-templates-diff-view').hide();
-        $('#view-templates-overview').show();
+        $('#view-templates-diff-view').addClass('hide-important');
+        $('#view-templates-overview').removeClass('hide-important');
         this.$diffContainer().empty();
     }
 
@@ -256,8 +256,8 @@ export class ViewTemplatesTab extends TabController {
      * Shows the tree/detail explorer for the notice type.
      */
     #switchToDiffView() {
-        $('#view-templates-overview').hide();
-        $('#view-templates-diff-view').show();
+        $('#view-templates-overview').addClass('hide-important');
+        $('#view-templates-diff-view').removeClass('hide-important');
     }
 
     // #endregion Diff display
