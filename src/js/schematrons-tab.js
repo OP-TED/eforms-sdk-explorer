@@ -65,7 +65,7 @@ export class SchematronsTab extends TabController {
             this.#switchToOverview();
         } catch (error) {
             console.error('Error while generating overview:', error);
-            throw new Error('Failed to load codelists');
+            throw new Error('Failed to load schematrons');
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
