@@ -5,6 +5,7 @@ import { FieldsTab } from "./fields-tab.js";
 import { NoticeTypesTab } from "./notice-types-tab.js";
 import { CodelistsTab } from "./codelists-tab.js";
 import { SchemasTab } from "./schemas-tab.js";
+import { SchematronsTab } from "./schematrons-tab.js";
 import { TranslationsTab } from "./translations-tab.js";
 import { ViewTemplatesTab } from "./view-templates-tab.js";
 import { ReleaseNotesTab } from "./release-notes-tab.js";
@@ -44,6 +45,7 @@ export class SdkExplorerApplication {
         this.#addTab(new NoticeTypesTab());
         this.#addTab(new CodelistsTab());
         this.#addTab(new SchemasTab());
+        this.#addTab(new SchematronsTab());
         this.#addTab(new TranslationsTab());
         this.#addTab(new ViewTemplatesTab());
         this.#addTab(new ReleaseNotesTab());
