@@ -105,8 +105,8 @@ export class CodelistsTab extends TabController {
 
 
     #switchToOverview() {
-        $('#code-lists-diff-view').hide();
-        $('#code-lists-overview').show();
+        $('#code-lists-diff-view').addClass('hide-important');
+        $('#code-lists-overview').removeClass('hide-important');
         this.$diffContainer().empty();
     }
 
@@ -249,8 +249,8 @@ export class CodelistsTab extends TabController {
      * Shows the tree/detail explorer for the notice type.
      */
     #switchToDiffView() {
-        $('#code-lists-overview').hide();
-        $('#code-lists-diff-view').show();
+        $('#code-lists-overview').addClass('hide-important');
+        $('#code-lists-diff-view').removeClass('hide-important');
     }
 
     // #endregion Diff display
