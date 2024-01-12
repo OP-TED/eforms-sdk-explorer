@@ -1,15 +1,15 @@
 import { appConfig, domElements } from "./config.js";
 import { appState } from "./state.js";
-import { HomeTab } from "./home-tab.js";
-import { FieldsTab } from "./fields-tab.js";
-import { NoticeTypesTab } from "./notice-types-tab.js";
-import { CodelistsTab } from "./codelists-tab.js";
-import { SchemasTab } from "./schemas-tab.js";
-import { SchematronsTab } from "./schematrons-tab.js";
-import { TranslationsTab } from "./translations-tab.js";
-import { ViewTemplatesTab } from "./view-templates-tab.js";
-import { ReleaseNotesTab } from "./release-notes-tab.js";
-import { TabController } from "./tab-controller.js";
+import { HomeTab } from "./tabs/home-tab.js";
+import { FieldsTab } from "./tabs/fields-tab.js";
+import { NoticeTypesTab } from "./tabs/notice-types-tab.js";
+import { CodelistsTab } from "./tabs/codelists-tab.js";
+import { SchemasTab } from "./tabs/schemas-tab.js";
+import { SchematronsTab } from "./tabs/schematrons-tab.js";
+import { TranslationsTab } from "./tabs/translations-tab.js";
+import { ViewTemplatesTab } from "./tabs/view-templates-tab.js";
+import { ReleaseNotesTab } from "./tabs/release-notes-tab.js";
+import { TabController } from "./tabs/tab-controller.js";
 
 export class SdkExplorerApplication {
 

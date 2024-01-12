@@ -1,5 +1,5 @@
 import { BootstrapWebComponent } from './bootstrap-web-component.js';
-import { Diff } from './diff.js';
+import { Diff } from '../diff.js';
 
 export class PropertyCard extends BootstrapWebComponent {
 

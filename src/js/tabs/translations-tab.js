@@ -1,15 +1,15 @@
-import { appState } from "./state.js";
-import { appConfig } from "./config.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { appState } from "../state.js";
+import { appConfig } from "../config.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { TabController } from "./tab-controller.js";
-import { PropertyCard } from "./property-card.js";
-import { IndexCard } from "./index-card.js";
-import { SdkExplorerApplication } from "./app.js";
-
-export class SchemasTab extends TabController {
+import { PropertyCard } from "../components/property-card.js";
+import { IndexCard } from "../components/index-card.js";
+import { SdkExplorerApplication } from "../app.js";
+import { CardGroup } from "../components/card-group.js";
+export class TranslationsTab extends TabController {
 
     constructor() {
-        super('schemas-tab');
+        super('translations-tab');
     }
 
     /**
@@ -19,8 +19,8 @@ export class SchemasTab extends TabController {
         super.init();
 
         // Handle clicks on the "Overview" link to return to the Overview display.
-        $('#schemas-overview-link').on('click', async (e) => {
-            await this.#switchToOverview();
+        $('#translations-overview-link').on('click', async (e) => {
+            this.#switchToOverview();
         });
     }
 
@@ -42,11 +42,11 @@ export class SchemasTab extends TabController {
      * @returns {CardGroup}
      */
     #cardGroup() {
-        return document.getElementById('schemas-overview-card-group');
+        return document.getElementById('translations-overview-card-group');
     }
 
     #diffContainer() {
-        return document.getElementById('schemas-diff');
+        return document.getElementById('translations-diff');
     }
 
     $diffContainer() {
@@ -54,23 +54,25 @@ export class SchemasTab extends TabController {
     }
     
     /**
-     * Fetches schemas files for both versions and renders the overview display.
+     * Fetches translations.json index files for both versions and renders the overview display.
      */
     async fetchAndRenderOverview() {
         SdkExplorerApplication.startSpinner();
         try {
 
-            // Get schemas.json index files for both versions.
+            // Get translations.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchIndexFile(appState.mainVersion),
-                this.#fetchIndexFile(appState.baseVersion)
+                this.#fetchTranslationsIndexFile(appState.mainVersion),
+                this.#fetchTranslationsIndexFile(appState.baseVersion)
             ]);
-            const diff = Diff.fromArrayComparison(mainVersionData, baseVersionData, 'filename');
+
+            // Compare the two index files
+            const diff = Diff.fromArrayComparison(mainVersionData.files, baseVersionData.files, 'filename');
 
             // Clear existing index-cards.
             this.#cardGroup().empty();
 
-            // Create and add an index-card for each schema.
+            // Create and add an index-card for each Translations.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
                     if (!this.aborting) {
@@ -82,107 +84,101 @@ export class SchemasTab extends TabController {
             this.#switchToOverview();
         } catch (error) {
             console.error('Error while generating overview:', error);
-            throw new Error('Failed to load Schemas');
+            throw new Error('Failed to load Translations');
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
     }
 
     /**
-     * Fetches the schemas.json index file for the specified SDK version.
+     * Fetches the translations.json index file for the specified SDK version.
      */
-      async #fetchIndexFile(sdkVersion) {
-        const url = this.#getSchemasIndexFileUrl(sdkVersion);
+    async #fetchTranslationsIndexFile(sdkVersion) {
+        const url = this.#getTranslationsIndexFileUrl(sdkVersion);
         try {
-            const response = await this.ajaxRequest({
-                url: url,
+            const response = await this.ajaxRequest({ 
+                url: url, 
                 dataType: 'json'
             });
             return response;
         } catch (error) {
             if (error.status === 404) {
-                console.warn(`schemas.json not found for SDK version ${sdkVersion}, fetching filenames from schema folder`);
-                return this.#fetchFilenamesFromSchemasFolder(sdkVersion);
+                console.warn(`translations.json not found for SDK version ${sdkVersion}, fetching filenames from translations folder`);
+                return this.#fetchFilenamesFromTranslationsFolder(sdkVersion);
             }
-            console.error('Error fetching schema.json:', error);
+            console.error('Error fetching translations.json:', error);
             throw error;
         }
     }
 
 
-    #getSchemasIndexFileUrl(sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/schemas.json`;
-    }
-
-    async #fetchFilenamesFromSchemasFolder(sdkVersion) {
-        const apiUrl = `${appConfig.contentsFileUrl}/schemas?ref=${sdkVersion}`;
+    async #fetchFilenamesFromTranslationsFolder(sdkVersion) {
+        const apiUrl = `${appConfig.contentsFileUrl}/translations?ref=${sdkVersion}`;
         try {
-            const directoryStructure = await this.#fetchGithubDirectory(apiUrl, '');
-            const directoryStructureConst = Object.assign({}, directoryStructure);
-            return this.#processDirectoryData(directoryStructureConst);
+            const response = await this.ajaxRequest({
+                url: apiUrl,
+                headers: { 'Accept': 'application/vnd.github.v3+json' },
+            });
+            return this.#processFilenames(response.map(file => file.name));
         } catch (error) {
             console.error('Error fetching filenames from GitHub API:', error);
             throw error;
         }
     }
 
-    async #fetchGithubDirectory(url, path) {
-        const response = await $.ajax({
-            url: url,
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
+    #fetchCountryCodeMappings() {
+        return this.ajaxRequest({ 
+            url: './src/assets/eu_countries_three_letter_code_mappings.json', 
+            dataType: 'json' 
         });
+    }
+    
+    async #processFilenames(filenames) {
+        const euCountriesCodeMappings = await this.#fetchCountryCodeMappings();
+        const processedFilenames = filenames.map(filename => {
+            const parts = filename.split('_');
+            const assetType = parts[0];
+            const twoLetterCode = parts[1].split('.')[0];
+            const threeLetterCode = euCountriesCodeMappings[twoLetterCode] || '';
 
-        let directoryStructure = {};
-        for (const item of response) {
-            if (item.type === 'file') {
-                if (!directoryStructure[path]) {
-                    directoryStructure[path] = [];
-                }
-                directoryStructure[path].push(item.name);
-            } else if (item.type === 'dir') {
-                const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
-                directoryStructure = { ...directoryStructure, ...subDirStructure };
-            }
-        }
-        return directoryStructure;
+            return {
+                assetType: assetType,
+                twoLetterCode: twoLetterCode,
+                threeLetterCode: threeLetterCode,
+                filename: filename
+            };
+        });
+        return { files: processedFilenames };
+    }
+    
+
+    #getTranslationsIndexFileUrl(sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/translations/translations.json`;
     }
 
-    #processDirectoryData(data) {
-        let processedData = [];
 
-        for (const [path, files] of Object.entries(data)) {
-            const trimmedPath = path.split('/').pop();
-
-            files.forEach(file => {
-                const filenameWithoutExtension = file.replace('.xsd', '');
-                processedData.push({
-                    filename: filenameWithoutExtension,
-                    path: trimmedPath,
-                    file: `${trimmedPath}/${file}`,
-                });
-            });
-        }
-
-        return processedData;
+    #switchToOverview() {
+        $('#translations-diff-view').addClass('hide-important');
+        $('#translations-overview').removeClass('hide-important');
+        this.$diffContainer().empty();
     }
-
 
     /**
-    * Creates an index-card for the specified Schema.
+    * Creates an index-card for the specified Translations.
     * 
     * @param {DiffEntry} diffEntry 
     * @returns 
     */
     #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('assetType'), diffEntry.get('twoLetterCode'), 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('file'));
+            this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
-        // If the Schema is not new or removed, then we will need to check for changes inside the Schemas file.
+        // If the Translations is not new or removed, then we will need to check for changes inside the Translations file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.file)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -207,11 +203,11 @@ export class SchemasTab extends TabController {
     }
 
     /**
-    * Checks for changes in the Schema.
+    * Checks for changes in the Translations file.
     * It will ignore the values of certain properties that are expected to change between versions: 
     * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
     * 
-    * @param {string} filename The Schema to check for changes
+    * @param {string} filename The Translations file to check for changes
     * @returns {Promise<Diff.TypeOfChange>} The type of change detected
     */
     async #checkForChanges(filename) {
@@ -219,8 +215,8 @@ export class SchemasTab extends TabController {
             SdkExplorerApplication.startSpinner();
 
             // Get the two versions of the file.
-            const mainUrl = this.#getSchemaUrForVersion(filename, appState.mainVersion);
-            const baseUrl = this.#getSchemaUrForVersion(filename, appState.baseVersion);
+            const mainUrl = this.#getLabelsUrlForVersion(filename, appState.mainVersion);
+            const baseUrl = this.#getLabelsUrlForVersion(filename, appState.baseVersion);
             let [mainFile, baseFile] = await Promise.all([
                 this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
                 this.ajaxRequest({ url: baseUrl, dataType: 'text' })
@@ -247,12 +243,12 @@ export class SchemasTab extends TabController {
         }
     }
 
-    #getSchemaUrForVersion(filename, sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/${filename}`;
+    #getLabelsUrlForVersion(filename, sdkVersion) {
+        return `${appConfig.rawBaseUrl}/${sdkVersion}/translations/${filename}`;
     }
 
     // #endregion Overview display
-
+    
     // #region Diff display -----------------------------------------------
 
     /**
@@ -265,18 +261,16 @@ export class SchemasTab extends TabController {
         try {
 
             const [mainData, baseData] = await Promise.all([
-                this.#fetchSchema(filename, appState.mainVersion),
-                this.#fetchSchema(filename, appState.baseVersion)
+                this.#fetchLabels(filename, appState.mainVersion),
+                this.#fetchLabels(filename, appState.baseVersion)
             ]);
-
-            Diff.injectTextDiff(mainData, baseData, 'schemas-diff', `${filename}`);
+            Diff.injectTextDiff(mainData, baseData, 'translations-diff', `${filename}`);
             this.#switchToDiffView();
 
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
     }
-
     /**
      * Fetches the labels XML file for the specified SDK version.
      * 
@@ -285,23 +279,17 @@ export class SchemasTab extends TabController {
      *  
      * @returns 
      */
-    async #fetchSchema(filename, sdkVersion) {
-        const url = this.#getSchemaUrForVersion(filename, sdkVersion);
+    async #fetchLabels(filename, sdkVersion) {
+        const url = this.#getLabelsUrlForVersion(filename, sdkVersion);
         return this.ajaxRequest({ url, dataType: 'text' });
     }
 
-    #switchToOverview() {
-        $('#schemas-diff-view').addClass('hide-important');
-        $('#schemas-overview').removeClass('hide-important');
-        this.$diffContainer().empty();
-    }
-
     /**
-     * Shows the tree/detail explorer for the schemas.
+     * Shows the tree/detail explorer for the notice type.
      */
     #switchToDiffView() {
-        $('#schemas-overview').addClass('hide-important');
-        $('#schemas-diff-view').removeClass('hide-important');
+        $('#translations-overview').addClass('hide-important');
+        $('#translations-diff-view').removeClass('hide-important');
     }
     
     // #endregion Diff display

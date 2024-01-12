@@ -1,5 +1,5 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { PropertyCard } from "./property-card.js";
 
 export class TreeDetailSplitView extends BootstrapWebComponent {
