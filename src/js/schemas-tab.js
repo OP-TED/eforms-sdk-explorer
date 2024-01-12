@@ -25,12 +25,14 @@ export class SchemasTab extends TabController {
     }
 
     async fetchAndRender() {
-        // Render the overview display by default
         this.fetchAndRenderOverview();
     }
 
-    // #region Overview display -----------------------------------------------
-
+    deactivated() {
+        super.deactivated();
+        this.#cardGroup().dispose();
+        this.$diffContainer().empty();
+    }
 
     /**
      * 
@@ -40,6 +42,13 @@ export class SchemasTab extends TabController {
         return document.getElementById('schemas-overview-card-group');
     }
 
+    #diffContainer() {
+        return document.getElementById('schemas-diff');
+    }
+
+    $diffContainer() {
+        return $(this.#diffContainer());
+    }
     /**
    * Fetches schemas files for both versions and renders the overview display.
    */
@@ -72,18 +81,14 @@ export class SchemasTab extends TabController {
         }
     }
 
-    #switchToOverview() {
-        $('#schemas-overview').show();
-    }
-
-      /**
-     * Fetches the schema.json index file for the specified SDK version.
-     */
-      async #fetchTranslationsIndexFile(sdkVersion) {
+    /**
+   * Fetches the schema.json index file for the specified SDK version.
+   */
+    async #fetchTranslationsIndexFile(sdkVersion) {
         const url = this.#getSchemasIndexFileUrl(sdkVersion);
         try {
-            const response = await this.ajaxRequest({ 
-                url: url, 
+            const response = await this.ajaxRequest({
+                url: url,
                 dataType: 'json'
             });
             return response;
@@ -222,7 +227,7 @@ export class SchemasTab extends TabController {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/${filename}`;
     }
 
-    
+
     /**
      * Fetches both versions of label files and renders the diff view.
      * 
@@ -231,12 +236,12 @@ export class SchemasTab extends TabController {
     async fetchAndRenderDiffView(filename) {
         SdkExplorerApplication.startSpinner();
         try {
-            
+
             const [mainData, baseData] = await Promise.all([
                 this.#fetchLabels(filename, appState.mainVersion),
                 this.#fetchLabels(filename, appState.baseVersion)
             ]);
-            
+
             Diff.injectTextDiff(mainData, baseData, 'schemas-diff', `${filename}`);
             this.#switchToDiffView();
 
@@ -244,32 +249,38 @@ export class SchemasTab extends TabController {
             SdkExplorerApplication.stopSpinner();
         }
     }
-        /**
-         * Fetches the labels XML file for the specified SDK version.
-         * 
-         * @param {string} filename 
-         * @param {string} sdkVersion
-         *  
-         * @returns 
-         */
-            async #fetchLabels(filename, sdkVersion) {
-                const url = this.#getUrSchemasListsAndVersion(filename, sdkVersion);
-                
-                try {
-                    const response = await $.ajax({ url, dataType: 'text' });
-                    return response;
-                } catch (error) {
-                    console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
-                    throw error;
-                }
-            }
+    /**
+     * Fetches the labels XML file for the specified SDK version.
+     * 
+     * @param {string} filename 
+     * @param {string} sdkVersion
+     *  
+     * @returns 
+     */
+    async #fetchLabels(filename, sdkVersion) {
+        const url = this.#getUrSchemasListsAndVersion(filename, sdkVersion);
+
+        try {
+            const response = await $.ajax({ url, dataType: 'text' });
+            return response;
+        } catch (error) {
+            console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
+            throw error;
+        }
+    }
+
+    #switchToOverview() {
+        $('#schemas-diff-view').addClass('hide-important');
+        $('#schemas-overview').removeClass('hide-important');
+        this.$diffContainer().empty();
+    }
 
     /**
-     * Shows the tree/detail explorer for the notice type.
+     * Shows the tree/detail explorer for the schemas.
      */
     #switchToDiffView() {
-        $('#schemas-overview').hide();
-        $('#schemas-diff-view').show();
+        $('#schemas-overview').addClass('hide-important');
+        $('#schemas-diff-view').removeClass('hide-important');
     }
-    
+
 }
