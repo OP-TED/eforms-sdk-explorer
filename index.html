@@ -11,12 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
     <link rel="stylesheet" href="./src/assets/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
     <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.0.0/diff.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>    
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
     <script defer type="module" src="./src/js/script.js"></script>
 </head>
 
@@ -68,6 +70,10 @@
                     role="tab" aria-controls="schemas" aria-selected="false">Schemas</button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schematrons-tab" data-toggle="tab" data-target="#schematrons" type="button"
+                    role="tab" aria-controls="schematrons" aria-selected="false">Schematrons</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations"
                     type="button" role="tab" aria-controls="translations" aria-selected="false">Translations</button>
             </li>
@@ -116,7 +122,7 @@
         <!-- Notice subtypes -->
         <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
             <div class="tab-container">
-        
+
                 <!-- Notice-types overview -->
                 <div id="notice-types-overview" class="view-container">
                     <nav aria-label="breadcrumb" class="view-breadcrumb">
@@ -126,10 +132,10 @@
                     </nav>
                     <card-group id="notice-types-overview-card-group" filter-property="formType"></card-group>
                 </div>
-        
+
                 <!-- Notice-type Explorer -->
                 <div id="notice-type-explorer-view" class="view-container hide-important">
-        
+
                     <!-- Breadcrumbs -->
                     <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
@@ -137,13 +143,13 @@
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
-        
+
                     <!-- Content -->
                     <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1"
                         style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
-        
+
                 </div> <!-- End of notice-type comparison row -->
-        
+
             </div> <!-- End of container -->
         </div> <!-- End of notice-types tab -->
 
@@ -159,10 +165,10 @@
                     </nav>
                     <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
                 </div>
-        
+
                 <!-- Codelist  diff view -->
                 <div id="code-list-diff-view" class="view-container hide-important">
-        
+
                     <!-- Breadcrumbs -->
                     <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
@@ -170,10 +176,10 @@
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
-        
+
                     <!-- Content -->
                     <div id="code-list-diff" class="view-diff"></div>
-        
+
                 </div> <!-- End of Codelists diff view -->
             </div> <!-- End of container -->
         </div> <!-- End of Codelists tab -->
@@ -196,10 +202,10 @@
                     </nav>
                     <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
                 </div>
-        
+
                 <!-- Translations  diff -->
                 <div id="translations-diff-view" class="view-container hide-important">
-        
+
                     <!-- Breadcrumbs -->
                     <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
@@ -207,13 +213,44 @@
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
-        
+
                     <!-- Content -->
                     <div id="translations-diff" class="view-diff"></div>
-        
+
                 </div> <!-- End of Translations diff -->
             </div> <!-- End of container -->
         </div>
+
+        <!-- Schematrons -->
+        <div class="tab-pane fade" id="schematrons" role="tabpanel" aria-labelledby="schematrons-tab">
+            <div class="tab-container">
+                <!-- schematrons overview -->
+                <div id="schematrons-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="schematrons-overview-card-group"></card-group>
+                </div>
+
+                <!-- schematrons diff -->
+                <div id="schematrons-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="schematrons-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                    <div id="schematrons-diff" class="flex-grow-1" class="view-diff"></div>
+                </div> <!-- End of container -->
+            </div> <!-- End of schematrons diff -->
+        </div>
+
 
         <!-- View Templates -->
         <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="viewtemplates-tab">
@@ -227,10 +264,10 @@
                     </nav>
                     <card-group id="view-templates-overview-card-group" class="flex-grow-1 mh-100"></card-group>
                 </div>
-        
+
                 <!-- View-template diff -->
                 <div id="view-templates-diff-view" class="view-container hide-important">
-        
+
                     <!-- Breadcrumb -->
                     <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
@@ -238,10 +275,10 @@
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
-        
+
                     <!-- Content -->
                     <div id="view-template-diff" class="view-diff"></div>
-        
+
                 </div> <!-- End of View-template diff -->
             </div> <!-- End of container -->
         </div>
@@ -252,7 +289,7 @@
             <!-- Release Notes will appear here -->
         </div>
     </main>
-    
+
     <footer class="d-flex w-100">
         <!-- Legend -->
         <div class="legend-container flex-grow-1 ml-3">
@@ -267,7 +304,7 @@
         <div id="apiStatus" class="alert alert-info" role="alert">
         </div>
     </footer>
-    </body>
+</body>
 
 <!-- Index Card Template - used by idex-card.js -->
 <template id="index-card-template">
@@ -314,6 +351,7 @@
         }
 
         @keyframes fadeToWhite {
+
             0%,
             100% {
                 background-color: var(--light-background-color);
@@ -506,7 +544,8 @@
             <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to
                 search for items with the specified property added, removed or modified.</p>
             <ul>
-                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property modified.</li>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property
+                    modified.</li>
             </ul>
             <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
             <ul>
@@ -619,8 +658,8 @@
 
         #cards-container {
             height: 100%;
-            width:100%;
-            flex: 0 1 100%!important;
+            width: 100%;
+            flex: 0 1 100% !important;
             overflow-y: auto;
         }
 
