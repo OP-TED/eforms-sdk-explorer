@@ -185,9 +185,66 @@
         </div> <!-- End of Codelists tab -->
 
         <!-- Schemas -->
-        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
-            <p>TODO: Provide an overview of changed XSDs and link to GitHub compare page for detailed comparison.
-            </p>
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="schemas-tab">
+            <div class="tab-container">
+                <!-- schemas overview -->
+                <div id="schemas-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="schemas-overview-card-group" filter-property="path"></card-group>
+                </div>
+        
+                <!-- schemas  diff -->
+                <div id="schemas-diff-view" class="view-container hide-important">
+        
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="schemas-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+        
+                    <!-- Content -->
+                    <div id="schemas-diff" class="view-diff"></div>
+        
+                </div>
+            </div>
+        </div>
+        
+        <!-- Schematrons -->
+        <div class="tab-pane fade" id="schematrons" role="tabpanel" aria-labelledby="schematrons-tab">
+            <div class="tab-container">
+                
+                <!-- Schematrons overview -->
+                <div id="schematrons-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="schematrons-overview-card-group"></card-group>
+                </div>
+
+                <!-- Schematrons diff view -->
+                <div id="schematrons-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="schematrons-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Schematrons Diff -->
+                    <div id="schematrons-diff" class="view-diff"></div>
+
+                </div> <!-- End of schematrons diff view -->
+            </div> <!-- End of schematrons tab container --> 
         </div>
 
         <!-- Translations -->
@@ -219,36 +276,6 @@
 
                 </div> <!-- End of Translations diff -->
             </div> <!-- End of container -->
-        </div>
-
-        <!-- Schematrons -->
-        <div class="tab-pane fade" id="schematrons" role="tabpanel" aria-labelledby="schematrons-tab">
-            <div class="tab-container">
-                <!-- schematrons overview -->
-                <div id="schematrons-overview" class="view-container">
-                    <nav aria-label="breadcrumb" class="view-breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item" aria-current="page">Overview</li>
-                        </ol>
-                    </nav>
-                    <card-group id="schematrons-overview-card-group"></card-group>
-                </div>
-
-                <!-- schematrons diff -->
-                <div id="schematrons-diff-view" class="view-container hide-important">
-
-                    <!-- Breadcrumbs -->
-                    <nav aria-label="breadcrumb" class="view-breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#" id="schematrons-overview-link">Overview</a></li>
-                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
-                        </ol>
-                    </nav>
-
-                    <!-- Content -->
-                    <div id="schematrons-diff" class="flex-grow-1" class="view-diff"></div>
-                </div> <!-- End of container -->
-            </div> <!-- End of schematrons diff -->
         </div>
 
 
