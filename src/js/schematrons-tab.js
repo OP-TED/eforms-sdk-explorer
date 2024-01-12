@@ -143,7 +143,7 @@ export class SchematronsTab extends TabController {
         const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('file'));
+            this.fetchAndRenderDiffView(diffEntry.get('relativePath'));
         });
         // If the Schematrons is not new or removed, then we will need to check for changes inside the Schematrons file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
