@@ -34,6 +34,9 @@ export class TranslationsTab extends TabController {
         this.$diffContainer().empty();
     }
 
+    // #region Overview display -----------------------------------------------
+
+
     /**
      * 
      * @returns {CardGroup}
@@ -231,7 +234,7 @@ export class TranslationsTab extends TabController {
             if (error.statusText === 'abort') {
                 console.log('Request was aborted');
             } else {
-                console.error(`Error processing files for ${filename}.json:`, error);
+                console.error(`Error processing files for ${filename}:`, error);
             }
             return null;
         }
@@ -244,6 +247,8 @@ export class TranslationsTab extends TabController {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/translations/${filename}`;
     }
 
+    // #endregion Overview display
+    
     // #region Diff display -----------------------------------------------
 
     /**

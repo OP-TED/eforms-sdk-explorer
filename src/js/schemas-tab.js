@@ -13,14 +13,14 @@ export class SchemasTab extends TabController {
     }
 
     /**
- * Overridden to hook up event handlers.
- */
+     * Overridden to hook up event handlers.
+     */
     init() {
         super.init();
 
         // Handle clicks on the "Overview" link to return to the Overview display.
         $('#schemas-overview-link').on('click', async (e) => {
-            await this.fetchAndRenderOverview();
+            await this.#switchToOverview();
         });
     }
 
@@ -33,6 +33,9 @@ export class SchemasTab extends TabController {
         this.#cardGroup().dispose();
         this.$diffContainer().empty();
     }
+
+    // #region Overview display -----------------------------------------------
+
 
     /**
      * 
@@ -49,16 +52,18 @@ export class SchemasTab extends TabController {
     $diffContainer() {
         return $(this.#diffContainer());
     }
+    
     /**
-   * Fetches schemas files for both versions and renders the overview display.
-   */
+     * Fetches schemas files for both versions and renders the overview display.
+     */
     async fetchAndRenderOverview() {
         SdkExplorerApplication.startSpinner();
         try {
 
+            // Get schemas.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchTranslationsIndexFile(appState.mainVersion),
-                this.#fetchTranslationsIndexFile(appState.baseVersion)
+                this.#fetchIndexFile(appState.mainVersion),
+                this.#fetchIndexFile(appState.baseVersion)
             ]);
             const diff = Diff.fromArrayComparison(mainVersionData, baseVersionData, 'filename');
 
@@ -68,23 +73,25 @@ export class SchemasTab extends TabController {
             // Create and add an index-card for each schema.
             diff.forEach((entry, index) => {
                 setTimeout(() => {
-                    const card = this.#createIndexCard(entry);
-                    this.#cardGroup().appendCard(card);
+                    if (!this.aborting) {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    }
                 }, 0);
             });
             this.#switchToOverview();
         } catch (error) {
             console.error('Error while generating overview:', error);
-            throw new Error('Failed to load codelists');
+            throw new Error('Failed to load Schemas');
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
     }
 
     /**
-   * Fetches the schema.json index file for the specified SDK version.
-   */
-    async #fetchTranslationsIndexFile(sdkVersion) {
+     * Fetches the schemas.json index file for the specified SDK version.
+     */
+      async #fetchIndexFile(sdkVersion) {
         const url = this.#getSchemasIndexFileUrl(sdkVersion);
         try {
             const response = await this.ajaxRequest({
@@ -94,7 +101,7 @@ export class SchemasTab extends TabController {
             return response;
         } catch (error) {
             if (error.status === 404) {
-                console.warn(`schema.json not found for SDK version ${sdkVersion}, fetching filenames from schema folder`);
+                console.warn(`schemas.json not found for SDK version ${sdkVersion}, fetching filenames from schema folder`);
                 return this.#fetchFilenamesFromSchemasFolder(sdkVersion);
             }
             console.error('Error fetching schema.json:', error);
@@ -161,18 +168,18 @@ export class SchemasTab extends TabController {
 
 
     /**
-  * Creates an index-card for the specified Schemas.
-  * 
-  * @param {DiffEntry} diffEntry 
-  * @returns 
-  */
+    * Creates an index-card for the specified Schema.
+    * 
+    * @param {DiffEntry} diffEntry 
+    * @returns 
+    */
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
             this.fetchAndRenderDiffView(diffEntry.get('file'));
         });
-        // If the Schemas is not new or removed, then we will need to check for changes inside the Schemas file.
+        // If the Schema is not new or removed, then we will need to check for changes inside the Schemas file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
             component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.file)));
@@ -200,22 +207,39 @@ export class SchemasTab extends TabController {
     }
 
     /**
-* Checks for changes in the Schemas file.
-* @param {string} filename The Schemas file to check for changes
-* @returns {Promise<Diff.TypeOfChange>} The type of change detected
-*/
+    * Checks for changes in the Schema.
+    * It will ignore the values of certain properties that are expected to change between versions: 
+    * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
+    * 
+    * @param {string} filename The Schema to check for changes
+    * @returns {Promise<Diff.TypeOfChange>} The type of change detected
+    */
     async #checkForChanges(filename) {
         try {
             SdkExplorerApplication.startSpinner();
-            let mainUrl = this.#getUrSchemasListsAndVersion(filename, appState.mainVersion);
-            let baseUrl = this.#getUrSchemasListsAndVersion(filename, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
-            let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Get the two versions of the file.
+            const mainUrl = this.#getSchemaUrForVersion(filename, appState.mainVersion);
+            const baseUrl = this.#getSchemaUrForVersion(filename, appState.baseVersion);
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);         
+
+            // Compare to determine the type of change.
+            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+            // Nullify the two variables holding the file contents to free up memory.
+            mainFile = null;
+            baseFile = null;
+
             return nodeChange;
         } catch (error) {
-
-            console.error(`Error processing files for ${filename}.xsd:`, error);
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                console.error(`Error processing files for ${filename}:`, error);
+            }
             return null;
         }
         finally {
@@ -223,10 +247,13 @@ export class SchemasTab extends TabController {
         }
     }
 
-    #getUrSchemasListsAndVersion(filename, sdkVersion) {
+    #getSchemaUrForVersion(filename, sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/schemas/${filename}`;
     }
 
+    // #endregion Overview display
+
+    // #region Diff display -----------------------------------------------
 
     /**
      * Fetches both versions of label files and renders the diff view.
@@ -238,8 +265,8 @@ export class SchemasTab extends TabController {
         try {
 
             const [mainData, baseData] = await Promise.all([
-                this.#fetchLabels(filename, appState.mainVersion),
-                this.#fetchLabels(filename, appState.baseVersion)
+                this.#fetchSchema(filename, appState.mainVersion),
+                this.#fetchSchema(filename, appState.baseVersion)
             ]);
 
             Diff.injectTextDiff(mainData, baseData, 'schemas-diff', `${filename}`);
@@ -249,6 +276,7 @@ export class SchemasTab extends TabController {
             SdkExplorerApplication.stopSpinner();
         }
     }
+
     /**
      * Fetches the labels XML file for the specified SDK version.
      * 
@@ -257,16 +285,9 @@ export class SchemasTab extends TabController {
      *  
      * @returns 
      */
-    async #fetchLabels(filename, sdkVersion) {
-        const url = this.#getUrSchemasListsAndVersion(filename, sdkVersion);
-
-        try {
-            const response = await $.ajax({ url, dataType: 'text' });
-            return response;
-        } catch (error) {
-            console.error(`Error fetching codelist "${filename}" for SDK ${sdkVersion}:  `, error);
-            throw error;
-        }
+    async #fetchSchema(filename, sdkVersion) {
+        const url = this.#getSchemaUrForVersion(filename, sdkVersion);
+        return this.ajaxRequest({ url, dataType: 'text' });
     }
 
     #switchToOverview() {
@@ -282,5 +303,7 @@ export class SchemasTab extends TabController {
         $('#schemas-overview').addClass('hide-important');
         $('#schemas-diff-view').removeClass('hide-important');
     }
+    
+    // #endregion Diff display
 
 }
