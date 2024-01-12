@@ -97,8 +97,8 @@ export class NoticeTypesTab extends TabController {
     }
 
     #switchToOverview() {
-        $('#notice-type-explorer-view').hide();
-        $('#notice-types-overview').show();
+        $('#notice-type-explorer-view').addClass('hide-important');
+        $('#notice-types-overview').removeClass('hide-important');
     }
 
     /**
@@ -285,8 +285,8 @@ export class NoticeTypesTab extends TabController {
      * Shows the tree/detail explorer for the notice type.
      */
     #switchToExplorerView() {
-        $('#notice-types-overview').hide();
-        $('#notice-type-explorer-view').show();
+        $('#notice-types-overview').addClass('hide-important');
+        $('#notice-type-explorer-view').removeClass('hide-important');
     }
 
     

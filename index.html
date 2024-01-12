@@ -115,66 +115,68 @@
 
         <!-- Notice subtypes -->
         <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
-            <div class="container-fluid h-100">
-
+            <div class="tab-container">
+        
                 <!-- Notice-types overview -->
-                <div id="notice-types-overview" class="container-fluid h-100 mb-3">
-                    <nav aria-label="breadcrumb">
+                <div id="notice-types-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
                     <card-group id="notice-types-overview-card-group" filter-property="formType"></card-group>
                 </div>
-
+        
                 <!-- Notice-type Explorer -->
-                <div id="notice-type-explorer-view" class="container-fluid d-flex flex-column h-100">
-
+                <div id="notice-type-explorer-view" class="view-container hide-important">
+        
                     <!-- Breadcrumbs -->
-                    <nav aria-label="breadcrumb" class="flex-shrink-0">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="#" id="notice-types-overview-link">Overview</a></li>
                             <li class="breadcrumb-item" aria-current="page">Comparison</li>
                         </ol>
                     </nav>
-
+        
                     <!-- Content -->
                     <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1"
                         style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
-
+        
                 </div> <!-- End of notice-type comparison row -->
-
+        
             </div> <!-- End of container -->
         </div> <!-- End of notice-types tab -->
 
         <!-- Codelists -->
         <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
-            <!-- Code-lists overview -->
-            <div id="code-lists-overview" class="container-fluid h-100 mb-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item" aria-current="page">Overview</li>
-                    </ol>
-                </nav>
-                <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
-            </div>
-
-            <!-- Codelist  diff -->
-            <div id="code-list-diff-view" class="container-fluid d-flex flex-column h-100">
+            <div class="tab-container">
+                <!-- Code-lists overview -->
+                <div id="code-lists-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
+                </div>
         
-                <!-- Breadcrumbs -->
-                <nav aria-label="breadcrumb" class="flex-shrink-0">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#" id="code-lists-overview-link">Overview</a></li>
-                        <li class="breadcrumb-item" aria-current="page">Comparison</li>
-                    </ol>
-                </nav>
+                <!-- Codelist  diff view -->
+                <div id="code-list-diff-view" class="view-container hide-important">
         
-                <!-- Content -->
-                <div id="code-list-diff"  class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></div>
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="code-lists-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
         
-            </div> <!-- End of Codelists diff -->            
-        </div>
+                    <!-- Content -->
+                    <div id="code-list-diff" class="view-diff"></div>
+        
+                </div> <!-- End of Codelists diff view -->
+            </div> <!-- End of container -->
+        </div> <!-- End of Codelists tab -->
 
         <!-- Schemas -->
         <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="codelists-tab">
@@ -184,61 +186,64 @@
 
         <!-- Translations -->
         <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="translations-tab">
-            <!-- translations overview -->
-            <div id="translations-overview" class="container-fluid h-100 mb-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item" aria-current="page">Overview</li>
-                    </ol>
-                </nav>
-                <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
-            </div>
-
-            <!-- Translations  diff -->
-            <div id="translations-diff-view" class="container-fluid d-flex flex-column h-100">
+            <div class="tab-container">
+                <!-- translations overview -->
+                <div id="translations-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
+                </div>
         
-                <!-- Breadcrumbs -->
-                <nav aria-label="breadcrumb" class="flex-shrink-0">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#" id="translations-overview-link">Overview</a></li>
-                        <li class="breadcrumb-item" aria-current="page">Comparison</li>
-                    </ol>
-                </nav>
+                <!-- Translations  diff -->
+                <div id="translations-diff-view" class="view-container hide-important">
         
-                <!-- Content -->
-                <div id="translations-diff"  class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></div>
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="translations-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
         
-            </div> <!-- End of Translations diff -->            
+                    <!-- Content -->
+                    <div id="translations-diff" class="view-diff"></div>
+        
+                </div> <!-- End of Translations diff -->
+            </div> <!-- End of container -->
         </div>
 
         <!-- View Templates -->
         <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="viewtemplates-tab">
-            <!-- View-templates overview -->
-            <div id="view-templates-overview" class="container-fluid h-100 mb-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item" aria-current="page">Overview</li>
-                    </ol>
-                </nav>
-                <card-group id="view-templates-overview-card-group"></card-group>
-            </div>
-
-            <!-- View-template diff -->
-            <div id="view-templates-diff-view" class="container-fluid d-flex flex-column h-100">
+            <div class="tab-container">
+                <!-- View-templates overview -->
+                <div id="view-templates-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="view-templates-overview-card-group" class="flex-grow-1 mh-100"></card-group>
+                </div>
         
-                <!-- Breadcrumbs -->
-                <nav aria-label="breadcrumb" class="flex-shrink-0">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="#" id="view-templates-overview-link">Overview</a></li>
-                        <li class="breadcrumb-item" aria-current="page">Comparison</li>
-                    </ol>
-                </nav>
+                <!-- View-template diff -->
+                <div id="view-templates-diff-view" class="view-container hide-important">
         
-                <!-- Content -->
-                <div id="view-template-diff"  class="flex-grow-1" style="overflow-x: hidden; overflow-y: auto;"></div>
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="view-templates-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
         
-            </div> <!-- End of View-template diff -->
+                    <!-- Content -->
+                    <div id="view-template-diff" class="view-diff"></div>
         
+                </div> <!-- End of View-template diff -->
+            </div> <!-- End of container -->
         </div>
 
         <!-- Release notes -->
@@ -256,9 +261,8 @@
             <span class="legend-item removed">removed</span>
             <span class="legend-item modified">modified</span>
         </div>
-        <div class="progress mr-3" style="width: 200px;">
-            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;" aria-valuenow="5" aria-valuemin="0"
-                aria-valuemax="100"></div>
+        <div class="progress mr-3" style="width: 10%; min-width: 100px">
+            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;"></div>
         </div>
         <div id="apiStatus" class="alert alert-info" role="alert">
         </div>
@@ -559,13 +563,20 @@
 <!-- Card-group template - used by card-group.js -->
 <template id="card-group-template">
     <style>
+        :host {
+            overflow-y: hidden;
+            display: flex;
+            height: 100%;
+            /* border: 1px solid red; */
+        }
+
         .card-group {
-            height: calc(100vh - 290px);
+            /* height: calc(100vh - 290px); */
             overflow-y: auto;
             background-color: var(--light-background-color);
             border: 1px solid var(--border-color);
             padding: 15px;
-            display: flex;
+            /* display: flex; */
             flex-wrap: wrap;
             align-content: flex-start;
         }
@@ -573,6 +584,44 @@
         .card-group index-card {
             flex: 1 0 300px;
             margin: 10px;
+        }
+
+        #card-group-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+            /* border: 1px solid red; */
+        }
+
+        #head {
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+        }
+
+        #body {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            /* height: 100%;
+            max-height: calc(100% - 24px); */
+        }
+
+        #nav {
+            flex: 1 1 10%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-width: 200px;
+        }
+
+        #cards-container {
+            height: 100%;
+            width:100%;
+            flex: 0 1 100%!important;
+            overflow-y: auto;
         }
 
         .nav-link {
@@ -583,20 +632,20 @@
             font-weight: bold;
         }
     </style>
-    <div class="col h-100 overflow-x-hidden" style="height: 100%;">
-        <header class="d-flex flex-shrink-0 font-weight-normal" style="align-items: center;">
+    <div id="card-group-container">
+        <header id="head">
             <div style="flex:1;"></div>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
-                <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+                <label class="custom-control-label" for="compactViewSwitch">Compact view</label>
             </div>
         </header>
-        <div class="row flex-grow-1" style="height: 100%;">
-            <div id="nav" class="col-auto" style="height: 100%; overflow-y: auto;">
-                <label id="filter-property-name">xxx</label>
+        <div id="body">
+            <div id="nav">
+                <label id="filter-property-name"></label>
                 <ul id="filter-options" class="nav flex-column"></ul>
             </div>
-            <div id="cards-container" class="col card-group" style="--filter-all: block;"></div>
+            <div id="cards-container" class="card-group" style="--filter-all: block;"></div>
         </div>
     </div>
 </template>

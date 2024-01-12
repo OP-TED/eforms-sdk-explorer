@@ -18,11 +18,43 @@
     --d2h-del-bg-color: var(--removed-item-background-color) !important
 }
 
+.hide-important {
+    display: none !important;
+}
+
+.tab-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.view-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+.view-breadcrumb {
+    flex-shrink: 1;
+}
+
+.view-diff {
+    flex: 1;
+    overflow-x: hidden; 
+    overflow-y: auto
+}
+
+.view-container card-group {
+    flex: 1;
+    overflow-y: auto;
+}
 
 .d-flex.align-items-center {
     display: flex;
     align-items: center;
 }
+
 #centralLoadingSpinner {
     margin: 10px;
     min-width: 16px!important;
