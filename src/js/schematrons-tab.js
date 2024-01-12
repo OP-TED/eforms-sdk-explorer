@@ -19,17 +19,19 @@ export class SchematronsTab extends TabController {
 
         // Handle clicks on the "Overview" link to return to the Overview display.
         $('#schematrons-overview-link').on('click', async (e) => {
-            await this.fetchAndRenderOverview();
+            this.#switchToOverview();
         });
     }
 
     async fetchAndRender() {
-        // Render the overview display by default
         this.fetchAndRenderOverview();
     }
 
-    // #region Overview display -----------------------------------------------
-
+    deactivated() {
+        super.deactivated();
+        this.#cardGroup().dispose();
+        this.$diffContainer().empty();
+    }
 
     /**
      * 
@@ -37,6 +39,14 @@ export class SchematronsTab extends TabController {
      */
     #cardGroup() {
         return document.getElementById('schematrons-overview-card-group');
+    }
+
+    #diffContainer() {
+        return document.getElementById('schematrons-diff');
+    }
+
+    $diffContainer() {
+        return $(this.#diffContainer());
     }
 
       /**
@@ -70,11 +80,6 @@ export class SchematronsTab extends TabController {
             SdkExplorerApplication.stopSpinner();
         }
     }
-
-    #switchToOverview() {
-        $('#schematron-overview').show();
-    }
-
     
     async #fetchFilenamesFromSchematronFolder(sdkVersion) {
         const apiUrl = `${appConfig.contentsFileUrl}/schematrons?ref=${sdkVersion}`;
@@ -117,9 +122,9 @@ export class SchematronsTab extends TabController {
             files.forEach(file => {
                 const filenameWithoutExtension = file.replace('.sch', '');
                 processedData.push({
-                    filename: filenameWithoutExtension,
-                    path: trimmedPath,
-                    file: `${trimmedPath}/${file}`,
+                    name: filenameWithoutExtension,
+                    relativePath: `${trimmedPath}/${file}`,
+                    filename: `${file}`,
                 });
             });
         }
@@ -143,7 +148,7 @@ export class SchematronsTab extends TabController {
         // If the Schematrons is not new or removed, then we will need to check for changes inside the Schematrons file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.file)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.relativePath)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -237,12 +242,18 @@ export class SchematronsTab extends TabController {
                 }
             }
 
+    #switchToOverview() {
+        $('#schematrons-diff-view').addClass('hide-important');
+        $('#schematrons-overview').removeClass('hide-important');
+        this.$diffContainer().empty();
+    }
+
     /**
-     * Shows the tree/detail explorer for the notice type.
+     * Shows the tree/detail explorer for the schematrons.
      */
     #switchToDiffView() {
-        $('#schematrons-overview').hide();
-        $('#schematrons-diff-view').show();
+        $('#schematrons-overview').addClass('hide-important');
+        $('#schematrons-diff-view').removeClass('hide-important');
     }
 
 }
