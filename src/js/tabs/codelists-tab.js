@@ -105,7 +105,7 @@ export class CodelistsTab extends TabController {
 
 
     #switchToOverview() {
-        $('#code-lists-diff-view').addClass('hide-important');
+        $('#code-list-diff-view').addClass('hide-important');
         $('#code-lists-overview').removeClass('hide-important');
         this.$diffContainer().empty();
     }
@@ -250,7 +250,7 @@ export class CodelistsTab extends TabController {
      */
     #switchToDiffView() {
         $('#code-lists-overview').addClass('hide-important');
-        $('#code-lists-diff-view').removeClass('hide-important');
+        $('#code-list-diff-view').removeClass('hide-important');
     }
 
     // #endregion Diff display
