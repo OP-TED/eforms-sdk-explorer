@@ -127,7 +127,7 @@ export class SchemasTab extends TabController {
     }
 
     async #fetchGithubDirectory(url, path) {
-        const response = await $.ajax({
+        const response = await this.ajaxRequest({
             url: url,
             headers: { 'Accept': 'application/vnd.github.v3+json' },
         });

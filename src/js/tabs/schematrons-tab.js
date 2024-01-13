@@ -93,7 +93,7 @@ export class SchematronsTab extends TabController {
         }
     }
     async #fetchGithubDirectory(url, path) {
-        const response = await $.ajax({
+        const response = await this.ajaxRequest({
             url: url,
             headers: { 'Accept': 'application/vnd.github.v3+json' },
         });
@@ -182,8 +182,10 @@ export class SchematronsTab extends TabController {
             SdkExplorerApplication.startSpinner();
             let mainUrl = this.#getUrSchematronsListsAndVersion(filename, appState.mainVersion);
             let baseUrl = this.#getUrSchematronsListsAndVersion(filename, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);
             let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
             return nodeChange;
         } catch (error) {
@@ -234,7 +236,7 @@ export class SchematronsTab extends TabController {
                 const url = this.#getUrSchematronsListsAndVersion(filename, sdkVersion);
                 
                 try {
-                    const response = await $.ajax({ url, dataType: 'text' });
+                    const response = await this.ajaxRequest({ url, dataType: 'text' });
                     return response;
                 } catch (error) {
                     console.error(`Error fetching Schematron "${filename}" for SDK ${sdkVersion}:  `, error);
