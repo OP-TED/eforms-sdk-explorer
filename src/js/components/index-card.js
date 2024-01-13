@@ -1,5 +1,6 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 import { PropertyCard } from "./property-card.js";
+import { Diff } from "../diff.js";
 
 export class IndexCard extends BootstrapWebComponent {
 
@@ -84,7 +85,12 @@ export class IndexCard extends BootstrapWebComponent {
             button = document.createElement('button');
             button.setAttribute('id', 'action-button');
             button.setAttribute('type', 'button');
-            button.classList.add('btn', 'btn-outline-primary');
+            if ([Diff.TypeOfChange.ADDED, Diff.TypeOfChange.REMOVED].includes(this.status)) {
+                button.setAttribute('disabled', '');
+                button.classList.add('btn', 'btn-outline-secondary');
+            } else {
+                button.classList.add('btn', 'btn-outline-primary');
+            }
             this.shadowRoot.querySelector('#card-header').appendChild(button);
         }
     
