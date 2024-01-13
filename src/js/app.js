@@ -1,4 +1,4 @@
-import { appConfig, domElements } from "./config.js";
+import { appConfig } from "./config.js";
 import { appState } from "./state.js";
 import { HomeTab } from "./tabs/home-tab.js";
 import { FieldsTab } from "./tabs/fields-tab.js";
@@ -60,18 +60,42 @@ export class SdkExplorerApplication {
             SdkExplorerApplication.instance.activeTabChanged(activeTabId);
         });
 
-        domElements.newVersionDropdown.change(function () {
+        this.$mainVersionDropdown().change(function () {
             appState.mainVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
             SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
-        
-        domElements.comparisonDropdown.change(function () {
+
+        this.$baseVersionDropdown().change(function () {
             appState.baseVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
             SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
     }
+
+    #mainVersionDropdown() {
+        return document.querySelector('#main-version-dropdown');
+    }
+    $mainVersionDropdown() {
+        return $(this.#mainVersionDropdown());
+    }
+
+    #baseVersionDropdown() {
+        return document.querySelector('#base-version-dropdown');
+    }
+
+    $baseVersionDropdown() {
+        return $(this.#baseVersionDropdown());
+    }
+
+    #apiStatus() {
+        return document.querySelector('#apiStatus');
+    }
+
+    $apiStatus() {
+        return $(this.#apiStatus());
+    }
+
 
     /**
      * 
@@ -118,15 +142,15 @@ export class SdkExplorerApplication {
     static stopSpinner() {
         SdkExplorerApplication.instance.stopSpinner();
     }
-    
+
     startSpinner() {
         this.#spinnerCounter++;
         this.#toggleSpinner();
     }
 
-    stopSpinner() {  
+    stopSpinner() {
         this.#spinnerCounter--;
-        this.#toggleSpinner();    
+        this.#toggleSpinner();
     }
 
     #toggleSpinner() {
@@ -138,74 +162,177 @@ export class SdkExplorerApplication {
     }
 
     clearApiStatus() {
-        domElements.apiStatus.text('');
+        this.$apiStatus().text('');
     }
 
     updateApiStatus(message, isSuccess = true) {
-        domElements.apiStatus.text(message);
-    
+        this.$apiStatus().text(message);
+
         if (isSuccess) {
-            domElements.apiStatus.addClass('alert-success').removeClass('alert-danger');
+            this.$apiStatus().addClass('alert-success').removeClass('alert-danger');
         } else {
-            domElements.apiStatus.addClass('alert-danger').removeClass('alert-success');
+            this.$apiStatus().addClass('alert-danger').removeClass('alert-success');
         }
-    
-        domElements.apiStatus.show();
-    
+
+        this.$apiStatus().show();
+
         setTimeout(() => {
-            domElements.apiStatus.fadeOut('slow');
+            this.$apiStatus().fadeOut('slow');
         }, 5000);
     }
 
+    /**
+     * Compares two version numbers but returns the opposite of the result.
+     * 
+     * @param {string} a 
+     * @param {string} b 
+     * @returns {number} -1 if a > b, 1 if a < b, 0 if a === b
+     */
+    #reverseCompareVersions(a, b) {
+        const aParts = a.split('.').map(Number);
+        const bParts = b.split('.').map(Number);
 
-    compareVersions(a, b) {
-        const parseVersionPart = (part) => {
-            const match = part.match(/(\d+)(.*)/);
-            return match ? { number: parseInt(match[1], 10), text: match[2] } : { number: 0, text: '' };
-        };
-
-        const aParts = a.split('.').map(parseVersionPart);
-        const bParts = b.split('.').map(parseVersionPart);
-
-        for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-            const aValue = i < aParts.length ? aParts[i] : { number: 0, text: '' };
-            const bValue = i < bParts.length ? bParts[i] : { number: 0, text: '' };
-
-            // Compare numeric
-            if (aValue.number > bValue.number) return -1;
-            if (aValue.number < bValue.number) return 1;
-
-            // Compare textual parts if needed
-            if (aValue.text > bValue.text) return -1;
-            if (aValue.text < bValue.text) return 1;
+        for (let i = 0; i < aParts.length; i++) {
+            if (aParts[i] > bParts[i]) {
+                return -1;
+            } else if (aParts[i] < bParts[i]) {
+                return 1;
+            }
         }
 
         return 0;
     }
 
+    /**
+     * Gets the two latest non-pre-release versions.
+     * 
+     * @param {string[]} versions 
+     * @returns 
+     */
+    #getLastTwoReleasedVersions(versions) {
+
+        // Filter out pre-release versions
+        const releasedVersions = versions.filter(version => version.indexOf('-') === -1);
+
+        releasedVersions.sort(this.#reverseCompareVersions.bind(this));
+
+        const latestVersion = releasedVersions[0];
+
+        // Find the latest patch of the preceding minor version
+        const latestVersionParts = latestVersion.split('.').map(Number);
+        const previousVersion = releasedVersions.find(version => {
+            const versionParts = version.split('.').map(Number);
+            return versionParts[0] === latestVersionParts[0] && versionParts[1] < latestVersionParts[1];
+        });
+
+        return [latestVersion, previousVersion];
+    }
+
+    /**
+     * Gets the previous version of the provided version.
+     * 
+     * @param {string} latestVersion 
+     * @param {string[]} versions 
+     * @returns 
+     */
+    #getPreviousVersion(latestVersion, versions) {
+
+        // Filter out pre-release versions
+        const releasedVersions = versions.filter(version => version.indexOf('-') === -1);
+
+        releasedVersions.sort(this.#reverseCompareVersions.bind(this));
+
+        // Find the latest patch of the preceding minor version
+        const latestVersionParts = latestVersion.split('.').map(Number);
+        const previousVersion = releasedVersions.find(version => {
+            const versionParts = version.split('.').map(Number);
+            return versionParts[0] === latestVersionParts[0] && versionParts[1] < latestVersionParts[1];
+        });
+
+        return previousVersion;
+    }
+
+    /**
+     * Gets the main and base versions from the query string if provided.
+     * 
+     * @returns 
+     */
+    #getVersionsFromQueryString() {
+        // Parse the query string
+        let params = new URLSearchParams(window.location.search);
+        let versionParam = params.get('version');
+        let baseParam = params.get('base');
+
+        if (window.location.search) {
+            // Remove the query string from the URL
+            history.replaceState(null, null, window.location.pathname);
+        }
+
+        return [versionParam, baseParam];
+    }
 
     async populateDropdown() {
         this.startSpinner();
         this.clearApiStatus();
         try {
             const response = await $.ajax({
-                url: `${appConfig.eformsBaseUrl}/tags`,
+                url: `${appConfig.eformsBaseUrl}/tags?per_page=100&page=1`,
                 dataType: 'json'
             });
 
-            domElements.newVersionDropdown.empty();
-            domElements.comparisonDropdown.empty();
+            let availableVersions = response.map(item => item.name);
 
-            response.forEach(item => {
-                const option = $('<option>', { value: item.name, text: item.name });
-                domElements.newVersionDropdown.append(option.clone());
-                domElements.comparisonDropdown.append(option);
+            // Filter out versions older than the threshold
+            let versions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
+            // Sort versions by version number
+            versions.sort(this.#reverseCompareVersions.bind(this));
+
+            // Filter out pre-releases of released versions
+            const releasedVersions = versions.filter(version => !version.includes('-'));
+            const latestRelease = releasedVersions[0];
+            const preReleasesOfLatestVersion = versions.filter(version => {
+                const baseVersion = version.split('-')[0];
+                return version.includes('-') && baseVersion === latestRelease;
+                });
+            const preReleasesOfUnreleasedVersions = versions.filter(version => {
+                const baseVersion = version.split('-')[0];
+                return version.includes('-') && !releasedVersions.includes(baseVersion);
+            });
+            versions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
+
+            // Sort versions by version number
+            versions.sort(this.#reverseCompareVersions.bind(this));
+
+            // Populate the dropdowns
+            this.$mainVersionDropdown().empty();
+            this.$baseVersionDropdown().empty();
+            versions.forEach(version => {
+                const option = $('<option>', { value: version, text: version });
+                this.$mainVersionDropdown().append(option.clone());
+                this.$baseVersionDropdown().append(option);
             });
 
-            domElements.newVersionDropdown.val(response[0].name);
-            domElements.comparisonDropdown.val(response.length > 1 ? response[1].name : response[0].name);
-            appState.mainVersion = response[0].name;
-            appState.baseVersion = response[1].name;
+            // Get versions from the query string if provided
+            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(versions);
+
+            // Validate the versions passed in the query string
+            if (!availableVersions.includes(mainVersion)) {
+                mainVersion = latestRelease;
+            } else if (!versions.includes(mainVersion)) {
+                const option = $('<option>', { value: mainVersion, text: mainVersion });
+                this.$mainVersionDropdown().append(option);
+            }
+            if (!availableVersions.includes(baseVersion)) {
+                baseVersion = this.#getPreviousVersion(mainVersion, releasedVersions);
+            } else if (!versions.includes(baseVersion)) {
+                const option = $('<option>', { value: baseVersion, text: baseVersion });
+                this.$baseVersionDropdown().append(option);            
+            }
+
+            this.$mainVersionDropdown().val(mainVersion);
+            this.$baseVersionDropdown().val(baseVersion);
+            appState.mainVersion = mainVersion;
+            appState.baseVersion = baseVersion;
         } catch (error) {
             this.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
