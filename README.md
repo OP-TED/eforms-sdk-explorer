@@ -37,3 +37,20 @@ If you are interested in this application, we welcome your contributions:
 > _Likewise, for bug fixes, make sure there is a GitHub Issue recoded and labeled as `bug`._
 > 
 > _In your commit messages and pull requests, [reference the issue number](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests). For example `Fixes #7: rest of your commit message here`._
+
+## Acknowledgements
+
+This project uses the following open-source libraries:
+
+- [JsDiff](https://github.com/kpdecker/jsdiff): A JavaScript text differencing implementation.  
+  Licensed under the [BSD License](https://github.com/kpdecker/jsdiff/blob/main/LICENSE).
+- [Diff2Html](https://github.com/rtfpessoa/diff2html): Pretty diff to HTML javascript library (diff2html).  
+  Licensed under the [MIT License](https://github.com/rtfpessoa/diff2html/blob/main/LICENSE).
+- [Bootstrap](https://getbootstrap.com/): The most popular HTML, CSS, and JS library in the world.  
+  Licensed under the [MIT License](https://github.com/twbs/bootstrap/blob/main/LICENSE).
+- [jQuery](https://jquery.com/): A fast, small, and feature-rich JavaScript library.  
+  Licensed under the [MIT License](https://github.com/jquery/jquery/blob/main/LICENSE.txt).
+- [jsTree](https://www.jstree.com/): jquery plugin, that provides interactive trees.  
+  Licensed under the [MIT License](https://github.com/vakata/jstree/blob/master/LICENSE-MIT).
+
+Please see the respective links for license details.
