@@ -101,10 +101,13 @@ export class SchematronsTab extends TabController {
         let directoryStructure = {};
         for (const item of response) {
             if (item.type === 'file') {
-                if (!directoryStructure[path]) {
-                    directoryStructure[path] = [];
+                const extension = item.name.split('.').pop();
+                if (extension === 'sch') {
+                    if (!directoryStructure[path]) {
+                        directoryStructure[path] = [];
+                    }
+                    directoryStructure[path].push(item.name);
                 }
-                directoryStructure[path].push(item.name);
             } else if (item.type === 'dir') {
                 const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
                 directoryStructure = { ...directoryStructure, ...subDirStructure };
@@ -121,10 +124,18 @@ export class SchematronsTab extends TabController {
 
             files.forEach(file => {
                 const filenameWithoutExtension = file.replace('.sch', '');
+                let stage = null;
+
+                if (filenameWithoutExtension.startsWith('validation-stage')) {
+                    const parts = filenameWithoutExtension.split('-');
+                    stage = parts[2]; // The stage is the third part of the filename
+                }
+
                 processedData.push({
                     name: filenameWithoutExtension,
-                    relativePath: `${trimmedPath}/${file}`,
-                    filename: `${file}`,
+                    stage: stage,
+                    folder: trimmedPath,
+                    filename: `${trimmedPath}/${file}`
                 });
             });
         }
@@ -140,15 +151,15 @@ export class SchematronsTab extends TabController {
   * @returns 
   */
     #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('name'), diffEntry.get('folder') ?? '', 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('relativePath'));
+            this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
         // If the Schematrons is not new or removed, then we will need to check for changes inside the Schematrons file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.relativePath)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
