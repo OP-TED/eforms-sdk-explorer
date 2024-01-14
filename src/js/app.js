@@ -60,13 +60,13 @@ export class SdkExplorerApplication {
             SdkExplorerApplication.instance.activeTabChanged(activeTabId);
         });
 
-        this.$mainVersionDropdown().change(function () {
+        SdkExplorerApplication.instance.$mainVersionDropdown().change(function () {
             appState.mainVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
             SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
         });
 
-        this.$baseVersionDropdown().change(function () {
+        SdkExplorerApplication.instance.$baseVersionDropdown().change(function () {
             appState.baseVersion = $(this).val();
             $('#fieldDetailsContent').html('Select an item to see details.');
             SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);

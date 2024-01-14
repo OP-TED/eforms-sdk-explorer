@@ -135,10 +135,13 @@ export class SchemasTab extends TabController {
         let directoryStructure = {};
         for (const item of response) {
             if (item.type === 'file') {
-                if (!directoryStructure[path]) {
-                    directoryStructure[path] = [];
+                const extension = item.name.split('.').pop();
+                if (['xsd', 'json', 'xml'].includes(extension)) {
+                    if (!directoryStructure[path]) {
+                        directoryStructure[path] = [];
+                    }
+                    directoryStructure[path].push(item.name);
                 }
-                directoryStructure[path].push(item.name);
             } else if (item.type === 'dir') {
                 const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
                 directoryStructure = { ...directoryStructure, ...subDirStructure };
@@ -151,22 +154,37 @@ export class SchemasTab extends TabController {
         let processedData = [];
 
         for (const [path, files] of Object.entries(data)) {
-            const trimmedPath = path.split('/').pop();
+            const folder = path.split('/').pop();
 
             files.forEach(file => {
-                const filenameWithoutExtension = file.replace('.xsd', '');
+                const filenameParts = file.split('.');
+                const extension = filenameParts.pop();
+                const filenameWithoutExtension = filenameParts.join('.');
+
+                let standard = null;
+                let name = filenameWithoutExtension;
+                let version = null;
+
+                if (extension === 'xsd') {
+                    [standard, name, version] = filenameWithoutExtension.split('-');
+                }
+
+                name = name.replace(/_/g, ' ');
+
                 processedData.push({
-                    filename: filenameWithoutExtension,
-                    path: trimmedPath,
-                    file: `${trimmedPath}/${file}`,
+                    standard: standard,
+                    name: name,
+                    version: version,
+                    folder: folder,
+                    filename: `${folder}/${file}`,
                 });
             });
         }
 
+        processedData.sort((a, b) => a.name.localeCompare(b.name));
+
         return processedData;
     }
-
-
     /**
     * Creates an index-card for the specified Schema.
     * 
@@ -174,15 +192,15 @@ export class SchemasTab extends TabController {
     * @returns 
     */
     #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('name'), diffEntry.get('standard'), 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('file'));
+            this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
         // If the Schema is not new or removed, then we will need to check for changes inside the Schemas file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.file)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
