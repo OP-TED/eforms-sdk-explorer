@@ -193,7 +193,7 @@ export class TranslationsTab extends TabController {
         if (diffEntry.mainItem) {
             for (const propertyName in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
-                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName]);
+                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName], Diff.TypeOfChange.REMOVED);
                     component.appendProperty(card);
                 }
             }

@@ -244,7 +244,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         if (diffEntry.mainItem) {
             for (const key in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
-                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
+                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key], Diff.TypeOfChange.REMOVED);
                     this.$detailView().append($removedPropertyTemplate);
                 }
             }
