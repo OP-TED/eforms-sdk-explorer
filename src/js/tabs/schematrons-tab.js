@@ -1,10 +1,10 @@
-import { appState } from "./state.js";
-import { appConfig } from "./config.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { appState } from "../state.js";
+import { appConfig } from "../config.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { TabController } from "./tab-controller.js";
-import { PropertyCard } from "./property-card.js";
-import { IndexCard } from "./index-card.js";
-import { SdkExplorerApplication } from "./app.js";
+import { PropertyCard } from "../components/property-card.js";
+import { IndexCard } from "../components/index-card.js";
+import { SdkExplorerApplication } from "../app.js";
 export class SchematronsTab extends TabController {
 
     constructor() {
@@ -93,7 +93,7 @@ export class SchematronsTab extends TabController {
         }
     }
     async #fetchGithubDirectory(url, path) {
-        const response = await $.ajax({
+        const response = await this.ajaxRequest({
             url: url,
             headers: { 'Accept': 'application/vnd.github.v3+json' },
         });
@@ -101,10 +101,13 @@ export class SchematronsTab extends TabController {
         let directoryStructure = {};
         for (const item of response) {
             if (item.type === 'file') {
-                if (!directoryStructure[path]) {
-                    directoryStructure[path] = [];
+                const extension = item.name.split('.').pop();
+                if (extension === 'sch') {
+                    if (!directoryStructure[path]) {
+                        directoryStructure[path] = [];
+                    }
+                    directoryStructure[path].push(item.name);
                 }
-                directoryStructure[path].push(item.name);
             } else if (item.type === 'dir') {
                 const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
                 directoryStructure = { ...directoryStructure, ...subDirStructure };
@@ -121,10 +124,18 @@ export class SchematronsTab extends TabController {
 
             files.forEach(file => {
                 const filenameWithoutExtension = file.replace('.sch', '');
+                let stage = null;
+
+                if (filenameWithoutExtension.startsWith('validation-stage')) {
+                    const parts = filenameWithoutExtension.split('-');
+                    stage = parts[2]; // The stage is the third part of the filename
+                }
+
                 processedData.push({
                     name: filenameWithoutExtension,
-                    relativePath: `${trimmedPath}/${file}`,
-                    filename: `${file}`,
+                    stage: stage,
+                    folder: trimmedPath,
+                    filename: `${trimmedPath}/${file}`
                 });
             });
         }
@@ -140,15 +151,15 @@ export class SchematronsTab extends TabController {
   * @returns 
   */
     #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
+        const component = IndexCard.create(diffEntry.get('name'), diffEntry.get('folder') ?? '', 'Compare', diffEntry.typeOfChange);
         component.setActionHandler((e) => {
             e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('relativePath'));
+            this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
         // If the Schematrons is not new or removed, then we will need to check for changes inside the Schematrons file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.relativePath)));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -163,7 +174,7 @@ export class SchematronsTab extends TabController {
         if (diffEntry.mainItem) {
             for (const propertyName in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
-                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName]);
+                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName], Diff.TypeOfChange.REMOVED);
                     component.appendProperty(card);
                 }
             }
@@ -182,8 +193,10 @@ export class SchematronsTab extends TabController {
             SdkExplorerApplication.startSpinner();
             let mainUrl = this.#getUrSchematronsListsAndVersion(filename, appState.mainVersion);
             let baseUrl = this.#getUrSchematronsListsAndVersion(filename, appState.baseVersion);
-            let mainFile = await $.ajax({ url: mainUrl, dataType: 'text' });
-            let baseFile = await $.ajax({ url: baseUrl, dataType: 'text' });
+            let [mainFile, baseFile] = await Promise.all([
+                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
+                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+            ]);
             let nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
             return nodeChange;
         } catch (error) {
@@ -234,7 +247,7 @@ export class SchematronsTab extends TabController {
                 const url = this.#getUrSchematronsListsAndVersion(filename, sdkVersion);
                 
                 try {
-                    const response = await $.ajax({ url, dataType: 'text' });
+                    const response = await this.ajaxRequest({ url, dataType: 'text' });
                     return response;
                 } catch (error) {
                     console.error(`Error fetching Schematron "${filename}" for SDK ${sdkVersion}:  `, error);

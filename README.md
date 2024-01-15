@@ -23,6 +23,15 @@ You can access it here: **https://docs.ted.europa.eu/eforms-sdk-explorer/**
 > [!NOTE]
 > _Initially our intention was to keep the application "as simple as possible" so that it can be downloaded and executed locally in your browser. However, we quickly deviated from our initial intention and decided to integrate the application in the [TED Developer Documentation Portal](https://docs.ted.europa.eu/eforms-sdk-explorer/) instead. This makes accessing the SDK Explorer more convenient for everyone, and allows us to implement it without being restricted by code safety limitations imposed when browsers execute scripts locally on your computer._
 
+### Comparing SDK versions
+
+You can select the version to explore as well as the base version to compare it with, by using the drop-down selectors on the top right of the SDK Explorer screen.
+
+The drop-down version selectors only show released versions as well as any pre-releases of unreleased versions.
+
+You can also specify the versions to compare in the query string:
+
+`http://docs.ted.europa.eu/eforms-sdk-explorer?version=1.8.0&base=1.5.3`
 
 ## Contributing to the SDK Explorer
 
@@ -37,3 +46,20 @@ If you are interested in this application, we welcome your contributions:
 > _Likewise, for bug fixes, make sure there is a GitHub Issue recoded and labeled as `bug`._
 > 
 > _In your commit messages and pull requests, [reference the issue number](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/autolinked-references-and-urls#issues-and-pull-requests). For example `Fixes #7: rest of your commit message here`._
+
+## Acknowledgements
+
+This project uses the following open-source libraries:
+
+- [Bootstrap](https://getbootstrap.com/): The most popular HTML, CSS, and JS library in the world. 
+  Licensed under the [MIT License](https://github.com/twbs/bootstrap/blob/main/LICENSE).
+- [jQuery](https://jquery.com/): A fast, small, and feature-rich JavaScript library. 
+  Licensed under the [MIT License](https://github.com/jquery/jquery/blob/main/LICENSE.txt).
+- [jsTree](https://www.jstree.com/): jquery plugin, that provides interactive trees. 
+  Licensed under the [MIT License](https://github.com/vakata/jstree/blob/master/LICENSE-MIT).
+- [JsDiff](https://github.com/kpdecker/jsdiff): A JavaScript text differencing implementation. 
+  Licensed under the [BSD License](https://github.com/kpdecker/jsdiff/blob/main/LICENSE).
+- [Diff2Html](https://github.com/rtfpessoa/diff2html): Pretty diff to HTML javascript library (diff2html). 
+  Licensed under the [MIT License](https://github.com/rtfpessoa/diff2html/blob/main/LICENSE).
+
+Please see the respective links for license details.

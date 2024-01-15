@@ -1,10 +1,10 @@
 import { BootstrapWebComponent } from './bootstrap-web-component.js';
-import { Diff } from './diff.js';
+import { Diff } from '../diff.js';
 
 export class PropertyCard extends BootstrapWebComponent {
 
     static get observedAttributes() {
-        return ['property-name', 'new-property-value', 'old-property-value', 'node-change'];
+        return ['property-name', 'new-property-value', 'old-property-value', 'type-of-change'];
     }
 
     constructor() {
@@ -15,13 +15,11 @@ export class PropertyCard extends BootstrapWebComponent {
         if (newValue === oldValue) {
             return;
         }
-        if (name === 'node-change') {
-            this.nodeChange = newValue;
-        }
         switch (name) {
             case 'property-name': this.propertyName = newValue; break;
             case 'new-property-value': this.newPropertyValue = newValue === "undefined" ? undefined : newValue; break;
             case 'old-property-value': this.oldPropertyValue = newValue === "undefined" ? undefined : newValue; break;
+            case 'type-of-change': this.typeOfChange = newValue; break;
         }
 
         if (this.isConnected) {
@@ -49,7 +47,7 @@ export class PropertyCard extends BootstrapWebComponent {
     }
 
     getTypeOfChange() {
-        return this.nodeChange;
+        return this.typeOfChange;
     }
 
     render() {
@@ -72,7 +70,12 @@ export class PropertyCard extends BootstrapWebComponent {
         } else {
             this.shadowRoot.querySelector('#list-item').classList.add('unchanged-property');
             this.shadowRoot.querySelector('#old-property-value').style.display = 'none';
-        }    
+
+            // hide undefined properties
+            if (!this.newPropertyValue && !this.oldPropertyValue) {
+                this.style.display = 'none';
+            }
+        }
     }
 
     /**
@@ -82,11 +85,12 @@ export class PropertyCard extends BootstrapWebComponent {
      * @param {*} previousValue 
      * @returns {PropertyCard}
      */
-    static create(propertyName, currentValue, previousValue) {
+    static create(propertyName, currentValue, previousValue, typeOfChange) {
         const component = document.createElement('property-card');
         component.setAttribute('property-name', propertyName);
         component.setAttribute('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
         component.setAttribute('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
+        component.setAttribute('type-of-change', typeOfChange);
     
         return component;
     }

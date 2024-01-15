@@ -1,11 +1,11 @@
-import { appState } from "./state.js";
-import { appConfig } from "./config.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { appState } from "../state.js";
+import { appConfig } from "../config.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { TabController } from "./tab-controller.js";
-import { PropertyCard } from "./property-card.js";
-import { IndexCard } from "./index-card.js";
-import { SdkExplorerApplication } from "./app.js";
-import { CardGroup } from "./card-group.js";
+import { PropertyCard } from "../components/property-card.js";
+import { IndexCard } from "../components/index-card.js";
+import { SdkExplorerApplication } from "../app.js";
+import { CardGroup } from "../components/card-group.js";
 
 export class CodelistsTab extends TabController {
 
@@ -105,7 +105,7 @@ export class CodelistsTab extends TabController {
 
 
     #switchToOverview() {
-        $('#code-lists-diff-view').addClass('hide-important');
+        $('#code-list-diff-view').addClass('hide-important');
         $('#code-lists-overview').removeClass('hide-important');
         this.$diffContainer().empty();
     }
@@ -142,7 +142,7 @@ export class CodelistsTab extends TabController {
         if (diffEntry.mainItem) {
             for (const propertyName in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
-                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName]);
+                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName], Diff.TypeOfChange.REMOVED);
                     component.appendProperty(card);
                 }
             }
@@ -250,7 +250,7 @@ export class CodelistsTab extends TabController {
      */
     #switchToDiffView() {
         $('#code-lists-overview').addClass('hide-important');
-        $('#code-lists-diff-view').removeClass('hide-important');
+        $('#code-list-diff-view').removeClass('hide-important');
     }
 
     // #endregion Diff display

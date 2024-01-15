@@ -11,7 +11,7 @@ export class CardGroup extends BootstrapWebComponent {
      * @type {string[]}
      */
     static get observedAttributes() {
-        return ['filter-property', 'default-filter-value'];
+        return ['filter-property', 'filter-prompt', 'default-filter-value'];
     }
 
     constructor() {
@@ -45,6 +45,7 @@ export class CardGroup extends BootstrapWebComponent {
 
         switch (name) {
             case 'filter-property': this.filterProperty = newValue; break;
+            case 'filter-prompt': this.filterPrompt = newValue; break;
             case 'default-filter-value': this.defaultFilterValue = newValue; break;
         }
 
@@ -85,7 +86,7 @@ export class CardGroup extends BootstrapWebComponent {
         }.bind(this));
 
         if (this.filterProperty) {
-            this.shadowRoot.querySelector('#filter-property-name').textContent = this.filterProperty;
+            this.shadowRoot.querySelector('#filter-prompt').textContent = this.filterPrompt ?? this.filterProperty;
             if (this.filterValues.length > 1) {
                 this.filterValues.push('(all)');
             }

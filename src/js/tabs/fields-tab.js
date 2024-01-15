@@ -1,8 +1,8 @@
 import { TabController } from "./tab-controller.js";
-import { appState } from "./state.js";
-import { appConfig } from "./config.js";
-import { Diff, DiffEntry } from "./diff.js"; 
-import { TreeDetailSplitView } from "./tree-detail-split-view.js";
+import { appState } from "../state.js";
+import { appConfig } from "../config.js";
+import { Diff, DiffEntry } from "../diff.js"; 
+import { TreeDetailSplitView } from "../components/tree-detail-split-view.js";
 
 export class FieldsTab extends TabController {
 

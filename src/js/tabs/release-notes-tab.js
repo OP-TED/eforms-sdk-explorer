@@ -1,6 +1,6 @@
 import { TabController } from "./tab-controller.js";
-import { appConfig } from "./config.js";
-import { appState } from "./state.js";
+import { appConfig } from "../config.js";
+import { appState } from "../state.js";
 
 export class ReleaseNotesTab extends TabController {
 

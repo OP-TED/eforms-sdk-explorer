@@ -1,5 +1,5 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { PropertyCard } from "./property-card.js";
 
 export class TreeDetailSplitView extends BootstrapWebComponent {
@@ -141,6 +141,15 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             this.displayDetails(DiffEntry.fromObject(data.node.data), titleProperty, subtitleProperty, hiddenProperties);
         });   
 
+        // Reset the search fields
+        this.$treeSearch().val('');
+        this.$treeFilter().val('all');
+
+        // Empty the detail view
+        this.$detailView().empty();
+        this.$detailTitle().text('Select a node to see details');
+        this.$detailSubtitle().text('');
+
         let titleSlot = this.shadowRoot.querySelector('slot[name="search-popover-title"]');
         let titleSlotNodes = titleSlot.assignedNodes();
         let popoverTitle = titleSlotNodes.length > 0 ? titleSlotNodes[0].innerHTML : titleSlot.innerHTML;
@@ -244,7 +253,7 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         if (diffEntry.mainItem) {
             for (const key in diffEntry.baseItem) {
                 if (!diffEntry.mainItem.hasOwnProperty(key) && key !== 'content') {
-                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key]);
+                    const $removedPropertyTemplate = PropertyCard.create(key, undefined, diffEntry.baseItem[key], Diff.TypeOfChange.REMOVED);
                     this.$detailView().append($removedPropertyTemplate);
                 }
             }

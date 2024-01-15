@@ -1,12 +1,12 @@
-import { appState } from "./state.js";
-import { appConfig } from "./config.js";
-import { Diff, DiffEntry } from "./diff.js";
+import { appState } from "../state.js";
+import { appConfig } from "../config.js";
+import { Diff, DiffEntry } from "../diff.js";
 import { TabController } from "./tab-controller.js";
-import { PropertyCard } from "./property-card.js";
-import { IndexCard } from "./index-card.js";
-import { SdkExplorerApplication } from "./app.js";
-import { TreeDetailSplitView } from "./tree-detail-split-view.js";
-import { CardGroup } from "./card-group.js";
+import { PropertyCard } from "../components/property-card.js";
+import { IndexCard } from "../components/index-card.js";
+import { SdkExplorerApplication } from "../app.js";
+import { TreeDetailSplitView } from "../components/tree-detail-split-view.js";
+import { CardGroup } from "../components/card-group.js";
 
 export class NoticeTypesTab extends TabController {
 
@@ -138,7 +138,7 @@ export class NoticeTypesTab extends TabController {
                 }
 
                 if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
-                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName]);
+                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName], Diff.TypeOfChange.REMOVED);
                     component.appendProperty(card);
                 }
             }

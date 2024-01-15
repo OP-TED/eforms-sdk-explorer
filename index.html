@@ -33,12 +33,12 @@
             </a>
             <div class="d-flex align-items-center">
                 <div class="version-text mr-2">Explore SDK</div>
-                <select id="newVersionDropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
+                <select id="main-version-dropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
                     data-placement="left" title="Select SDK version to explore" data-html="true"
                     data-content="Typically this is a newer version of the SDK. For example, items that only exist in this version are indicated as 'added'.">
                 </select>
                 <div class="comparison-text mr-2">in comparison with</div>
-                <select id="comparisonDropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
+                <select id="base-version-dropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
                     data-placement="left" title="Select version to compare with" data-html="true"
                     data-content="Typically this will be an older SDK version. For example, items that only exist in this version are indicated as 'removed'.">
                 </select>
@@ -130,7 +130,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="notice-types-overview-card-group" filter-property="formType"></card-group>
+                    <card-group id="notice-types-overview-card-group" filter-property="formType" filter-prompt="Filter by form type"></card-group>
                 </div>
 
                 <!-- Notice-type Explorer -->
@@ -163,7 +163,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="code-lists-overview-card-group" filter-property="parentId"></card-group>
+                    <card-group id="code-lists-overview-card-group" filter-property="parentId" filter-prompt="Filter by parent codelist"></card-group>
                 </div>
 
                 <!-- Codelist  diff view -->
@@ -194,7 +194,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="schemas-overview-card-group" filter-property="path"></card-group>
+                    <card-group id="schemas-overview-card-group" filter-property="standard" filter-prompt="Filter by standard"></card-group>
                 </div>
         
                 <!-- schemas  diff -->
@@ -226,7 +226,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="schematrons-overview-card-group"></card-group>
+                    <card-group id="schematrons-overview-card-group" filter-property="folder" filter-prompt="Filter by folder"></card-group>
                 </div>
 
                 <!-- Schematrons diff view -->
@@ -257,7 +257,7 @@
                             <li class="breadcrumb-item" aria-current="page">Overview</li>
                         </ol>
                     </nav>
-                    <card-group id="translations-overview-card-group" filter-property="twoLetterCode"></card-group>
+                    <card-group id="translations-overview-card-group" filter-property="twoLetterCode" filter-prompt="Filter by language"></card-group>
                 </div>
 
                 <!-- Translations  diff -->
@@ -681,6 +681,7 @@
             overflow-x: hidden;
             overflow-y: auto;
             min-width: 200px;
+            border-top: 1px solid var(--border-color);
         }
 
         #cards-container {
@@ -688,6 +689,10 @@
             width: 100%;
             flex: 0 1 100% !important;
             overflow-y: auto;
+        }
+
+        #filter-prompt {
+            margin: 0px 4px;
         }
 
         .nav-link {
@@ -700,7 +705,7 @@
     </style>
     <div id="card-group-container">
         <header id="head">
-            <div style="flex:1;"></div>
+            <label style="flex:1;" id="filter-prompt"></label>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
                 <label class="custom-control-label" for="compactViewSwitch">Compact view</label>
@@ -708,7 +713,6 @@
         </header>
         <div id="body">
             <div id="nav">
-                <label id="filter-property-name"></label>
                 <ul id="filter-options" class="nav flex-column"></ul>
             </div>
             <div id="cards-container" class="card-group" style="--filter-all: block;"></div>
