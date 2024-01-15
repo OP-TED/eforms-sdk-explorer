@@ -30,7 +30,8 @@ You can select the version to explore as well as the base version to compare it 
 The drop-down version selectors only show released versions as well as any pre-releases of unreleased versions.
 
 You can also specify the versions to compare in the query string:
-`http://docs.ted.europa.eu/eforms-sdk-explorer/?version=1.8.0&base=1.5.3`
+
+`http://docs.ted.europa.eu/eforms-sdk-explorer?version=1.8.0&base=1.5.3`
 
 ## Contributing to the SDK Explorer
 
