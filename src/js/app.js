@@ -316,19 +316,24 @@ export class SdkExplorerApplication {
             let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(versions);
 
             // Validate the versions passed in the query string
-            if (!availableVersions.includes(mainVersion)) {
-                mainVersion = latestRelease;
-            } else if (!versions.includes(mainVersion)) {
-                const option = $('<option>', { value: mainVersion, text: mainVersion });
-                this.$mainVersionDropdown().append(option);
+            if (!versions.includes(mainVersion)) {
+                if (availableVersions.includes(mainVersion)) {
+                    const option = $('<option>', { value: mainVersion, text: mainVersion });
+                    this.$mainVersionDropdown().append(option);
+                } else {
+                    mainVersion = latestRelease;
+                }
             }
-            if (!availableVersions.includes(baseVersion)) {
-                baseVersion = this.#getPreviousVersion(mainVersion, releasedVersions);
-            } else if (!versions.includes(baseVersion)) {
-                const option = $('<option>', { value: baseVersion, text: baseVersion });
-                this.$baseVersionDropdown().append(option);            
+            if (!versions.includes(baseVersion)) {
+                if (availableVersions.includes(baseVersion)) {
+                    const option = $('<option>', { value: baseVersion, text: baseVersion });
+                    this.$baseVersionDropdown().append(option);
+                } else {
+                    baseVersion = this.#getPreviousVersion(mainVersion, availableVersions) ?? mainVersion;
+                    const option = $('<option>', { value: baseVersion, text: baseVersion });
+                    this.$baseVersionDropdown().append(option);                }
             }
-
+            
             this.$mainVersionDropdown().val(mainVersion);
             this.$baseVersionDropdown().val(baseVersion);
             appState.mainVersion = mainVersion;
