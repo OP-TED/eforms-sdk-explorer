@@ -141,6 +141,10 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
             this.displayDetails(DiffEntry.fromObject(data.node.data), titleProperty, subtitleProperty, hiddenProperties);
         });   
 
+        // Reset the search fields
+        this.$treeSearch().val('');
+        this.$treeFilter().val('all');
+
         let titleSlot = this.shadowRoot.querySelector('slot[name="search-popover-title"]');
         let titleSlotNodes = titleSlot.assignedNodes();
         let popoverTitle = titleSlotNodes.length > 0 ? titleSlotNodes[0].innerHTML : titleSlot.innerHTML;
