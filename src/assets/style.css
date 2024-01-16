@@ -218,3 +218,26 @@ body > footer {
   .d2h-file-list-wrapper {
     display: none !important;
   }
+
+  .comparison-text::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: darkgray;
+    vertical-align: middle;
+    margin-right: 0px;
+    margin-left: 6px;;
+}
+
+.comparison-text::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 10px solid darkgray;
+    vertical-align: middle;
+}
+

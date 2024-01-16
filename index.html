@@ -31,16 +31,16 @@
                     class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer <span
                         class="badge badge-warning">EARLY PREVIEW</span></span>
             </a>
-            <div class="d-flex align-items-center">
-                <div class="version-text mr-2">Explore SDK</div>
-                <select id="main-version-dropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
-                    data-placement="left" title="Select SDK version to explore" data-html="true"
-                    data-content="Typically this is a newer version of the SDK. For example, items that only exist in this version are indicated as 'added'.">
-                </select>
-                <div class="comparison-text mr-2">in comparison with</div>
+            <div class="d-flex align-items-center arrow">
+                <div class="version-text mr-2">Compare SDK versions</div>
                 <select id="base-version-dropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
-                    data-placement="left" title="Select version to compare with" data-html="true"
-                    data-content="Typically this will be an older SDK version. For example, items that only exist in this version are indicated as 'removed'.">
+                    data-placement="left" title="Older SDK version" data-html="true"
+                    data-content="This is the base version for the comparison. Items that exist only in this version are indicated as 'removed'.">
+                </select>
+                <div class="comparison-text mr-2"></div>
+                <select id="main-version-dropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
+                    data-placement="left" title="Newer SDK version" data-html="true"
+                    data-content="This is the target version for the comparison. Items that exist only in this version are indicated as 'added'.">
                 </select>
             </div>
         </div>
@@ -652,6 +652,18 @@
             margin: 10px;
         }
 
+        .card-group .added-card {
+            display: var(--filter-status-added, var(--filter-status-all, none));
+        }
+
+        .card-group .removed-card {
+            display: var(--filter-status-removed, var(--filter-status-all, none));
+        }
+
+        .card-group .modified-card {
+            display: var(--filter-status-modified, var(--filter-status-all, none));
+        }
+
         #card-group-container {
             display: flex;
             flex-direction: column;
@@ -702,10 +714,20 @@
         .nav-link.active {
             font-weight: bold;
         }
+
+        #status-filter {
+            margin-right: 12px;
+        }
     </style>
     <div id="card-group-container">
         <header id="head">
             <label style="flex:1;" id="filter-prompt"></label>
+            <select id="status-filter" class="form-control form-control-sm m-3" style="width:100px;">
+                <option value="all">all</option>
+                <option value="added">added</option>
+                <option value="removed">removed</option>
+                <option value="modified">modified</option>
+            </select>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
                 <label class="custom-control-label" for="compactViewSwitch">Compact view</label>
@@ -715,7 +737,7 @@
             <div id="nav">
                 <ul id="filter-options" class="nav flex-column"></ul>
             </div>
-            <div id="cards-container" class="card-group" style="--filter-all: block;"></div>
+            <div id="cards-container" class="card-group" style="--filter-all-all: block;"></div>
         </div>
     </div>
 </template>

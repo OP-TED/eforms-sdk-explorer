@@ -53,7 +53,12 @@ export class IndexCard extends BootstrapWebComponent {
             case 'title': this.title = newValue; break;
             case 'subtitle': this.subTitle = newValue; break;
             case 'action-name': this.actionName = newValue; break;
-            case 'status': this.status = newValue; break;
+            case 'status':
+                this.status = newValue;
+                // Dispatch a custom event when the status changes
+                let event = new CustomEvent('statusChanged', { detail: { status: newValue } });
+                this.dispatchEvent(event);
+                break;
         }
 
         // If the element is already connected to the DOM, then re-render it.
@@ -141,6 +146,10 @@ export class IndexCard extends BootstrapWebComponent {
             return propertyCard.getPropertyValue();
         }
         return undefined;
+    }
+
+    getStatus() {
+        return this.status;
     }
 
     /**
