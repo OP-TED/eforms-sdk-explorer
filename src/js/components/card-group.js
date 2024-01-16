@@ -5,6 +5,10 @@ export class CardGroup extends BootstrapWebComponent {
 
     filterValues = [];
 
+    selectedStatusFilterValue = 'all';
+
+    selectedPropertyFilterValue = '(all)';
+
     /**
      * Array containing the names of all attributes for which the element needs change notifications.
      * 
@@ -71,6 +75,38 @@ export class CardGroup extends BootstrapWebComponent {
         return $(this.#cardsContainer());
     }
 
+    #statusFilter() {
+        return this.shadowRoot.querySelector('#status-filter');
+    }
+
+    $statusFilter() {
+        return $(this.#statusFilter());
+    }
+
+    setSelectedStatusFilterValue(newValue) {
+        if (this.selectedStatusFilterValue !== newValue) {
+            const oldValue = this.selectedStatusFilterValue;
+            this.selectedStatusFilterValue = newValue;
+            this.selectedStatusFilterChanged(newValue, oldValue);
+        }
+    }
+
+    getSelectedStatusFilterValue() {
+        return this.selectedStatusFilterValue;
+    }
+
+    getSelectedPropertyFilterValue() {
+        return this.selectedPropertyFilterValue;
+    }
+
+    setSelectedPropertyFilterValue(newValue) {
+        if (this.selectedPropertyFilterValue !== newValue) {
+            const oldValue = this.selectedPropertyFilterValue;
+            this.selectedPropertyFilterValue = newValue;
+            this.selectedPropertyFilterChanged(newValue, oldValue);
+        }
+    }
+
     render() {
         super.render();
 
@@ -84,6 +120,11 @@ export class CardGroup extends BootstrapWebComponent {
                 this.style.removeProperty('--compact-view-unchanged-display');
             }
         }.bind(this));
+
+        this.$statusFilter().on('change', (event) => {
+            const status = event.target.value;
+            this.setSelectedStatusFilterValue(status);
+        });
 
         if (this.filterProperty) {
             this.shadowRoot.querySelector('#filter-prompt').textContent = this.filterPrompt ?? this.filterProperty;
@@ -130,8 +171,31 @@ export class CardGroup extends BootstrapWebComponent {
             }
         }
 
-        // Use CSS variables to show/hide the indexCard based on the filter value
-        indexCard.style.display = `var(${this.#filterValueToCssVariableName(filterValue)}, var(--filter-all, none))`;
+        if (!indexCard.getStatus()) {
+            // Create the event listener function
+            let updateStatusFilter = (event) => {
+                const indexCard = event.target;
+                const status = indexCard.getStatus();
+                const filterOptionStatus = CardGroup.#filterValueToCssVariableName(filterValue, status);
+                const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
+                const filterOptionAllStatus = CardGroup.#filterValueToCssVariableName('(all)', status);
+                const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
+                indexCard.style.display = `var(${filterOptionStatus}, var( ${filterOptionAll}, var(${filterOptionAllStatus}, var(${filterOptionAllAll}, none)))`;
+
+                // Remove the event listener
+                indexCard.removeEventListener('statusChanged', updateStatusFilter);
+            };
+
+            // Attach the event listener
+            indexCard.addEventListener('statusChanged', updateStatusFilter);
+        } else {
+            const status = indexCard.getStatus();
+            const filterOptionStatus = CardGroup.#filterValueToCssVariableName(filterValue, status);
+            const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
+            const filterOptionAllStatus = CardGroup.#filterValueToCssVariableName('(all)', status);
+            const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
+            indexCard.style.display = `var(${filterOptionStatus}, var( ${filterOptionAll}, var(${filterOptionAllStatus}, var(${filterOptionAllAll}, none)))`;
+        }
     }
 
     /**
@@ -175,13 +239,7 @@ export class CardGroup extends BootstrapWebComponent {
         // Add a click listener to apply selected filter
         filterOption.addEventListener('click', (event) => {
             event.preventDefault();
-
-            // Loop through the filterValues and remove the corresponding CSS properties
-            this.filterValues.forEach(filterValue => {
-                this.#cardsContainer().style.removeProperty(`${this.#filterValueToCssVariableName(filterValue)}`);
-            });
-
-            this.#cardsContainer().style.setProperty(`${this.#filterValueToCssVariableName(filterValue)}`, 'block');
+            this.setSelectedPropertyFilterValue(filterValue);
 
             // Highlight the selected filter option
             this.#highlightNavLink(event.target);
@@ -193,11 +251,11 @@ export class CardGroup extends BootstrapWebComponent {
     /**
      * CSS variables are used to show/hide the indexCards based on the filter value.
      * 
-     * @param {string} filterOption 
+     * @param {string} propertyFilter 
      * @returns 
      */
-    #filterValueToCssVariableName(filterOption) {
-        return `--filter-${filterOption === '(all)' ? 'all' : filterOption === '(blank)' ? 'undefined' : filterOption}`;
+    static #filterValueToCssVariableName(propertyFilter, statusFilter) {
+        return `--filter-${propertyFilter === '(all)' ? 'all' : propertyFilter === '(blank)' ? 'undefined' : propertyFilter}-${statusFilter}`;
     }
 
     /**
@@ -228,6 +286,21 @@ export class CardGroup extends BootstrapWebComponent {
         // Add active class to the clicked nav link
         filterOption.classList.add('active');
     }
+
+    selectedStatusFilterChanged(newValue, oldValue) {
+        setTimeout(() => {
+            this.#cardsContainer().style.removeProperty(`${CardGroup.#filterValueToCssVariableName(this.getSelectedPropertyFilterValue(), oldValue)}`);
+            this.#cardsContainer().style.setProperty(`${CardGroup.#filterValueToCssVariableName(this.getSelectedPropertyFilterValue(), newValue)}`, 'block');
+        }, 0);
+    }
+
+    selectedPropertyFilterChanged(newValue, oldValue) {
+        setTimeout(() => {
+            this.#cardsContainer().style.removeProperty(`${CardGroup.#filterValueToCssVariableName(oldValue, this.getSelectedStatusFilterValue())}`);
+            this.#cardsContainer().style.setProperty(`${CardGroup.#filterValueToCssVariableName(newValue, this.getSelectedStatusFilterValue())}`, 'block');
+        }, 0);
+    }   
+
 }
 
 customElements.define('card-group', CardGroup);

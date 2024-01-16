@@ -652,6 +652,18 @@
             margin: 10px;
         }
 
+        .card-group .added-card {
+            display: var(--filter-status-added, var(--filter-status-all, none));
+        }
+
+        .card-group .removed-card {
+            display: var(--filter-status-removed, var(--filter-status-all, none));
+        }
+
+        .card-group .modified-card {
+            display: var(--filter-status-modified, var(--filter-status-all, none));
+        }
+
         #card-group-container {
             display: flex;
             flex-direction: column;
@@ -702,10 +714,20 @@
         .nav-link.active {
             font-weight: bold;
         }
+
+        #status-filter {
+            margin-right: 12px;
+        }
     </style>
     <div id="card-group-container">
         <header id="head">
             <label style="flex:1;" id="filter-prompt"></label>
+            <select id="status-filter" class="form-control form-control-sm m-3" style="width:100px;">
+                <option value="all">all</option>
+                <option value="added">added</option>
+                <option value="removed">removed</option>
+                <option value="modified">modified</option>
+            </select>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
                 <label class="custom-control-label" for="compactViewSwitch">Compact view</label>
@@ -715,7 +737,7 @@
             <div id="nav">
                 <ul id="filter-options" class="nav flex-column"></ul>
             </div>
-            <div id="cards-container" class="card-group" style="--filter-all: block;"></div>
+            <div id="cards-container" class="card-group" style="--filter-all-all: block;"></div>
         </div>
     </div>
 </template>
