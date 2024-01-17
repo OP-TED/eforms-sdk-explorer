@@ -164,6 +164,30 @@ export class Diff {
           });
 
         document.getElementById(containerElementId).innerHTML = diff;
+
+        // Attach scroll listeners
+        this.#attachScrollListeners();
+    }
+
+    static #attachScrollListeners() {
+        // Get the scrollable diff elements
+        const diffSides = document.querySelectorAll('.d2h-code-wrapper');
+
+        // Add scroll event listeners to the diff sides
+        diffSides.forEach((side, index) => {
+            // Check if the listener is already attached
+            if (!side.hasAttribute('data-scroll-listener-attached')) {
+                side.addEventListener('scroll', (event) => {
+                    // Update the scroll position of the other side
+                    const otherSide = diffSides[(index + 1) % diffSides.length];
+                    otherSide.scrollLeft = event.target.scrollLeft;
+                    otherSide.scrollTop = event.target.scrollTop;
+                });
+
+                // Mark the listener as attached
+                side.setAttribute('data-scroll-listener-attached', 'true');
+            }
+        });
     }
 }
 
