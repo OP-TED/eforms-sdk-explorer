@@ -42,7 +42,7 @@
 .view-diff {
     flex: 1;
     overflow-x: hidden; 
-    overflow-y: auto
+    overflow-y: hidden;
 }
 
 .view-container card-group {
@@ -218,6 +218,16 @@ body > footer {
   .d2h-file-list-wrapper {
     display: none !important;
   }
+
+.d2h-code-wrapper {
+    max-height: calc(100vh - 320px); 
+    overflow: auto;
+}
+
+.d2h-file-side-diff {
+    overflow-x: hidden!important;
+    overflow-y: hidden!important;
+}
 
   .comparison-text::before {
     content: "";
