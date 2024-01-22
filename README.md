@@ -66,6 +66,9 @@ Follow these steps to set up and run the SDK Explorer locally:
 4. Open your web browser and navigate to the local address specified by your server (usually `localhost` followed by a port number).
 5. You should now be able to view and interact with the SDK Explorer in your browser.
 
+> [!NOTE]
+> While this project is not a Node.js application, we've included a `package.json` file to clearly list and manage the JavaScript dependencies. This helps ensure consistency and reproducibility across different environments. However, the application does not rely on Node.js for execution.
+
 ## Acknowledgements
 
 This project uses the following open-source libraries:
