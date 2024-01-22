@@ -161,9 +161,9 @@ export class SdkExplorerApplication {
 
     #toggleSpinner() {
         if (this.#spinnerCounter > 0) {
-            $('#centralLoadingSpinner').show();
+            $('#centralLoadingSpinner').css('visibility', 'visible');
         } else {
-            $('#centralLoadingSpinner').hide();
+            $('#centralLoadingSpinner').css('visibility', 'hidden');
         }
     }
 

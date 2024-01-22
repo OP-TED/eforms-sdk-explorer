@@ -201,6 +201,11 @@ body > footer {
     font-size: 90%;
 }
 
+.tour-button-container {
+    text-align: right;
+    margin-top: 6px;
+}
+
 .tab-pane {
     height: 100%;
 }
