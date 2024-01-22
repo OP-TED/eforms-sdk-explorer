@@ -2,23 +2,45 @@
 <html lang="en">
 
 <head>
-    <title>SDK Explorer</title>
+    <!-- 
+    Copyright (c) 2021 European Union 
+    Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission – subsequent versions of the EUPL (the “Licence”); You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at: 
+    https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12 
+    Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence. 
+    -->
+    <title>eForms SDK Explorer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- jQuery library -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap CSS and JS bundle -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Lodash library -->
     <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
+
+    <!-- jstree CSS and JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
-    <link rel="stylesheet" href="./src/assets/style.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+    <!-- GitHub Markdown CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+
+    <!-- Showdown library -->
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+
+    <!-- jsdiff library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.0.0/diff.min.js"></script>
-    <link rel="stylesheet" type="text/css"
-        href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+
+    <!-- diff2html CSS and JS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+
+    <!-- SDK Explorer CSS and JS -->
+    <link rel="stylesheet" href="./src/assets/style.css">
     <script defer type="module" src="./src/js/script.js"></script>
 </head>
 
@@ -28,11 +50,10 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <img src="./src/assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
-                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer <span
-                        class="badge badge-warning">EARLY PREVIEW</span></span>
+                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer</span>
             </a>
             <div class="d-flex align-items-center arrow">
-                <div class="version-text mr-2">Compare SDK versions</div>
+                <div class="version-text mr-2" data-toggle="popover" data-trigger="manual" data-placement="left" data-html="true" data-step="0" title="Select versions to compare" data-content="<p>Use these dropdowns to select the versions of the SDK that you want to compare.</p><p>Select the older version (that you are migrating from) and the newer version (that you are migrating to).</p><p>SDK Explorer calls these the <i>base</i> and <i>target</i> version respectively.</p> <div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">Compare SDK versions</div>
                 <select id="base-version-dropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
                     data-placement="left" title="Older SDK version" data-html="true"
                     data-content="This is the base version for the comparison. Items that exist only in this version are indicated as 'removed'.">
@@ -55,7 +76,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
-                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="false">Fields</button>
+                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="false" data-toggle="popover" data-trigger="manual" data-placement="bottom" data-html="true" data-step="1" title="Switch between sections" data-content="<p>Use the tabs to explore and compare different sections of the SDK.</p><p>Depending on the nature and structure of the information you will find appropriate options for filtering and searching the data.</p><div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">Fields</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types"
@@ -87,8 +108,9 @@
                     type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
             </li>
             <div class="spinner-grow spinner-grow-sm text-info ml-auto" role="status" id="centralLoadingSpinner"
-                style="display: none;">
-                <span class="sr-only">Loading...</span>
+                style="visibility: hidden;" data-toggle="popover" data-trigger="manual" data-placement="top" data-html="true"
+                data-step="2" title="Loading indicator"
+                data-content="<p>A flashing indicator will appear here while data is being processed in the background.</p><p>The SDK Explorer downloads and compares SDK versions from GitHub every time you switch to a different tab. This is done to conserve memory on your browser.</p><div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">
             </div>
         </ul>
     </nav>
@@ -97,7 +119,7 @@
 
         <!-- Home -->
         <div class="tab-pane h-100 fade show active" id="home-tab-content" role="tabpanel" aria-labelledby="home-tab">
-            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is an early preview of the SDK
+            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is a pre-release version of the SDK
                 Explorer. Some features may not be fully functional.</div>
             <div class="jumbotron">
                 <h1 class="display-4">SDK Explorer</h1>
@@ -106,9 +128,13 @@
                 <p>The eForms SDK Explorer is a web application that allows you to explore the contents as well as
                     changes between any two versions of the eForms SDK.
                     The application is being developed by the Publications Office of the EU and is available as open
-                    source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>.</p>
-                <p>We welcome your feedback, suggestions for improvement as well as your contributions to the project.
+                    source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>. We welcome your feedback,
+                    suggestions for improvement as well as your contributions to the project.
                 </p>
+                <p>
+                    If you are new to the SDK Explorer, we recommend that you take our quick tour.
+                </p>
+                <button id="start-tour" class="btn btn-primary">Start Quick Tour</button>
             </div>
         </div>
 
@@ -320,7 +346,7 @@
     <footer class="d-flex w-100">
         <!-- Legend -->
         <div class="legend-container flex-grow-1 ml-3">
-            <span class="legend-title">Legend:</span>
+            <span class="legend-title" data-toggle="popover" data-trigger="manual" data-placement="top" data-html="true" data-step="3" title="Identify changes" data-content="<p>The SDK Explorer highlights changed items using the color coding you see in this legend.</p><div class='tour-button-container'><a href='#' class='btn btn-primary next-step'>Done</a></div>">Legend:</span>
             <span class="legend-item added">added</span>
             <span class="legend-item removed">removed</span>
             <span class="legend-item modified">modified</span>
