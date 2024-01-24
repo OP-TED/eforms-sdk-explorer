@@ -300,40 +300,40 @@ export class SdkExplorerApplication {
             let availableVersions = response.map(item => item.name);
 
             // Filter out versions older than the threshold
-            let versions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
+            let listedVersions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
             // Sort versions by version number
-            versions.sort(this.#reverseCompareVersions.bind(this));
+            listedVersions.sort(this.#reverseCompareVersions.bind(this));
 
             // Filter out pre-releases of released versions
-            const releasedVersions = versions.filter(version => !version.includes('-'));
+            const releasedVersions = listedVersions.filter(version => !version.includes('-'));
             const latestRelease = releasedVersions[0];
-            const preReleasesOfLatestVersion = versions.filter(version => {
+            const preReleasesOfLatestVersion = listedVersions.filter(version => {
                 const baseVersion = version.split('-')[0];
                 return version.includes('-') && baseVersion === latestRelease;
                 });
-            const preReleasesOfUnreleasedVersions = versions.filter(version => {
+            const preReleasesOfUnreleasedVersions = listedVersions.filter(version => {
                 const baseVersion = version.split('-')[0];
                 return version.includes('-') && !releasedVersions.includes(baseVersion);
             });
-            versions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
+            listedVersions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
 
             // Sort versions by version number
-            versions.sort(this.#reverseCompareVersions.bind(this));
+            listedVersions.sort(this.#reverseCompareVersions.bind(this));
 
             // Populate the dropdowns
             this.$mainVersionDropdown().empty();
             this.$baseVersionDropdown().empty();
-            versions.forEach(version => {
+            listedVersions.forEach(version => {
                 const option = $('<option>', { value: version, text: version });
                 this.$mainVersionDropdown().append(option.clone());
                 this.$baseVersionDropdown().append(option);
             });
 
             // Get versions from the query string if provided
-            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(versions);
+            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(listedVersions);
 
             // Validate the versions passed in the query string
-            if (!versions.includes(mainVersion)) {
+            if (!listedVersions.includes(mainVersion)) {
                 if (availableVersions.includes(mainVersion)) {
                     const option = $('<option>', { value: mainVersion, text: mainVersion });
                     this.$mainVersionDropdown().append(option);
@@ -341,14 +341,17 @@ export class SdkExplorerApplication {
                     mainVersion = latestRelease;
                 }
             }
-            if (!versions.includes(baseVersion)) {
+            if (!listedVersions.includes(baseVersion)) {
                 if (availableVersions.includes(baseVersion)) {
                     const option = $('<option>', { value: baseVersion, text: baseVersion });
                     this.$baseVersionDropdown().append(option);
                 } else {
                     baseVersion = this.#getPreviousVersion(mainVersion, availableVersions) ?? mainVersion;
-                    const option = $('<option>', { value: baseVersion, text: baseVersion });
-                    this.$baseVersionDropdown().append(option);                }
+                    if (!listedVersions.includes(baseVersion)) {
+                        const option = $('<option>', { value: baseVersion, text: baseVersion });
+                        this.$baseVersionDropdown().append(option);
+                    }
+                }
             }
             
             this.$mainVersionDropdown().val(mainVersion);
