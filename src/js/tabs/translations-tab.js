@@ -12,6 +12,9 @@ import { PropertyCard } from "../components/property-card.js";
 import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { CardGroup } from "../components/card-group.js";
+import { AjaxError, CustomError } from "../custom-error.js";
+import { ERROR_FETCHING_DIRECTORY_LISTING, ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE } from "../error-messages.js";
+
 export class TranslationsTab extends TabController {
 
     constructor() {
@@ -31,7 +34,7 @@ export class TranslationsTab extends TabController {
     }
 
     async fetchAndRender() {
-        this.fetchAndRenderOverview();
+        await this.fetchAndRenderOverview();
     }
 
     deactivated() {
@@ -68,29 +71,30 @@ export class TranslationsTab extends TabController {
 
             // Get translations.json index files for both versions.
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchTranslationsIndexFile(appState.mainVersion),
-                this.#fetchTranslationsIndexFile(appState.baseVersion)
+                this.#fetchIndexFile(appState.mainVersion),
+                this.#fetchIndexFile(appState.baseVersion)
             ]);
 
-            // Compare the two index files
-            const diff = Diff.fromArrayComparison(mainVersionData.files, baseVersionData.files, 'filename');
+            try {
+                // Compare the two index files
+                const diff = Diff.fromArrayComparison(mainVersionData.files, baseVersionData.files, 'filename');
 
-            // Clear existing index-cards.
-            this.#cardGroup().empty();
+                // Clear existing index-cards.
+                this.#cardGroup().empty();
 
-            // Create and add an index-card for each Translations.
-            diff.forEach((entry, index) => {
-                setTimeout(() => {
-                    if (!this.aborting) {
-                        const card = this.#createIndexCard(entry);
-                        this.#cardGroup().appendCard(card);
-                    }
-                }, 0);
-            });
-            this.#switchToOverview();
-        } catch (error) {
-            console.error('Error while generating overview:', error);
-            throw new Error('Failed to load Translations');
+                // Create and add an index-card for each Translations.
+                diff.forEach((entry, index) => {
+                    setTimeout(() => {
+                        if (!this.aborting) {
+                            const card = this.#createIndexCard(entry);
+                            this.#cardGroup().appendCard(card);
+                        }
+                    }, 0);
+                });
+                this.#switchToOverview();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_OVERVIEW, error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
@@ -99,44 +103,42 @@ export class TranslationsTab extends TabController {
     /**
      * Fetches the translations.json index file for the specified SDK version.
      */
-    async #fetchTranslationsIndexFile(sdkVersion) {
-        const url = this.#getTranslationsIndexFileUrl(sdkVersion);
+    async #fetchIndexFile(sdkVersion) {
         try {
-            const response = await this.ajaxRequest({ 
-                url: url, 
+            return await this.ajaxRequest({
+                url: this.#getTranslationsIndexFileUrl(sdkVersion),
                 dataType: 'json'
             });
-            return response;
         } catch (error) {
             if (error.status === 404) {
                 console.warn(`translations.json not found for SDK version ${sdkVersion}, fetching filenames from translations folder`);
-                return this.#fetchFilenamesFromTranslationsFolder(sdkVersion);
+                return this.#fetchFilenames(sdkVersion);
             }
-            console.error('Error fetching translations.json:', error);
-            throw error;
+            throw new AjaxError(ERROR_FETCHING_FILE('translations.json', sdkVersion), error);
         }
     }
 
-
-    async #fetchFilenamesFromTranslationsFolder(sdkVersion) {
+    async #fetchFilenames(sdkVersion) {
         const apiUrl = `${appConfig.contentsFileUrl}/translations?ref=${sdkVersion}`;
-        try {
-            const response = await this.ajaxRequest({
-                url: apiUrl,
-                headers: { 'Accept': 'application/vnd.github.v3+json' },
-            });
-            return this.#processFilenames(response.map(file => file.name));
-        } catch (error) {
-            console.error('Error fetching filenames from GitHub API:', error);
-            throw error;
-        }
+        const response = await this.ajaxRequest({
+            url: apiUrl,
+            headers: { 'Accept': 'application/vnd.github.v3+json' },
+        }).catch(error => {
+            throw new AjaxError(ERROR_FETCHING_DIRECTORY_LISTING, error);
+        });
+        return this.#processFilenames(response.map(file => file.name));
+
     }
 
-    #fetchCountryCodeMappings() {
-        return this.ajaxRequest({ 
-            url: './src/assets/eu_countries_three_letter_code_mappings.json', 
-            dataType: 'json' 
-        });
+    async #fetchCountryCodeMappings() {
+        try {
+            return await this.ajaxRequest({
+                url: './src/assets/eu_countries_three_letter_code_mappings.json',
+                dataType: 'json'
+            });
+        } catch (error) {
+            throw new AjaxError('Error loading EU country codes', error);
+        }
     }
     
     async #processFilenames(filenames) {
@@ -177,9 +179,8 @@ export class TranslationsTab extends TabController {
     */
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('assetType'), diffEntry.get('twoLetterCode'), 'Compare', diffEntry.typeOfChange);
-        component.setActionHandler((e) => {
-            e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('filename'));
+        component.setActionHandler(async (e) => {
+            await this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
         // If the Translations is not new or removed, then we will need to check for changes inside the Translations file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
@@ -221,28 +222,23 @@ export class TranslationsTab extends TabController {
             SdkExplorerApplication.startSpinner();
 
             // Get the two versions of the file.
-            const mainUrl = this.#getLabelsUrlForVersion(filename, appState.mainVersion);
-            const baseUrl = this.#getLabelsUrlForVersion(filename, appState.baseVersion);
             let [mainFile, baseFile] = await Promise.all([
-                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
-                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
-            ]);         
+                this.#fetchLabels(filename, appState.mainVersion),
+                this.#fetchLabels(filename, appState.baseVersion)
+            ]);
 
-            // Compare to determine the type of change.
-            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+            try {
+                // Compare to determine the type of change.
+                const typeOfChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
 
-            // Nullify the two variables holding the file contents to free up memory.
-            mainFile = null;
-            baseFile = null;
+                // Nullify the two variables holding the file contents to free up memory.
+                mainFile = null;
+                baseFile = null;
 
-            return nodeChange;
-        } catch (error) {
-            if (error.statusText === 'abort') {
-                console.log('Request was aborted');
-            } else {
-                console.error(`Error processing files for ${filename}:`, error);
+                return typeOfChange;
+            } catch (error) {
+                throw new CustomError(ERROR_CHECKING_CHANGES(filename), error);
             }
-            return null;
         }
         finally {
             SdkExplorerApplication.stopSpinner();
@@ -270,13 +266,18 @@ export class TranslationsTab extends TabController {
                 this.#fetchLabels(filename, appState.mainVersion),
                 this.#fetchLabels(filename, appState.baseVersion)
             ]);
+
+            try{
             Diff.injectTextDiff(mainData, baseData, 'translations-diff', `${filename}`);
             this.#switchToDiffView();
-
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_DIFF(filename), error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
     }
+
     /**
      * Fetches the labels XML file for the specified SDK version.
      * 
@@ -286,8 +287,12 @@ export class TranslationsTab extends TabController {
      * @returns 
      */
     async #fetchLabels(filename, sdkVersion) {
-        const url = this.#getLabelsUrlForVersion(filename, sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'text' });
+        return this.ajaxRequest({
+            url: this.#getLabelsUrlForVersion(filename, sdkVersion),
+            dataType: 'text'
+        }).catch(error => {
+            throw new AjaxError(ERROR_FETCHING_FILE(filename, sdkVersion), error);
+        });
     }
 
     /**
@@ -299,5 +304,4 @@ export class TranslationsTab extends TabController {
     }
     
     // #endregion Diff display
-
 }

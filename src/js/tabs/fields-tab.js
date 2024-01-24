@@ -9,6 +9,8 @@ import { appState } from "../state.js";
 import { appConfig } from "../config.js";
 import { Diff, DiffEntry } from "../diff.js"; 
 import { TreeDetailSplitView } from "../components/tree-detail-split-view.js";
+import { CustomError, AjaxError } from "../custom-error.js";
+import { ERROR_FETCHING_FILE } from "../error-messages.js";
 
 export class FieldsTab extends TabController {
 
@@ -21,12 +23,16 @@ export class FieldsTab extends TabController {
         const mainVersionUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/fields/fields.json`;
         const comparisonVersionUrl = `${appConfig.rawBaseUrl}/${appState.baseVersion}/fields/fields.json`;
 
-        try {
-            const [response1, response2] = await Promise.all([
-                this.ajaxRequest({ url: mainVersionUrl, dataType: 'json' }),
-                this.ajaxRequest({ url: comparisonVersionUrl, dataType: 'json' })
-            ]);
+        const [response1, response2] = await Promise.all([
+            this.ajaxRequest({ url: mainVersionUrl, dataType: 'json' }).catch(error => {
+                throw new AjaxError(ERROR_FETCHING_FILE('fields.json', appState.mainVersion), error);
+            }),
+            this.ajaxRequest({ url: comparisonVersionUrl, dataType: 'json' }).catch(error => {
+                throw new AjaxError(ERROR_FETCHING_FILE('fields.json', appState.baseVersion), error);
+            })
+        ]);
 
+        try {
             const mainVersionNodes = response1.xmlStructure;
             const mainVersionFields = response1.fields;
             const baseVersionNodes = response2.xmlStructure;
@@ -43,8 +49,7 @@ export class FieldsTab extends TabController {
                 });
             }
         } catch (error) {
-            console.error('Error fetching and displaying fields.json contents: ', error);
-            throw new Error('Failed to load data');
+            throw new CustomError('Error while visualising the fields.json', error);
         }
     }
 

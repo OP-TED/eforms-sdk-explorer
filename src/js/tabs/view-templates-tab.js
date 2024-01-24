@@ -12,6 +12,9 @@ import { PropertyCard } from "../components/property-card.js";
 import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { CardGroup } from "../components/card-group.js";
+import { AjaxError, CustomError } from "../custom-error.js";
+import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_FETCHING_FILE, ERROR_GENERATING_DIFF } from "../error-messages.js";
+
 export class ViewTemplatesTab extends TabController {
 
     constructor() {
@@ -32,7 +35,7 @@ export class ViewTemplatesTab extends TabController {
 
     async fetchAndRender() {
         // Render the overview display by default
-        this.fetchAndRenderOverview();
+        await this.fetchAndRenderOverview();
     }
 
     /**
@@ -82,25 +85,27 @@ export class ViewTemplatesTab extends TabController {
                 this.#fetchIndexFile(appState.mainVersion),
                 this.#fetchIndexFile(appState.baseVersion)
             ]);
-            // Compare the two index files
-            const diff = Diff.fromArrayComparison(mainVersionData.viewTemplates, baseVersionData.viewTemplates, 'id');
 
-            // Clear existing index-cards.
-            this.#cardGroup().empty();
+            try {
+                // Compare the two index files
+                const diff = Diff.fromArrayComparison(mainVersionData.viewTemplates, baseVersionData.viewTemplates, 'id');
 
-            // Create and add an index-card for each view templates.
-            diff.forEach((entry, index) => {
-                setTimeout(() => {
-                    if (!this.aborting) {
-                        const card = this.#createIndexCard(entry);
-                        this.#cardGroup().appendCard(card);
-                    }
-                }, 0);
-            });
-            this.#switchToOverview();
-        } catch (error) {
-            console.error('Error while generating overview:', error);
-            throw new Error('Failed to load view templates');
+                // Clear existing index-cards.
+                this.#cardGroup().empty();
+
+                // Create and add an index-card for each view templates.
+                diff.forEach((entry, index) => {
+                    setTimeout(() => {
+                        if (!this.aborting) {
+                            const card = this.#createIndexCard(entry);
+                            this.#cardGroup().appendCard(card);
+                        }
+                    }, 0);
+                });
+                this.#switchToOverview();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_OVERVIEW, error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
@@ -110,10 +115,13 @@ export class ViewTemplatesTab extends TabController {
      * Fetches the view-templates.json index file for the specified SDK version.
      */
     async #fetchIndexFile(sdkVersion) {
-        const url = this.#getIndexFileUrl(sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'json' });
+        return this.ajaxRequest({
+            url: this.#getIndexFileUrl(sdkVersion),
+            dataType: 'json'
+        }).catch(error => {
+            throw new AjaxError(ERROR_FETCHING_FILE('view-templates.json', sdkVersion), error);
+        });
     }
-
 
     #getIndexFileUrl(sdkVersion) {
         return `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/view-templates.json`;
@@ -135,16 +143,15 @@ export class ViewTemplatesTab extends TabController {
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('filename'), '', 'Compare', diffEntry.typeOfChange);
   
-        component.setActionHandler((e) => {
-            e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('id'));
+        component.setActionHandler(async (e) => {
+            await this.fetchAndRenderDiffView(diffEntry.get('id'));
         });
         // If the view template is not new or removed, then we will need to check for changes inside the view template file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             // We will need to open the files and check for changes.
             // We will do that in the background
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.id)));
+            component.setStatusCheckCallback(async () => await Promise.resolve(this.#checkForChanges(diffEntry.id)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -181,33 +188,28 @@ export class ViewTemplatesTab extends TabController {
             SdkExplorerApplication.startSpinner();
 
             // Get the two versions of the view template file.
-            const  mainUrl = this.#getUrlByIdAndSdkVersion(id, appState.mainVersion);
-            const  baseUrl = this.#getUrlByIdAndSdkVersion(id, appState.baseVersion);
             let [mainFile, baseFile] = await Promise.all([
-                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
-                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+                this.#fetchViewTemplate(id, appState.mainVersion),
+                this.#fetchViewTemplate(id, appState.baseVersion)
             ]);
 
-            // Remove EFX comments before comparing the files.
-            const commentLineRegex = /^\/\/.*$/gm;
-            mainFile = mainFile.replace(commentLineRegex, '');
-            baseFile = baseFile.replace(commentLineRegex, '');
-            
-            // Compare the two files to determine the type of change.
-            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+            try {
+                // Remove EFX comments before comparing the files.
+                const commentLineRegex = /^\/\/.*$/gm;
+                mainFile = mainFile.replace(commentLineRegex, '');
+                baseFile = baseFile.replace(commentLineRegex, '');
 
-            // Nullify the two variables holding the file contents to free up memory.
-            mainFile = null;
-            baseFile = null;
+                // Compare the two files to determine the type of change.
+                const typeOfChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
 
-            return nodeChange;
-        } catch (error) {
-            if (error.statusText === 'abort') {
-                console.log('Request was aborted');
-            } else {
-                console.error(`Error processing files for ${id}.efx:`, error);
+                // Nullify the two variables holding the file contents to free up memory.
+                mainFile = null;
+                baseFile = null;
+
+                return typeOfChange;
+            } catch (error) {
+                throw new CustomError(ERROR_CHECKING_CHANGES(`${id}.efx`), error);
             }
-            return null;
         }
         finally {
             SdkExplorerApplication.stopSpinner();
@@ -236,10 +238,13 @@ export class ViewTemplatesTab extends TabController {
                 this.#fetchViewTemplate(id, appState.mainVersion),
                 this.#fetchViewTemplate(id, appState.baseVersion)
             ]);
- 
-            Diff.injectTextDiff(mainData, baseData, 'view-template-diff', `${id}.efx`);
-            this.#switchToDiffView();
-
+            
+            try {
+                Diff.injectTextDiff(mainData, baseData, 'view-template-diff', `${id}.efx`);
+                this.#switchToDiffView();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_DIFF(`${id}.efx`), error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
@@ -254,10 +259,16 @@ export class ViewTemplatesTab extends TabController {
      * @returns 
      */
     async #fetchViewTemplate(id, sdkVersion) {
-        const url = this.#getUrlByIdAndSdkVersion(id, sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'text' });
+        try {
+            return await this.ajaxRequest({
+                url: this.#getUrlByIdAndSdkVersion(id, sdkVersion),
+                dataType: 'text'
+            });
+        } catch (error) {
+            throw new AjaxError(ERROR_FETCHING_FILE(`${id}.efx`, sdkVersion), error);
+        }
     }
-    
+
     /**
      * Shows the tree/detail explorer for the notice type.
      */

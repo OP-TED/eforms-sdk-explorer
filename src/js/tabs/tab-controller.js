@@ -4,6 +4,8 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence. 
  */
 
+import { SdkExplorerApplication } from "../app.js";
+
 /**
  * Base class for all tabs.
  * Defines how the SdkExplorerApplication interacts with all tabs.
@@ -48,7 +50,16 @@ export class TabController {
      */
     async activated() {
         this.aborting = false;
-        await this.fetchAndRender();
+        try {
+            await this.fetchAndRender();
+        }
+        catch (error) {
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                this.showErrorMessage(error.message);
+            }
+        }
     }
 
     /**
@@ -66,7 +77,16 @@ export class TabController {
      * No need to override this method.
      */
     async versionChanged() {
-        await this.fetchAndRender();
+        try {
+            await this.fetchAndRender();
+        }
+        catch (error) {
+            if (error.statusText === 'abort') {
+                console.log('Request was aborted');
+            } else {
+                this.showErrorMessage(error.message);
+            }
+        }
     }
 
     /**
@@ -153,5 +173,9 @@ export class TabController {
             }
         });
         this.#ajaxRequests = [];
+    }
+
+    showErrorMessage(message) {
+        SdkExplorerApplication.updateApiStatus(message);
     }
 }

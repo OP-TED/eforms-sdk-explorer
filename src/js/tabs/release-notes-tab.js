@@ -7,6 +7,8 @@
 import { TabController } from "./tab-controller.js";
 import { appConfig } from "../config.js";
 import { appState } from "../state.js";
+import { AjaxError, CustomError } from "../custom-error.js";
+import { ERROR_FETCHING_FILE } from "../error-messages.js";
 
 export class ReleaseNotesTab extends TabController {
 
@@ -15,13 +17,16 @@ export class ReleaseNotesTab extends TabController {
     }
 
     async fetchAndRender() {
-        const releaseNotesUrl = `${appConfig.rawBaseUrl}/${appState.mainVersion}/CHANGELOG.md`;
         try {
-            const markdownContent = await this.ajaxRequest({ url: releaseNotesUrl, dataType: 'text' });
+            const markdownContent = await this.ajaxRequest({
+                url: `${appConfig.rawBaseUrl}/${appState.mainVersion}/CHANGELOG.md`,
+                dataType: 'text'
+            }).catch(error => {
+                throw new AjaxError(ERROR_FETCHING_FILE('CHANGELOG.md', appState.mainVersion), error);
+            });
             this.#displayMarkdownAsHtml(markdownContent);
         } catch (error) {
-            console.error('Error fetching release notes:', error);
-            $('#release-notes').html('<p>Error loading release notes.</p>');
+            throw new CustomError('Error rendering release notes', error);
         }
     }
 

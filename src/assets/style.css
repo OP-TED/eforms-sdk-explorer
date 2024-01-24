@@ -154,10 +154,26 @@ body > footer {
     right: 10px;
     z-index: 1050;
     max-width: 300px;
-    display: none;
     align-items: center;
     justify-content: center;
     padding: 10px;
+    max-width: 33vw;
+    width: auto;
+    background-color: white;
+}
+
+.toast-body {
+    max-height: 33vh;
+    overflow-y: auto;
+}
+.toast-body li {
+    margin-bottom: 5px;
+    list-style-type: none;
+}
+
+.toast-body li .detail {
+    color: red;
+    display: block;
 }
 
 /* Legend styling */

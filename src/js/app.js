@@ -31,6 +31,9 @@ export class SdkExplorerApplication {
     /** @type {number} */
     #spinnerCounter = 0;
 
+    /** @type {string} */
+    apiStatusMessage = '';
+
     /** @returns {string} */
     get newVersion() {
         return appState.mainVersion;
@@ -102,6 +105,9 @@ export class SdkExplorerApplication {
         return $(this.#apiStatus());
     }
 
+    #toastBody() {
+        return document.querySelector('#apiStatus .toast-body');
+    }
 
     /**
      * 
@@ -121,7 +127,7 @@ export class SdkExplorerApplication {
             this.#activeTab = this.tabs.get(activeTabId);
             await this.#activeTab.activated();
         } catch (error) {
-            this.updateApiStatus(error.message, false);
+            SdkExplorerApplication.updateApiStatus(error.message);
         }
         finally {
             this.stopSpinner();
@@ -134,7 +140,7 @@ export class SdkExplorerApplication {
         try {
             await this.#activeTab?.versionChanged();
         } catch (error) {
-            this.updateApiStatus(error.message, false);
+            SdkExplorerApplication.updateApiStatus(error.message);
         }
         finally {
             this.stopSpinner();
@@ -168,23 +174,28 @@ export class SdkExplorerApplication {
     }
 
     clearApiStatus() {
-        this.$apiStatus().text('');
+        // Clear the message inside the toast body
+        SdkExplorerApplication.instance.#toastBody().textContent = '';
+
+        // Hide the toast
+        SdkExplorerApplication.instance.$apiStatus().toast('hide');
     }
 
-    updateApiStatus(message, isSuccess = true) {
-        this.$apiStatus().text(message);
+    static updateApiStatus(message) {
 
-        if (isSuccess) {
-            this.$apiStatus().addClass('alert-success').removeClass('alert-danger');
-        } else {
-            this.$apiStatus().addClass('alert-danger').removeClass('alert-success');
-        }
+        SdkExplorerApplication.instance.apiStatusMessage += '<li>' + message + '</li>';
+        SdkExplorerApplication.instance.#toastBody().innerHTML = SdkExplorerApplication.instance.apiStatusMessage;
 
-        this.$apiStatus().show();
+        clearTimeout(SdkExplorerApplication.instance.fadeTimeOut);
 
         setTimeout(() => {
-            this.$apiStatus().fadeOut('slow');
-        }, 5000);
+            // Display the toast
+            SdkExplorerApplication.instance.$apiStatus().toast('show');
+            SdkExplorerApplication.instance.fadeTimeOut = setTimeout(() => {
+                SdkExplorerApplication.instance.$apiStatus().toast('hide');
+                SdkExplorerApplication.instance.apiStatusMessage = '';
+            }, 15000);
+        }, 0);
     }
 
     /**
@@ -289,40 +300,40 @@ export class SdkExplorerApplication {
             let availableVersions = response.map(item => item.name);
 
             // Filter out versions older than the threshold
-            let versions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
+            let listedVersions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
             // Sort versions by version number
-            versions.sort(this.#reverseCompareVersions.bind(this));
+            listedVersions.sort(this.#reverseCompareVersions.bind(this));
 
             // Filter out pre-releases of released versions
-            const releasedVersions = versions.filter(version => !version.includes('-'));
+            const releasedVersions = listedVersions.filter(version => !version.includes('-'));
             const latestRelease = releasedVersions[0];
-            const preReleasesOfLatestVersion = versions.filter(version => {
+            const preReleasesOfLatestVersion = listedVersions.filter(version => {
                 const baseVersion = version.split('-')[0];
                 return version.includes('-') && baseVersion === latestRelease;
                 });
-            const preReleasesOfUnreleasedVersions = versions.filter(version => {
+            const preReleasesOfUnreleasedVersions = listedVersions.filter(version => {
                 const baseVersion = version.split('-')[0];
                 return version.includes('-') && !releasedVersions.includes(baseVersion);
             });
-            versions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
+            listedVersions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
 
             // Sort versions by version number
-            versions.sort(this.#reverseCompareVersions.bind(this));
+            listedVersions.sort(this.#reverseCompareVersions.bind(this));
 
             // Populate the dropdowns
             this.$mainVersionDropdown().empty();
             this.$baseVersionDropdown().empty();
-            versions.forEach(version => {
+            listedVersions.forEach(version => {
                 const option = $('<option>', { value: version, text: version });
                 this.$mainVersionDropdown().append(option.clone());
                 this.$baseVersionDropdown().append(option);
             });
 
             // Get versions from the query string if provided
-            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(versions);
+            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(listedVersions);
 
             // Validate the versions passed in the query string
-            if (!versions.includes(mainVersion)) {
+            if (!listedVersions.includes(mainVersion)) {
                 if (availableVersions.includes(mainVersion)) {
                     const option = $('<option>', { value: mainVersion, text: mainVersion });
                     this.$mainVersionDropdown().append(option);
@@ -330,14 +341,17 @@ export class SdkExplorerApplication {
                     mainVersion = latestRelease;
                 }
             }
-            if (!versions.includes(baseVersion)) {
+            if (!listedVersions.includes(baseVersion)) {
                 if (availableVersions.includes(baseVersion)) {
                     const option = $('<option>', { value: baseVersion, text: baseVersion });
                     this.$baseVersionDropdown().append(option);
                 } else {
                     baseVersion = this.#getPreviousVersion(mainVersion, availableVersions) ?? mainVersion;
-                    const option = $('<option>', { value: baseVersion, text: baseVersion });
-                    this.$baseVersionDropdown().append(option);                }
+                    if (!listedVersions.includes(baseVersion)) {
+                        const option = $('<option>', { value: baseVersion, text: baseVersion });
+                        this.$baseVersionDropdown().append(option);
+                    }
+                }
             }
             
             this.$mainVersionDropdown().val(mainVersion);
@@ -345,7 +359,7 @@ export class SdkExplorerApplication {
             appState.mainVersion = mainVersion;
             appState.baseVersion = baseVersion;
         } catch (error) {
-            this.updateApiStatus('API call failed to fetch tags.', false);
+            SdkExplorerApplication.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
         } finally {
             this.stopSpinner();

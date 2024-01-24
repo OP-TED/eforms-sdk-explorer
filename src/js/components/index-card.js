@@ -7,6 +7,7 @@
 import { BootstrapWebComponent } from "./bootstrap-web-component.js";
 import { PropertyCard } from "./property-card.js";
 import { Diff } from "../diff.js";
+import { SdkExplorerApplication } from "../app.js";
 
 export class IndexCard extends BootstrapWebComponent {
 
@@ -18,6 +19,9 @@ export class IndexCard extends BootstrapWebComponent {
     static get observedAttributes() {
         return ['title', 'subtitle', 'action-name', 'status'];
     }
+
+    /** @type {(e: Event) => Promise<void>} */    
+    actionHandler = null;
 
     /**
      * Maintains a list of {@link PropertyCard} instances that are part of the index card.
@@ -36,7 +40,7 @@ export class IndexCard extends BootstrapWebComponent {
     /**
      * Provides a handler that will be called when the action button is clicked.
      * 
-     * @param {function(Event): void} handler 
+     * @param {function(Event): Promise<void>} handler 
      */
     setActionHandler(handler) {
         this.actionHandler = handler;
@@ -108,7 +112,13 @@ export class IndexCard extends BootstrapWebComponent {
         // Conditionally configure and display the button
         if (this.actionName && this.actionHandler) {
             button.textContent = this.actionName;
-            button.onclick = this.actionHandler;
+            button.onclick = async (event) => {
+                try {
+                    await this.actionHandler(event);
+                } catch (error) {
+                    SdkExplorerApplication.updateApiStatus(error.message);
+                }
+            };
             button.style.display = ''; 
         } else {
             button.style.display = 'none';
@@ -126,6 +136,10 @@ export class IndexCard extends BootstrapWebComponent {
         if (!this.status && this.getStatusCallback) {
             this.getStatusCallback().then(status => {
                 this.setAttribute('status', status);    // This will also trigger a re-render
+            }).catch(error => {
+                if (error.statusText !== 'abort') {
+                    SdkExplorerApplication.updateApiStatus(error.message);
+                }
             });
         }
     }
