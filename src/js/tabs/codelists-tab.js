@@ -12,6 +12,8 @@ import { PropertyCard } from "../components/property-card.js";
 import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { CardGroup } from "../components/card-group.js";
+import { CustomError, AjaxError } from "../custom-error.js";
+import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE } from "../error-messages.js";
 
 export class CodelistsTab extends TabController {
 
@@ -33,7 +35,7 @@ export class CodelistsTab extends TabController {
 
     async fetchAndRender() {
         // Render the overview display by default
-        this.fetchAndRenderOverview();
+        await this.fetchAndRenderOverview();
     }
 
     // #region Overview display -----------------------------------------------
@@ -63,7 +65,7 @@ export class CodelistsTab extends TabController {
     /**
      * Fetches the codelists.json index files for both versions and renders the overview display.
      */
-    async fetchAndRenderOverview() {    
+    async fetchAndRenderOverview() {
         SdkExplorerApplication.startSpinner();
         try {
 
@@ -72,25 +74,27 @@ export class CodelistsTab extends TabController {
                 this.#fetchIndexFile(appState.mainVersion),
                 this.#fetchIndexFile(appState.baseVersion)
             ]);
-            // Compare the two index files
-            const diff = Diff.fromArrayComparison(mainVersionData.codelists, baseVersionData.codelists, 'id');
 
-            // Clear existing index-cards.
-            this.#cardGroup().empty();
+            try {
+                // Compare the two index files
+                const diff = Diff.fromArrayComparison(mainVersionData.codelists, baseVersionData.codelists, 'id');
 
-            // Create and add an index-card for each codelist.
-            diff.forEach((entry, index) => {
-                setTimeout(() => {
-                    if (!this.aborting) {
-                        const card = this.#createIndexCard(entry);
-                        this.#cardGroup().appendCard(card);
-                    }
-                }, 0);
-            });
-             this.#switchToOverview();
-        } catch (error) {
-            console.error('Error while generating overview:', error);
-            throw new Error('Failed to load codelists');
+                // Clear existing index-cards.
+                this.#cardGroup().empty();
+
+                // Create and add an index-card for each codelist.
+                diff.forEach((entry, index) => {
+                    setTimeout(() => {
+                        if (!this.aborting) {
+                            const card = this.#createIndexCard(entry);
+                            this.#cardGroup().appendCard(card);
+                        }
+                    }, 0);
+                });
+                this.#switchToOverview();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_OVERVIEW, error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
@@ -100,8 +104,13 @@ export class CodelistsTab extends TabController {
      * Fetches the code-lists.json index file for the specified SDK version.
      */
     async #fetchIndexFile(sdkVersion) {
-        const url = this.#getIndexFileUrl(sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'json' });
+        try {
+            const url = this.#getIndexFileUrl(sdkVersion);
+            const response = await this.ajaxRequest({ url, dataType: 'json' });
+            return response;
+        } catch (error) {
+            throw new AjaxError(ERROR_FETCHING_FILE('codelists.json', sdkVersion), error);
+        }
     }
 
 
@@ -124,9 +133,8 @@ export class CodelistsTab extends TabController {
      */
      #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('parentId') ?? '', 'Compare', diffEntry.typeOfChange);
-        component.setActionHandler((e) => {
-            e.preventDefault();
-            this.fetchAndRenderDiffView(diffEntry.get('filename'));
+        component.setActionHandler(async (e) => {
+            await this.fetchAndRenderDiffView(diffEntry.get('filename'));
         });
         // If the code list is not new or removed, then we will need to check for changes inside the code list file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
@@ -165,47 +173,42 @@ export class CodelistsTab extends TabController {
      * @param {string} filename The codelist file to check for changes
      * @returns {Promise<Diff.TypeOfChange>} The type of change detected
      */
-     async #checkForChanges(filename) {
+    async #checkForChanges(filename) {
         try {
             SdkExplorerApplication.startSpinner();
 
             // Fetch the two versions of the file
-            const mainUrl = this.#getCodelistUrlForVersion(filename, appState.mainVersion);
-            const baseUrl = this.#getCodelistUrlForVersion(filename, appState.baseVersion);
             let [mainFile, baseFile] = await Promise.all([
-                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
-                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+                this.#fetchCodelist(filename, appState.mainVersion),
+                this.#fetchCodelist(filename, appState.baseVersion)
             ]);
 
-            // Ignore version information when comparing
-            const versionRegex = /<Version>(.*?)<\/Version>/; // Remove the global flag to replace only the first match
-            let mainFileModified = mainFile.replace(versionRegex, '<Version>-</Version>');
-            let baseFileModified = baseFile.replace(versionRegex, '<Version>-</Version>');
+            try {
+                // Ignore version information when comparing
+                const versionRegex = /<Version>(.*?)<\/Version>/; // Remove the global flag to replace only the first match
+                let mainFileModified = mainFile.replace(versionRegex, '<Version>-</Version>');
+                let baseFileModified = baseFile.replace(versionRegex, '<Version>-</Version>');
 
-            // Also remove all XML comments before comparing
-            const commentRegex = /<!--[\s\S]*?-->/g; // Matches all XML comments
-            mainFileModified = mainFileModified.replace(commentRegex, '');
-            baseFileModified = baseFileModified.replace(commentRegex, '');
-            
-            // Compare to determine the type of change
-            const nodeChange = mainFileModified === baseFileModified ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+                // Also remove all XML comments before comparing
+                const commentRegex = /<!--[\s\S]*?-->/g; // Matches all XML comments
+                mainFileModified = mainFileModified.replace(commentRegex, '');
+                baseFileModified = baseFileModified.replace(commentRegex, '');
 
-            // Nullify the two variables holding the file contents to free up memory.
-            mainFile = null;
-            baseFile = null;
+                // Compare to determine the type of change
+                const typeOfChange = mainFileModified === baseFileModified ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
 
-            return nodeChange;
-         } catch (error) {
-             if (error.statusText === 'abort') {
-                 console.log('Request was aborted');
-             } else {
-                 console.error(`Error processing files for ${filename}.json:`, error);
-             }
-             return null;
-         }
-         finally {
-             SdkExplorerApplication.stopSpinner();
-         }
+                // Nullify the two variables holding the file contents to free up memory.
+                mainFile = null;
+                baseFile = null;
+
+                return typeOfChange;
+            } catch (error) {
+                throw new CustomError(ERROR_CHECKING_CHANGES(filename), error);
+            }
+        }
+        finally {
+            SdkExplorerApplication.stopSpinner();
+        }
     }
 
     #getCodelistUrlForVersion(filename, sdkVersion) {
@@ -222,21 +225,25 @@ export class CodelistsTab extends TabController {
      * 
      * @param {string} filename 
      */
-        async fetchAndRenderDiffView(filename) {
-            SdkExplorerApplication.startSpinner();
+    async fetchAndRenderDiffView(filename) {
+        SdkExplorerApplication.startSpinner();
+        try {
+
+            const [mainData, baseData] = await Promise.all([
+                this.#fetchCodelist(filename, appState.mainVersion),
+                this.#fetchCodelist(filename, appState.baseVersion)
+            ]);
+
             try {
-    
-                const [mainData, baseData] = await Promise.all([
-                    this.#fetchCodelist(filename, appState.mainVersion),
-                    this.#fetchCodelist(filename, appState.baseVersion)
-                ]);
                 Diff.injectTextDiff(mainData, baseData, 'code-list-diff', `${filename}`);
                 this.#switchToDiffView();
-    
-            } finally {
-                SdkExplorerApplication.stopSpinner();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_DIFF(filename), error);
             }
+        } finally {
+            SdkExplorerApplication.stopSpinner();
         }
+    }
 
     /**
      * Fetches the codelist GC file for the specified id and SDK version.
@@ -248,7 +255,9 @@ export class CodelistsTab extends TabController {
      */
     async #fetchCodelist(filename, sdkVersion) {
         const url = this.#getCodelistUrlForVersion(filename, sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'text' });
+        return this.ajaxRequest({ url, dataType: 'text' }).catch(error => {
+            throw new AjaxError(ERROR_FETCHING_FILE(filename, sdkVersion), error);
+        });
     }
 
     /**

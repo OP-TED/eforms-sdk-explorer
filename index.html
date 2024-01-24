@@ -354,7 +354,19 @@
         <div class="progress mr-3" style="width: 10%; min-width: 100px">
             <div class="progress-bar bg-info" role="progressbar" style="width: 0%;"></div>
         </div>
-        <div id="apiStatus" class="alert alert-info" role="alert">
+        <div id="apiStatus" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false" >
+            <div class="toast-header">
+                <svg width="16" height="16" class="rounded mr-2">
+                    <rect width="16" height="16" fill="red"></rect>
+                </svg>                
+                <strong class="mr-auto">Error</strong>
+                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <ul class="toast-body">
+                <!-- Error message will be inserted here -->
+            </ul>
         </div>
     </footer>
 </body>

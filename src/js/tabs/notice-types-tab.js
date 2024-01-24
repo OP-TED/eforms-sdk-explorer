@@ -13,6 +13,9 @@ import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { TreeDetailSplitView } from "../components/tree-detail-split-view.js";
 import { CardGroup } from "../components/card-group.js";
+import { AjaxError, CustomError } from "../custom-error.js";
+import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_FETCHING_FILE } from "../error-messages.js";
+
 
 export class NoticeTypesTab extends TabController {
 
@@ -34,7 +37,7 @@ export class NoticeTypesTab extends TabController {
 
     async fetchAndRender() {
         // Render the overview display by default
-        this.fetchAndRenderOverview();
+        await this.fetchAndRenderOverview();
     }
 
     /**
@@ -59,7 +62,7 @@ export class NoticeTypesTab extends TabController {
     /**
      * Fetches the notice-types.json index files for both versions and renders the overview display.
      */
-    async fetchAndRenderOverview() {    
+    async fetchAndRenderOverview() {
         SdkExplorerApplication.startSpinner();
         try {
 
@@ -69,26 +72,27 @@ export class NoticeTypesTab extends TabController {
                 this.#fetchIndexFile(appState.baseVersion)
             ]);
 
-            // Compare the two index files
-            const diff = Diff.fromArrayComparison(mainVersionData.noticeSubTypes, baseVersionData.noticeSubTypes, 'subTypeId');
+            try {
+                // Compare the two index files
+                const diff = Diff.fromArrayComparison(mainVersionData.noticeSubTypes, baseVersionData.noticeSubTypes, 'subTypeId');
 
-            // Clear existing index-cards.
-            this.#cardGroup().empty();
+                // Clear existing index-cards.
+                this.#cardGroup().empty();
 
-            // Create and add an index-card for each notice type.
-            diff.forEach(entry => {
-                setTimeout(() => {
-                    if (!this.aborting) {
-                        const card = this.#createIndexCard(entry);
-                        this.#cardGroup().appendCard(card);
-                    }
-                }, 0);
-            });
+                // Create and add an index-card for each notice type.
+                diff.forEach(entry => {
+                    setTimeout(() => {
+                        if (!this.aborting) {
+                            const card = this.#createIndexCard(entry);
+                            this.#cardGroup().appendCard(card);
+                        }
+                    }, 0);
+                });
 
-            this.#switchToOverview();
-        } catch (error) {
-            console.error('Error while generating overview:', error);
-            throw new Error('Failed to load notice types');
+                this.#switchToOverview();
+            } catch (error) {
+                throw new CustomError(ERROR_GENERATING_OVERVIEW, error);
+            }
         } finally {
             SdkExplorerApplication.stopSpinner();
         }
@@ -98,8 +102,14 @@ export class NoticeTypesTab extends TabController {
      * Fetches the notice-types.json index file for the specified SDK version.
      */
     async #fetchIndexFile(sdkVersion) {
-        const url = this.#getIndexFileUrl(sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'json' });
+        try {
+            const url = this.#getIndexFileUrl(sdkVersion);
+            const response = await this.ajaxRequest({ url, dataType: 'json' });
+            return response;
+        }
+        catch (error) {
+            throw new AjaxError(ERROR_FETCHING_FILE('notice-types.json', sdkVersion), error);
+        }
     }
 
     #switchToOverview() {
@@ -115,9 +125,8 @@ export class NoticeTypesTab extends TabController {
      */
     #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('subTypeId'), diffEntry.get('type'), 'Compare', diffEntry.typeOfChange);
-        component.setActionHandler((e) => {
-            e.preventDefault();
-            this.fetchAndRenderExplorerView(diffEntry.get('subTypeId'));
+        component.setActionHandler(async (e) => {
+            await this.fetchAndRenderExplorerView(diffEntry.get('subTypeId'));
         });
 
         // If the notice type is not new or removed, then we will need to check for changes inside the notice type file.
@@ -167,40 +176,35 @@ export class NoticeTypesTab extends TabController {
             SdkExplorerApplication.startSpinner();
 
             // Get the notice type files for both versions.
-            const mainUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.mainVersion);
-            const baseUrl = this.#getUrlByNoticeSubtypeAndVersion(noticeSubtypeId, appState.baseVersion);
             let [mainFile, baseFile] = await Promise.all([
-                this.ajaxRequest({ url: mainUrl, dataType: 'text' }),
-                this.ajaxRequest({ url: baseUrl, dataType: 'text' })
+                this.#fetchNoticeTypeDefinition(noticeSubtypeId, appState.mainVersion, 'text'),
+                this.#fetchNoticeTypeDefinition(noticeSubtypeId, appState.baseVersion, 'text')
             ]);
 
-            // Ignore version information when comparing
-            const propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
-            for (let property of propertiesToIgnore) {
-                const regex = new RegExp(`(${property} ".*?")`);
-                mainFile = mainFile.replace(regex, `${property} "-"`);
-                baseFile = baseFile.replace(regex, `${property} "-"`);
+            try {
+                // Ignore version information when comparing
+                const propertiesToIgnore = ['"ublVersion" :', '"sdkVersion" :', '"version" :', '"createdOn" :'];
+                for (let property of propertiesToIgnore) {
+                    const regex = new RegExp(`(${property} ".*?")`);
+                    mainFile = mainFile.replace(regex, `${property} "-"`);
+                    baseFile = baseFile.replace(regex, `${property} "-"`);
+                }
+
+                // Compare to determine the type of change.
+                const typeOfChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+
+                // Nullify the two variables holding the file contents to free up memory.
+                mainFile = null;
+                baseFile = null;
+
+                return typeOfChange;
+            } catch (error) {
+                throw new CustomError(ERROR_CHECKING_CHANGES(`${noticeSubtypeId}.json`), error);
             }
-
-            // Compare to determine the type of change.
-            const nodeChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
-
-            // Nullify the two variables holding the file contents to free up memory.
-            mainFile = null;
-            baseFile = null;
-
-            return nodeChange;
-        } catch (error) {
-            if (error.statusText === 'abort') {
-                console.log('Request was aborted');
-            } else {
-                console.error(`Error processing files for ${noticeSubtypeId}.json:`, error);
-            }
-            return null;
         }
         finally {
             SdkExplorerApplication.stopSpinner();
-        }   
+        }
     }
 
     #getIndexFileUrl(sdkVersion) {
@@ -255,13 +259,20 @@ export class NoticeTypesTab extends TabController {
      * 
      * @param {string} subTypeId 
      * @param {string} sdkVersion
-     *  
+     * @param {string} dataType
      * @returns 
      */
-    async #fetchNoticeTypeDefinition(subTypeId, sdkVersion) {
-        const url = this.#getUrlByNoticeSubtypeAndVersion(subTypeId, sdkVersion);
-        return this.ajaxRequest({ url, dataType: 'json' });
+    async #fetchNoticeTypeDefinition(subTypeId, sdkVersion, dataType = 'json') {
+        try {
+            return await this.ajaxRequest({
+                url: this.#getUrlByNoticeSubtypeAndVersion(subTypeId, sdkVersion),
+                dataType: dataType
+            });
+        } catch (error) {
+            throw new AjaxError(ERROR_FETCHING_FILE(`${subTypeId}.json`, sdkVersion), error);
+        }
     }
+
 
 
     #compareNestedHierarchies(mainNestedHierarchy, baseNestedHierarchy) {

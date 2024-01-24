@@ -31,6 +31,9 @@ export class SdkExplorerApplication {
     /** @type {number} */
     #spinnerCounter = 0;
 
+    /** @type {string} */
+    apiStatusMessage = '';
+
     /** @returns {string} */
     get newVersion() {
         return appState.mainVersion;
@@ -102,6 +105,9 @@ export class SdkExplorerApplication {
         return $(this.#apiStatus());
     }
 
+    #toastBody() {
+        return document.querySelector('#apiStatus .toast-body');
+    }
 
     /**
      * 
@@ -121,7 +127,7 @@ export class SdkExplorerApplication {
             this.#activeTab = this.tabs.get(activeTabId);
             await this.#activeTab.activated();
         } catch (error) {
-            this.updateApiStatus(error.message, false);
+            SdkExplorerApplication.updateApiStatus(error.message);
         }
         finally {
             this.stopSpinner();
@@ -134,7 +140,7 @@ export class SdkExplorerApplication {
         try {
             await this.#activeTab?.versionChanged();
         } catch (error) {
-            this.updateApiStatus(error.message, false);
+            SdkExplorerApplication.updateApiStatus(error.message);
         }
         finally {
             this.stopSpinner();
@@ -168,23 +174,28 @@ export class SdkExplorerApplication {
     }
 
     clearApiStatus() {
-        this.$apiStatus().text('');
+        // Clear the message inside the toast body
+        SdkExplorerApplication.instance.#toastBody().textContent = '';
+
+        // Hide the toast
+        SdkExplorerApplication.instance.$apiStatus().toast('hide');
     }
 
-    updateApiStatus(message, isSuccess = true) {
-        this.$apiStatus().text(message);
+    static updateApiStatus(message) {
 
-        if (isSuccess) {
-            this.$apiStatus().addClass('alert-success').removeClass('alert-danger');
-        } else {
-            this.$apiStatus().addClass('alert-danger').removeClass('alert-success');
-        }
+        SdkExplorerApplication.instance.apiStatusMessage += '<li>' + message + '</li>';
+        SdkExplorerApplication.instance.#toastBody().innerHTML = SdkExplorerApplication.instance.apiStatusMessage;
 
-        this.$apiStatus().show();
+        clearTimeout(SdkExplorerApplication.instance.fadeTimeOut);
 
         setTimeout(() => {
-            this.$apiStatus().fadeOut('slow');
-        }, 5000);
+            // Display the toast
+            SdkExplorerApplication.instance.$apiStatus().toast('show');
+            SdkExplorerApplication.instance.fadeTimeOut = setTimeout(() => {
+                SdkExplorerApplication.instance.$apiStatus().toast('hide');
+                SdkExplorerApplication.instance.apiStatusMessage = '';
+            }, 15000);
+        }, 0);
     }
 
     /**
@@ -345,7 +356,7 @@ export class SdkExplorerApplication {
             appState.mainVersion = mainVersion;
             appState.baseVersion = baseVersion;
         } catch (error) {
-            this.updateApiStatus('API call failed to fetch tags.', false);
+            SdkExplorerApplication.updateApiStatus('API call failed to fetch tags.', false);
             console.error('Error populating dropdowns:', error);
         } finally {
             this.stopSpinner();
