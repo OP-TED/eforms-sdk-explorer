@@ -28,7 +28,7 @@ export class AjaxError extends CustomError {
     constructor(message, error) {
         super(message, error);
         if (error && error.statusText !== 'abort') {
-            const errorDetail = error?.message ?? error?.responseText ?? error ?? '';            
+            const errorDetail = error?.message ?? error?.responseText ?? (typeof error === 'string' ? error : '') ?? '';            
             this.message = `${message}${this.formatDetail(errorDetail)}`;
         }
 
