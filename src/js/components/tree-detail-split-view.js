@@ -42,7 +42,10 @@ export class TreeDetailSplitView extends BootstrapWebComponent {
         super.render();
 
         // Listen for changes in the search fields
-        this.$treeSearch().keyup(this.#searchJsTree.bind(this));
+        this.$treeSearch().keyup(() => {
+            this.$treeFilter().val('all'); // when entering a search string, then turn off the filter to avoid confusion
+            this.#searchJsTree();
+        });
         this.$treeFilter().change(this.#searchJsTree.bind(this));
 
         // Listen for changes in the compact view switch
