@@ -323,6 +323,13 @@ export class SdkExplorerApplication {
             // Populate the dropdowns
             this.$mainVersionDropdown().empty();
             this.$baseVersionDropdown().empty();
+
+            // Add hardcoded "develop" option to the top of the main version dropdown.
+            // This will allow us to compare any version to the develop branch.
+            const developOption = $('<option>', { value: 'develop', text: 'develop' });
+            this.$mainVersionDropdown().prepend(developOption);
+
+
             listedVersions.forEach(version => {
                 const option = $('<option>', { value: version, text: version });
                 this.$mainVersionDropdown().append(option.clone());
