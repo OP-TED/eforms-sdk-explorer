@@ -1,0 +1,21 @@
+{
+    "name": "eforms-sdk-explorer",
+    "version": "0.1.0",
+    "description": "A single-page web application designed to explore and compare the information contained in any two versions of the eForms SDK available on GitHub.",
+    "dependencies": {
+        "jquery": "^3.6.0",
+        "bootstrap": "^4.6.2",
+        "lodash": "^4.17.21",
+        "jstree": "^3.3.12",
+        "showdown": "^1.9.1",
+        "diff": "^5.0.0",
+        "diff2html": "^3.4.3"
+    },
+    "keywords": [],
+    "author": "Publications Office of the European Union",
+    "license": "EUPL-1.2",
+    "bugs": {
+        "url": "https://github.com/OP-TED/eforms-sdk-explorer/issues"
+    },
+    "homepage": "https://github.com/OP-TED/eforms-sdk-explorer#readme"
+}

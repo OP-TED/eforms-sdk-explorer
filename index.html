@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- 
+    Copyright (c) 2021 European Union 
+    Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission – subsequent versions of the EUPL (the “Licence”); You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at: 
+    https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12 
+    Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence. 
+    -->
+    <title>eForms SDK Explorer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap CSS and JS bundle -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Lodash library -->
+    <script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
+
+    <!-- jstree CSS and JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+    <!-- GitHub Markdown CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/4.0.0/github-markdown.min.css">
+
+    <!-- Showdown library -->
+    <script src="https://cdn.jsdelivr.net/npm/showdown/dist/showdown.min.js"></script>
+
+    <!-- jsdiff library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.0.0/diff.min.js"></script>
+
+    <!-- diff2html CSS and JS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+
+    <!-- SDK Explorer CSS and JS -->
+    <link rel="stylesheet" href="./src/assets/style.css">
+    <script defer type="module" src="./src/js/script.js"></script>
+</head>
+
+<body>
+
+    <header class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="./src/assets/ted-logo.png" alt="TED - Publications Office of the EU" width="60"
+                    class="d-inline-block align-middle mr-2"><span>eForms SDK Explorer</span>
+            </a>
+            <div class="d-flex align-items-center arrow">
+                <div class="version-text mr-2" data-toggle="popover" data-trigger="manual" data-placement="left" data-html="true" data-step="0" title="Select versions to compare" data-content="<p>Use these dropdowns to select the versions of the SDK that you want to compare.</p><p>Select the older version (that you are migrating from) and the newer version (that you are migrating to).</p><p>SDK Explorer calls these the <i>base</i> and <i>target</i> version respectively.</p> <div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">Compare SDK versions</div>
+                <select id="base-version-dropdown" class="custom-select" data-toggle="popover" data-trigger="hover"
+                    data-placement="left" title="Older SDK version" data-html="true"
+                    data-content="This is the base version for the comparison. Items that exist only in this version are indicated as 'removed'.">
+                </select>
+                <div class="comparison-text mr-2"></div>
+                <select id="main-version-dropdown" class="custom-select mr-2" data-toggle="popover" data-trigger="hover"
+                    data-placement="left" title="Newer SDK version" data-html="true"
+                    data-content="This is the target version for the comparison. Items that exist only in this version are indicated as 'added'.">
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <ul class="nav nav-tabs" role="tablist">
+            <div style="width: 20px;"><!-- leaves some space before the first tab --></div>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="home-tab" data-toggle="tab" data-target="#home-tab-content"
+                    type="button" role="tab" aria-controls="home-tab-content" aria-selected="true">Home</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fields-tab" data-toggle="tab" data-target="#fields-tab-content"
+                    type="button" role="tab" aria-controls="fields-tab-content" aria-selected="false" data-toggle="popover" data-trigger="manual" data-placement="bottom" data-html="true" data-step="1" title="Switch between sections" data-content="<p>Use the tabs to explore and compare different sections of the SDK.</p><p>Depending on the nature and structure of the information you will find appropriate options for filtering and searching the data.</p><div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">Fields</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notice-types-tab" data-toggle="tab" data-target="#notice-types"
+                    type="button" role="tab" aria-controls="notice-types" aria-selected="false">Notice Types</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="codelists-tab" data-toggle="tab" data-target="#codelists" type="button"
+                    role="tab" aria-controls="codelists" aria-selected="false">Codelists</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schemas-tab" data-toggle="tab" data-target="#schemas" type="button"
+                    role="tab" aria-controls="schemas" aria-selected="false">Schemas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="schematrons-tab" data-toggle="tab" data-target="#schematrons" type="button"
+                    role="tab" aria-controls="schematrons" aria-selected="false">Schematrons</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="translations-tab" data-toggle="tab" data-target="#translations"
+                    type="button" role="tab" aria-controls="translations" aria-selected="false">Translations</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="view-templates-tab" data-toggle="tab" data-target="#view-templates"
+                    type="button" role="tab" aria-controls="view-templates" aria-selected="false">View
+                    Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="release-notes-tab" data-toggle="tab" data-target="#release-notes"
+                    type="button" role="tab" aria-controls="release-notes" aria-selected="false">Release notes</button>
+            </li>
+            <div class="spinner-grow spinner-grow-sm text-info ml-auto" role="status" id="centralLoadingSpinner"
+                style="visibility: hidden;" data-toggle="popover" data-trigger="manual" data-placement="top" data-html="true"
+                data-step="2" title="Loading indicator"
+                data-content="<p>A flashing indicator will appear here while data is being processed in the background.</p><p>The SDK Explorer downloads and compares SDK versions from GitHub every time you switch to a different tab. This is done to conserve memory on your browser.</p><div class='tour-button-container'><a href='#' class='btn btn-link cancel-tour'>Cancel</a><a href='#' class='btn btn-primary next-step'>Next</a></div>">
+            </div>
+        </ul>
+    </nav>
+
+    <main class="tab-content">
+
+        <!-- Home -->
+        <div class="tab-pane h-100 fade show active" id="home-tab-content" role="tabpanel" aria-labelledby="home-tab">
+            <div class="alert alert-warning" role="alert"><b>Please note</b>: This is a pre-release version of the SDK
+                Explorer. Some features may not be fully functional.</div>
+            <div class="jumbotron">
+                <h1 class="display-4">SDK Explorer</h1>
+                <p class="lead">Explore and compare different versions of the eForms SDK.</p>
+                <hr class="my-4">
+                <p>The eForms SDK Explorer is a web application that allows you to explore the contents as well as
+                    changes between any two versions of the eForms SDK.
+                    The application is being developed by the Publications Office of the EU and is available as open
+                    source on <a href="https://github.com/OP-TED/eforms-sdk-explorer">GitHub</a>. We welcome your feedback,
+                    suggestions for improvement as well as your contributions to the project.
+                </p>
+                <p>
+                    If you are new to the SDK Explorer, we recommend that you take our quick tour.
+                </p>
+                <button id="start-tour" class="btn btn-primary">Start Quick Tour</button>
+            </div>
+        </div>
+
+        <!-- Fields -->
+        <div class="tab-pane h-100 fade show" id="fields-tab-content" role="tabpanel" aria-labelledby="fields-tab">
+            <div class="container-fluid h-100">
+                <tree-detail-split-view id="fields-explorer"></tree-detail-split-view>
+            </div>
+        </div>
+
+        <!-- Notice subtypes -->
+        <div class="tab-pane h-100 fade" id="notice-types" role="tabpanel" aria-labelledby="notice-types-tab">
+            <div class="tab-container">
+
+                <!-- Notice-types overview -->
+                <div id="notice-types-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="notice-types-overview-card-group" filter-property="formType" filter-prompt="Filter by form type"></card-group>
+                </div>
+
+                <!-- Notice-type Explorer -->
+                <div id="notice-type-explorer-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="notice-types-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                    <tree-detail-split-view id="notice-type-explorer" class="flex-grow-1"
+                        style="overflow-x: hidden; overflow-y: auto;"></tree-detail-split-view>
+
+                </div> <!-- End of notice-type comparison row -->
+
+            </div> <!-- End of container -->
+        </div> <!-- End of notice-types tab -->
+
+        <!-- Codelists -->
+        <div class="tab-pane fade" id="codelists" role="tabpanel" aria-labelledby="codelists-tab">
+            <div class="tab-container">
+                <!-- Code-lists overview -->
+                <div id="code-lists-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="code-lists-overview-card-group" filter-property="parentId" filter-prompt="Filter by parent codelist"></card-group>
+                </div>
+
+                <!-- Codelist  diff view -->
+                <div id="code-list-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="code-lists-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                    <div id="code-list-diff" class="view-diff"></div>
+
+                </div> <!-- End of Codelists diff view -->
+            </div> <!-- End of container -->
+        </div> <!-- End of Codelists tab -->
+
+        <!-- Schemas -->
+        <div class="tab-pane fade" id="schemas" role="tabpanel" aria-labelledby="schemas-tab">
+            <div class="tab-container">
+                <!-- schemas overview -->
+                <div id="schemas-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="schemas-overview-card-group" filter-property="standard" filter-prompt="Filter by standard"></card-group>
+                </div>
+        
+                <!-- schemas  diff -->
+                <div id="schemas-diff-view" class="view-container hide-important">
+        
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="schemas-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+        
+                    <!-- Content -->
+                    <div id="schemas-diff" class="view-diff"></div>
+        
+                </div>
+            </div>
+        </div>
+        
+        <!-- Schematrons -->
+        <div class="tab-pane fade" id="schematrons" role="tabpanel" aria-labelledby="schematrons-tab">
+            <div class="tab-container">
+                
+                <!-- Schematrons overview -->
+                <div id="schematrons-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="schematrons-overview-card-group" filter-property="folder" filter-prompt="Filter by folder"></card-group>
+                </div>
+
+                <!-- Schematrons diff view -->
+                <div id="schematrons-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="schematrons-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Schematrons Diff -->
+                    <div id="schematrons-diff" class="view-diff"></div>
+
+                </div> <!-- End of schematrons diff view -->
+            </div> <!-- End of schematrons tab container --> 
+        </div>
+
+        <!-- Translations -->
+        <div class="tab-pane fade" id="translations" role="tabpanel" aria-labelledby="translations-tab">
+            <div class="tab-container">
+                <!-- translations overview -->
+                <div id="translations-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="translations-overview-card-group" filter-property="twoLetterCode" filter-prompt="Filter by language"></card-group>
+                </div>
+
+                <!-- Translations  diff -->
+                <div id="translations-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumbs -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="translations-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                    <div id="translations-diff" class="view-diff"></div>
+
+                </div> <!-- End of Translations diff -->
+            </div> <!-- End of container -->
+        </div>
+
+
+        <!-- View Templates -->
+        <div class="tab-pane fade" id="view-templates" role="tabpanel" aria-labelledby="viewtemplates-tab">
+            <div class="tab-container">
+                <!-- View-templates overview -->
+                <div id="view-templates-overview" class="view-container">
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item" aria-current="page">Overview</li>
+                        </ol>
+                    </nav>
+                    <card-group id="view-templates-overview-card-group" class="flex-grow-1 mh-100"></card-group>
+                </div>
+
+                <!-- View-template diff -->
+                <div id="view-templates-diff-view" class="view-container hide-important">
+
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb" class="view-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" id="view-templates-overview-link">Overview</a></li>
+                            <li class="breadcrumb-item" aria-current="page">Comparison</li>
+                        </ol>
+                    </nav>
+
+                    <!-- Content -->
+                    <div id="view-template-diff" class="view-diff"></div>
+
+                </div> <!-- End of View-template diff -->
+            </div> <!-- End of container -->
+        </div>
+
+        <!-- Release notes -->
+        <div class="tab-pane fade mh-100 overflow-auto p-3" id="release-notes" role="tabpanel"
+            aria-labelledby="release-notes-tab">
+            <!-- Release Notes will appear here -->
+        </div>
+    </main>
+
+    <footer class="d-flex w-100">
+        <!-- Legend -->
+        <div class="legend-container flex-grow-1 ml-3">
+            <span class="legend-title" data-toggle="popover" data-trigger="manual" data-placement="top" data-html="true" data-step="3" title="Identify changes" data-content="<p>The SDK Explorer highlights changed items using the color coding you see in this legend.</p><div class='tour-button-container'><a href='#' class='btn btn-primary next-step'>Done</a></div>">Legend:</span>
+            <span class="legend-item added">added</span>
+            <span class="legend-item removed">removed</span>
+            <span class="legend-item modified">modified</span>
+        </div>
+        <div class="progress mr-3" style="width: 10%; min-width: 100px">
+            <div class="progress-bar bg-info" role="progressbar" style="width: 0%;"></div>
+        </div>
+        <div id="apiStatus" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false" >
+            <div class="toast-header">
+                <svg width="16" height="16" class="rounded mr-2">
+                    <rect width="16" height="16" fill="red"></rect>
+                </svg>                
+                <strong class="mr-auto">Error</strong>
+                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <ul class="toast-body">
+                <!-- Error message will be inserted here -->
+            </ul>
+        </div>
+    </footer>
+</body>
+
+<!-- Index Card Template - used by idex-card.js -->
+<template id="index-card-template">
+    <style>
+        .added-card {
+            background-color: var(--added-item-background-color);
+            color: black;
+        }
+
+        .removed-card {
+            background-color: var(--removed-item-background-color);
+            color: black;
+        }
+
+        .modified-card {
+            background-color: var(--modified-item-background-color);
+            color: black;
+        }
+
+        .unchanged-card {
+            background-color: var(--unchanged-item-background-color);
+            color: black;
+            animation: none;
+        }
+
+        :host(.unchanged-card) {
+            display: var(--compact-view-unchanged-display, block);
+        }
+
+        .card {
+            box-shadow: 1px 1px 3px 1px lightgray;
+        }
+
+        .card-header {
+            animation: fadeToWhite 1s infinite;
+            /* border-bottom-width: 5px; */
+        }
+
+        .card-header.added-card,
+        .card-header.removed-card,
+        .card-header.modified-card,
+        .card-header.unchanged-card {
+            animation: none;
+        }
+
+        @keyframes fadeToWhite {
+
+            0%,
+            100% {
+                background-color: var(--light-background-color);
+            }
+
+            50% {
+                background-color: white;
+            }
+        }
+
+        h2 {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #action-button {
+            margin-left: 24px;
+            margin-top: 4px;
+        }
+    </style>
+    <div class="card">
+        <div class="card-header" id="card-header" style="display: flex; flex-direction: row; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h2 id="title" class="card-title"></h2>
+                <h5 id="subtitle" class="card-subtitle"></h5>
+            </div>
+        </div>
+        <ul id="property-list" class="list-group list-group-flush">
+        </ul>
+    </div>
+</template>
+
+<!-- PropertyCard template - used by property-card.js -->
+<template id="property-card-template">
+    <style>
+        .property-flex {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .property-label {
+            font-weight: bold;
+            flex-basis: 100%;
+            font-size: smaller;
+        }
+
+        .property-value {
+            font-family: 'Courier New', Courier, monospace;
+            overflow-wrap: anywhere;
+            font-size: smaller;
+            float: right;
+            box-sizing: border-box;
+        }
+
+        .new-property-value {
+            background-color: var(--added-item-background-color);
+            color: black;
+            margin: 1px 0px 1px 4px;
+            border-radius: 5px;
+            border-top: 6px solid #B8E6C2;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .old-property-value {
+            background-color: var(--removed-item-background-color);
+            color: black;
+            margin: 1px 4px 1px 0px;
+            border-radius: 5px;
+            border-top: 6px solid #E6B8BC;
+            box-shadow: 1px 1px 3px 1px #A3A9CC;
+            padding: 2px 4px;
+            flex-basis: calc(50% - 4px);
+        }
+
+        .added-property {
+            background-color: var(--added-item-background-color);
+            color: black;
+        }
+
+        .removed-property {
+            background-color: var(--removed-item-background-color);
+            color: black;
+        }
+
+        .modified-property {
+            background-color: var(--modified-item-background-color);
+            color: black;
+        }
+
+        .unchanged-property {
+            display: var(--compact-view-unchanged-display, flex);
+        }
+
+        :host-context(.list-group-flush) .list-group-item {
+            border-width: 0 0 1px;
+        }
+    </style>
+    <li id="list-item" class="list-group-item property-flex">
+        <span id="property-name" class="property-label"></span>
+        <div id="old-property-value" class="property-value"></div>
+        <div id="new-property-value" class="property-value"></div>
+    </li>
+</template>
+
+<!-- Tree/Detail split-view template - used by tree-detail-split-view-.js -->
+<template id="tree-detail-split-view-template">
+    <style>
+        .tree-container {
+            padding: 8px;
+        }
+
+        .details-container {
+            padding: 0px;
+        }
+
+        .tree-container,
+        .details-container {
+            overflow-x: hidden;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+            background-color: white;
+            box-shadow: 1px 1px 3px 1px lightgray;
+            margin: 4px;
+        }
+
+        .removed-node>a {
+            color: black !important;
+            background-color: var(--removed-item-highlight) !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        .added-node>a {
+            background-color: var(--added-item-highlight) !important;
+            color: black !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        .modified-node>a {
+            background-color: var(--modified-item-highlight) !important;
+            color: black !important;
+            border-radius: 5px !important;
+            border-left: 1px solid white;
+            border-right: 1px solid white;
+        }
+
+        .card-header {
+            border-bottom-width: 5px;
+        }
+
+        #compact-view-warning {
+            display: var(--compact-view-warning-display, none);
+        }
+
+        /* jQuery Treeview */
+        .jstree-wholerow-ul {
+            background-color: white;
+            display: block;
+        }
+
+        .jstree-default .jstree-wholerow-hovered {
+            height: 24px;
+            background: #fcfcfd;
+        }
+
+        .jstree-default .jstree-wholerow-clicked {
+            height: 24px;
+            background: #d6d6d6;
+        }
+    </style>
+    <div class="row row-cols-2 h-100">
+        <slot name="search-popover-title" style="display: none;">Looking for a particular item?</slot>
+        <slot name="search-popover-content" style="display: none;">
+            <p>Search and highlight items by {searchableProperties}.</p>
+            <ul>
+                <li>Example: search for <code>cbc:ID</code> to find all items with "cbc:ID" in their xpathRelative.</li>
+            </ul>
+            <p>Use space or comma (<code>,</code>) to separate multiple search terms:</p>
+            <ul>
+                <li><code>term1 term2,term3</code> means "(term1 AND term2) OR term3"</li>
+            </ul>
+            <p>Prefix a property name with plus (<code>+</code>), minus (<code>-</code>) or tilde (<code>~</code>) to
+                search for items with the specified property added, removed or modified.</p>
+            <ul>
+                <li>Example: search for <code>~codeList</code> to find all items with their "codeList" property
+                    modified.</li>
+            </ul>
+            <p>Prefix with asterisk (<code>*</code>) to detect any change in the property.</p>
+            <ul>
+                <li>Example: search for <code>*codeList</code> to find all items with their "codeList" property added,
+                    removed or modified.</li>
+            </ul>
+            <p>Property names are <code>caseSensitive</code>.</p>
+        </slot>
+
+        <!-- Tree -->
+        <div class="col d-flex flex-column h-100">
+            <header class="d-flex flex-grow-0 flex-shrink-0 font-weight-bold">
+                <div style="flex: 1; align-self: self-end;">Structure</div>
+                <input type="text" id="tree-search" placeholder="Search" class="form-control form-control-sm m-1"
+                    style="width: 200px;" data-toggle="popover" data-trigger="manual" data-placement="left"
+                    data-html="true">
+                <select id="tree-filter" class="form-control form-control-sm m-1" style="width:100px;">
+                    <option value="all">all</option>
+                    <option value="added">added</option>
+                    <option value="removed">removed</option>
+                    <option value="modified">modified</option>
+                </select>
+            </header>
+            <!-- Tree View Container -->
+            <div id="treeViewContainer" class="tree-container flex-grow-1 overflow-auto">
+                <div id="treeView"></div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="col d-flex flex-column h-100 overflow-x-hidden">
+            <header class="d-flex flex-shrink-0 font-weight-bold">
+                <div style="flex: 1; align-self: self-end;">Details</div>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                    <label class="custom-control-label font-weight-normal" for="compactViewSwitch">Compact view</label>
+                </div>
+            </header>
+            <div class="card details-container flex-grow-1">
+                <div class="card-header" style="flex:none">
+                    <h5 id="detail-title" class="card-title"></h5>
+                    <h6 id="detail-subtitle" class="card-subtitle">Select a node to see details.</h6>
+                </div>
+                <ul id="detail-view" class="list-group list-group-flush">
+                </ul>
+                <div id="compact-view-warning" class="card-body" style="flex:none">
+                    <div class="alert alert-warning" role="alert">Unchanged properties are hidden in compact view.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Card-group template - used by card-group.js -->
+<template id="card-group-template">
+    <style>
+        :host {
+            overflow-y: hidden;
+            display: flex;
+            height: 100%;
+            /* border: 1px solid red; */
+        }
+
+        .card-group {
+            /* height: calc(100vh - 290px); */
+            overflow-y: auto;
+            background-color: var(--light-background-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            /* display: flex; */
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+
+        .card-group index-card {
+            flex: 1 0 300px;
+            margin: 10px;
+        }
+
+        .card-group .added-card {
+            display: var(--filter-status-added, var(--filter-status-all, none));
+        }
+
+        .card-group .removed-card {
+            display: var(--filter-status-removed, var(--filter-status-all, none));
+        }
+
+        .card-group .modified-card {
+            display: var(--filter-status-modified, var(--filter-status-all, none));
+        }
+
+        #card-group-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+            /* border: 1px solid red; */
+        }
+
+        #head {
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+        }
+
+        #body {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            /* height: 100%;
+            max-height: calc(100% - 24px); */
+        }
+
+        #nav {
+            flex: 1 1 10%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-width: 200px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        #cards-container {
+            height: 100%;
+            width: 100%;
+            flex: 0 1 100% !important;
+            overflow-y: auto;
+        }
+
+        #filter-prompt {
+            margin: 0px 4px;
+        }
+
+        .nav-link {
+            padding: .3rem;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+        }
+
+        #status-filter {
+            margin-right: 12px;
+        }
+    </style>
+    <div id="card-group-container">
+        <header id="head">
+            <label style="flex:1;" id="filter-prompt"></label>
+            <select id="status-filter" class="form-control form-control-sm m-3" style="width:100px;">
+                <option value="all">all</option>
+                <option value="added">added</option>
+                <option value="removed">removed</option>
+                <option value="modified">modified</option>
+            </select>
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="compactViewSwitch">
+                <label class="custom-control-label" for="compactViewSwitch">Compact view</label>
+            </div>
+        </header>
+        <div id="body">
+            <div id="nav">
+                <ul id="filter-options" class="nav flex-column"></ul>
+            </div>
+            <div id="cards-container" class="card-group" style="--filter-all-all: block;"></div>
+        </div>
+    </div>
+</template>
+
+</html>
