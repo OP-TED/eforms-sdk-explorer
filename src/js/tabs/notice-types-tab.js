@@ -242,7 +242,7 @@ export class NoticeTypesTab extends TabController {
             const metadataDiff = this.#compareNestedHierarchies(mainData.metadata, baseData.metadata);
             this.#splitView().initialise({
                 dataCallback: () => this.#createTreeNodes(metadataDiff, contentDiff), 
-                searchableProperties: ['id', 'description'],
+                searchableProperties: ['id', 'description', 'nodeId'],
                 titleProperty: 'id',
                 subtitleProperty: 'contentType',
                 hiddenProperties: ['parentId']
