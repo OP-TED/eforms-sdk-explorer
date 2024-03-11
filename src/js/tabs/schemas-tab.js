@@ -104,8 +104,8 @@ export class SchemasTab extends TabController {
       async #fetchIndexFile(sdkVersion) {
         try {
             const url = this.#getIndexFileUrl(sdkVersion);
-            const response = await this.ajaxRequest({ url: url, dataType: 'json' });
-            return response;
+            const { schemas } = await this.ajaxRequest({ url, dataType: 'json' });
+            return schemas;
         } catch (error) {
             if (error.status === 404) {
                 console.warn(`schemas.json not found for SDK ${sdkVersion}, fetching filenames from schema folder.`);
