@@ -249,7 +249,11 @@ export class DiffEntry {
      * @returns 
      */
     get(propertyName) {
-        return this.getItem()?.[propertyName];
+        const value = this.getItem()?.[propertyName];
+        // Some SDK nodes carry the literal string "NULL" as their name (a data/export
+        // artifact - structural nodes are not meant to have a name). Treat it as missing
+        // so the "?? id" fallbacks kick in and the node's id is shown instead of "NULL".
+        return value === 'NULL' ? undefined : value;
     }
 
     /**
