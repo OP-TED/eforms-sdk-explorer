@@ -40,9 +40,11 @@ export class CodelistsTab extends TabController {
 
     // #region Overview display -----------------------------------------------
 
-    deactivated() {
-        super.deactivated();
-        this.#cardGroup().dispose();
+    /**
+     * Overridden to remove the cards and the diff.
+     */
+    clear() {
+        this.#cardGroup().empty();
         this.$diffContainer().empty();
     }
 
@@ -84,12 +86,10 @@ export class CodelistsTab extends TabController {
 
                 // Create and add an index-card for each codelist.
                 diff.forEach((entry, index) => {
-                    setTimeout(() => {
-                        if (!this.aborting) {
-                            const card = this.#createIndexCard(entry);
-                            this.#cardGroup().appendCard(card);
-                        }
-                    }, 0);
+                    this.defer(() => {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    });
                 });
                 this.#switchToOverview();
             } catch (error) {
@@ -133,15 +133,20 @@ export class CodelistsTab extends TabController {
      */
      #createIndexCard(diffEntry) {
         const component = IndexCard.create(diffEntry.get('id'), diffEntry.get('parentId') ?? '', 'Compare', diffEntry.typeOfChange);
+
+        // Each version's file is the one its own index entry names: the filename of a codelist can change between
+        // versions (up to 1.11.0, tailored codelists have their parent in it, e.g. criterion_exclusion-ground.gc).
+        const mainFilename = diffEntry.mainItem?.filename ?? diffEntry.get('filename');
+        const baseFilename = diffEntry.baseItem?.filename ?? diffEntry.get('filename');
         component.setActionHandler(async (e) => {
-            await this.fetchAndRenderDiffView(diffEntry.get('filename'));
+            await this.fetchAndRenderDiffView(mainFilename, baseFilename);
         });
         // If the code list is not new or removed, then we will need to check for changes inside the code list file.
         if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
             // We will need to open the files and check for changes.
             // We will do that in the background
             component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.get('filename'))));
+            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(mainFilename, baseFilename)));
         }
 
         for (const [key, value] of Object.entries(diffEntry.getItem())) {
@@ -170,17 +175,18 @@ export class CodelistsTab extends TabController {
      * It will ignore the values of certain properties that are expected to change between versions: 
      * (ublVersion, sdkVersion, metadataDatabase.version and metadataDatabase.createdOn).
      * 
-     * @param {string} filename The codelist file to check for changes
+     * @param {string} mainFilename The codelist file of the main version
+     * @param {string} baseFilename The codelist file of the base version
      * @returns {Promise<Diff.TypeOfChange>} The type of change detected
      */
-    async #checkForChanges(filename) {
+    async #checkForChanges(mainFilename, baseFilename) {
         try {
             SdkExplorerApplication.startSpinner();
 
             // Fetch the two versions of the file
             let [mainFile, baseFile] = await Promise.all([
-                this.#fetchCodelist(filename, appState.mainVersion),
-                this.#fetchCodelist(filename, appState.baseVersion)
+                this.#fetchCodelist(mainFilename, appState.mainVersion),
+                this.#fetchCodelist(baseFilename, appState.baseVersion)
             ]);
 
             try {
@@ -203,7 +209,7 @@ export class CodelistsTab extends TabController {
 
                 return typeOfChange;
             } catch (error) {
-                throw new CustomError(ERROR_CHECKING_CHANGES(filename), error);
+                throw new CustomError(ERROR_CHECKING_CHANGES(mainFilename), error);
             }
         }
         finally {
@@ -222,23 +228,24 @@ export class CodelistsTab extends TabController {
 
     /**
      * Fetches both versions of codelist files and renders the diff view.
-     * 
-     * @param {string} filename 
+     *
+     * @param {string} mainFilename The codelist file of the main version, also the title of the diff
+     * @param {string} baseFilename The codelist file of the base version
      */
-    async fetchAndRenderDiffView(filename) {
+    async fetchAndRenderDiffView(mainFilename, baseFilename) {
         SdkExplorerApplication.startSpinner();
         try {
 
             const [mainData, baseData] = await Promise.all([
-                this.#fetchCodelist(filename, appState.mainVersion),
-                this.#fetchCodelist(filename, appState.baseVersion)
+                this.#fetchCodelist(mainFilename, appState.mainVersion),
+                this.#fetchCodelist(baseFilename, appState.baseVersion)
             ]);
 
             try {
-                Diff.injectTextDiff(mainData, baseData, 'code-list-diff', `${filename}`);
+                Diff.injectTextDiff(mainData, baseData, 'code-list-diff', `${mainFilename}`);
                 this.#switchToDiffView();
             } catch (error) {
-                throw new CustomError(ERROR_GENERATING_DIFF(filename), error);
+                throw new CustomError(ERROR_GENERATING_DIFF(mainFilename), error);
             }
         } finally {
             SdkExplorerApplication.stopSpinner();

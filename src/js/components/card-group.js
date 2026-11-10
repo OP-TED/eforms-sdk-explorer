@@ -34,10 +34,7 @@ export class CardGroup extends BootstrapWebComponent {
      */
     dispose() {
         super.dispose();
-        this.indexCards = [];
-        this.filterValues = [];
-        this.$filterOptions().empty();
-        this.$cardsContainer().empty();
+        this.empty();
     }
 
     /**
@@ -145,11 +142,46 @@ export class CardGroup extends BootstrapWebComponent {
         }
 
         this.indexCards.forEach(indexCard => this.#renderCard(indexCard));
+
+        // The template comes with "all" and "(all)" selected: show the stored selections instead.
+        this.#showSelectedFilters();
     }
 
+    /**
+     * Removes the cards and the values of the property filter, so that the card group can be filled from nothing
+     * (for example after the versions change). Emptying a card group resets its filters: "(all)" and "all" are
+     * selected again. Use {@link dispose} to release the component.
+     */
     empty() {
         this.indexCards = [];
+        this.filterValues = [];
+        this.$filterOptions().empty();
         this.$cardsContainer().empty();
+        this.selectedPropertyFilterValue = '(all)';
+        this.selectedStatusFilterValue = 'all';
+        this.#showSelectedFilters();
+    }
+
+    /**
+     * Makes the filter controls and the cards follow the stored selections: the status filter shows the selected
+     * status, the link of the selected property value is highlighted, and the cards container holds the one CSS
+     * variable of the selected pair, which the cards' display reads.
+     */
+    #showSelectedFilters() {
+        const container = this.#cardsContainer();
+        if (!container) {
+            return; // Not rendered yet: render() shows them.
+        }
+        this.$statusFilter().val(this.selectedStatusFilterValue);
+        Array.from(container.style)
+            .filter(propertyName => propertyName.startsWith('--filter-'))
+            .forEach(propertyName => container.style.removeProperty(propertyName));
+        container.style.setProperty(CardGroup.#filterValueToCssVariableName(this.selectedPropertyFilterValue, this.selectedStatusFilterValue), 'block');
+
+        const selectedLink = Array.from(this.#filterOptions().querySelectorAll('.nav-link')).find(link => link.textContent === this.selectedPropertyFilterValue);
+        if (selectedLink) {
+            this.#highlightNavLink(selectedLink);
+        }
     }
 
     #renderCard(indexCard) {
@@ -178,15 +210,13 @@ export class CardGroup extends BootstrapWebComponent {
         }
 
         if (!indexCard.getStatus()) {
+            // Until its status arrives (or if its check fails), the card follows the filters as a card whose status is
+            // not known: it is shown only while no particular status is selected.
+            indexCard.style.display = CardGroup.#displayWhilePending(filterValue);
+
             // Create the event listener function
             let updateStatusFilter = (event) => {
-                const indexCard = event.target;
-                const status = indexCard.getStatus();
-                const filterOptionStatus = CardGroup.#filterValueToCssVariableName(filterValue, status);
-                const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
-                const filterOptionAllStatus = CardGroup.#filterValueToCssVariableName('(all)', status);
-                const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
-                indexCard.style.display = `var(${filterOptionStatus}, var( ${filterOptionAll}, var(${filterOptionAllStatus}, var(${filterOptionAllAll}, none)))`;
+                indexCard.style.display = CardGroup.#displayWithStatus(filterValue, indexCard.getStatus());
 
                 // Remove the event listener
                 indexCard.removeEventListener('statusChanged', updateStatusFilter);
@@ -195,13 +225,36 @@ export class CardGroup extends BootstrapWebComponent {
             // Attach the event listener
             indexCard.addEventListener('statusChanged', updateStatusFilter);
         } else {
-            const status = indexCard.getStatus();
-            const filterOptionStatus = CardGroup.#filterValueToCssVariableName(filterValue, status);
-            const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
-            const filterOptionAllStatus = CardGroup.#filterValueToCssVariableName('(all)', status);
-            const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
-            indexCard.style.display = `var(${filterOptionStatus}, var( ${filterOptionAll}, var(${filterOptionAllStatus}, var(${filterOptionAllAll}, none)))`;
+            indexCard.style.display = CardGroup.#displayWithStatus(filterValue, indexCard.getStatus());
         }
+    }
+
+    /**
+     * The display of a card whose status is known: shown when the selected filters (property value and status) match it.
+     *
+     * @param {string} filterValue The card's value of the filter property.
+     * @param {string} status
+     * @returns {string} A CSS display value that reads the CSS variable set for the selected filters.
+     */
+    static #displayWithStatus(filterValue, status) {
+        const filterOptionStatus = CardGroup.#filterValueToCssVariableName(filterValue, status);
+        const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
+        const filterOptionAllStatus = CardGroup.#filterValueToCssVariableName('(all)', status);
+        const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
+        return `var(${filterOptionStatus}, var( ${filterOptionAll}, var(${filterOptionAllStatus}, var(${filterOptionAllAll}, none)))`;
+    }
+
+    /**
+     * The display of a card whose status is still pending: shown only when the status filter is "all" and the
+     * property filter matches it (or is "(all)").
+     *
+     * @param {string} filterValue The card's value of the filter property.
+     * @returns {string} A CSS display value that reads the CSS variable set for the selected filters.
+     */
+    static #displayWhilePending(filterValue) {
+        const filterOptionAll = CardGroup.#filterValueToCssVariableName(filterValue, 'all');
+        const filterOptionAllAll = CardGroup.#filterValueToCssVariableName('(all)', 'all');
+        return `var(${filterOptionAll}, var(${filterOptionAllAll}, none))`;
     }
 
     /**

@@ -16,6 +16,13 @@ export class ReleaseNotesTab extends TabController {
         super('release-notes-tab');
     }
 
+    /**
+     * Overridden to remove the release notes.
+     */
+    clear() {
+        $('#release-notes').empty();
+    }
+
     async fetchAndRender() {
         try {
             const markdownContent = await this.ajaxRequest({

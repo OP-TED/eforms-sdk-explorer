@@ -12,9 +12,13 @@ import { PropertyCard } from "../components/property-card.js";
 import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { AjaxError, CustomError } from "../custom-error.js";
-import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE, ERROR_FETCHING_DIRECTORY_LISTING } from "../error-messages.js";
+import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE } from "../error-messages.js";
+import { SdkRepository } from "../sdk-repository.js";
 
 export class SchemasTab extends TabController {
+
+    /** @type {SdkRepository} */
+    #repository = new SdkRepository(this);
 
     constructor() {
         super('schemas-tab');
@@ -36,9 +40,11 @@ export class SchemasTab extends TabController {
         await this.fetchAndRenderOverview();
     }
 
-    deactivated() {
-        super.deactivated();
-        this.#cardGroup().dispose();
+    /**
+     * Overridden to remove the cards and the diff.
+     */
+    clear() {
+        this.#cardGroup().empty();
         this.$diffContainer().empty();
     }
 
@@ -82,12 +88,10 @@ export class SchemasTab extends TabController {
 
                 // Create and add an index-card for each schema.
                 diff.forEach((entry, index) => {
-                    setTimeout(() => {
-                        if (!this.aborting) {
-                            const card = this.#createIndexCard(entry);
-                            this.#cardGroup().appendCard(card);
-                        }
-                    }, 0);
+                    this.defer(() => {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    });
                 });
                 this.#switchToOverview();
             } catch (error) {
@@ -121,34 +125,29 @@ export class SchemasTab extends TabController {
     }
 
     async #fetchFilenames(sdkVersion) {
-        const apiUrl = `${appConfig.contentsFileUrl}/schemas?ref=${sdkVersion}`;
-        const directoryStructure = await this.#fetchGithubDirectory(apiUrl, '');
+        const directoryStructure = await this.#fetchDirectoryStructure(sdkVersion);
         const directoryStructureConst = Object.assign({}, directoryStructure);
         return this.#processDirectoryData(directoryStructureConst);
     }
 
-    async #fetchGithubDirectory(url, path) {
-
-        const response = await this.ajaxRequest({
-            url: url,
-            headers: { 'Accept': 'application/vnd.github.v3+json' }
-        }).catch(error => {
-            throw new AjaxError(ERROR_FETCHING_DIRECTORY_LISTING, error);
-        });
+    /**
+     * Lists the schema files of the specified SDK version, grouped by the folder that holds them.
+     *
+     * @param {string} sdkVersion
+     * @returns {Promise<Object<string, string[]>>} The filenames, keyed by the path of their folder within the schemas folder ('' for the folder itself).
+     */
+    async #fetchDirectoryStructure(sdkVersion) {
+        const files = await this.#repository.listFolder('schemas', sdkVersion);
 
         let directoryStructure = {};
-        for (const item of response) {
-            if (item.type === 'file') {
-                const extension = item.name.split('.').pop();
-                if (['xsd', 'json', 'xml'].includes(extension)) {
-                    if (!directoryStructure[path]) {
-                        directoryStructure[path] = [];
-                    }
-                    directoryStructure[path].push(item.name);
+        for (const file of files) {
+            const extension = file.name.split('.').pop();
+            if (['xsd', 'json', 'xml'].includes(extension)) {
+                const path = file.path.substring(0, file.path.length - file.name.length - 1);
+                if (!directoryStructure[path]) {
+                    directoryStructure[path] = [];
                 }
-            } else if (item.type === 'dir') {
-                const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
-                directoryStructure = { ...directoryStructure, ...subDirStructure };
+                directoryStructure[path].push(file.name);
             }
         }
         return directoryStructure;

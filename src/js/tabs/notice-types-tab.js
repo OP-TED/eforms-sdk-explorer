@@ -41,12 +41,11 @@ export class NoticeTypesTab extends TabController {
     }
 
     /**
-     * Overridden to dispose of the card group and diff view.
+     * Overridden to remove the cards and the tree.
      */
-    deactivated() {
-        super.deactivated();
-        this.#cardGroup().dispose();
-        this.#splitView().dispose();
+    clear() {
+        this.#cardGroup().empty();
+        this.#splitView().clear();
     }
     
     // #region Overview display -----------------------------------------------
@@ -81,12 +80,10 @@ export class NoticeTypesTab extends TabController {
 
                 // Create and add an index-card for each notice type.
                 diff.forEach(entry => {
-                    setTimeout(() => {
-                        if (!this.aborting) {
-                            const card = this.#createIndexCard(entry);
-                            this.#cardGroup().appendCard(card);
-                        }
-                    }, 0);
+                    this.defer(() => {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    });
                 });
 
                 this.#switchToOverview();

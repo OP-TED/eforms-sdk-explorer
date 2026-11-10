@@ -1,15 +1,16 @@
 /* style.css */
 :root {
-    --added-item-highlight: #CCFFD8;
-    --removed-item-highlight: #FFCCD0;
-    --modified-item-highlight: #CCD3FF;
-    --added-item-background-color: #E6FFEC;
-    --removed-item-background-color: #FFEBE9;
-    --modified-item-background-color: #E6E9FF;
-    --unchanged-item-background-color: #f8f9fa;
-    --op-green-color: #2c862d;
-    --dark-background-color: #EEEEEE;
-    --light-background-color: #f8f9fa;
+    /* The change colours (TED tokens): a surface tint for rows and labels, a strong colour for markers. The highlights
+       are the tints too: emphasis comes from weight and an underline. */
+    --added-item-highlight: var(--gs-base-color-success-surface);
+    --removed-item-highlight: var(--gs-base-color-error-surface);
+    --modified-item-highlight: var(--gs-base-color-info-surface);
+    --added-item-background-color: var(--gs-base-color-success-surface);
+    --removed-item-background-color: var(--gs-base-color-error-surface);
+    --modified-item-background-color: var(--gs-base-color-info-surface);
+    --added-marker-color: var(--gs-base-color-success);
+    --removed-marker-color: var(--gs-base-color-error-100);
+    --modified-marker-color: var(--gs-base-color-info);
     --border-color: #ddd;
     /* diff2html color overrides */
     --d2h-ins-highlight-bg-color: var(--added-item-highlight) !important;
@@ -32,7 +33,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: hidden;
 }
 
 .view-breadcrumb {
@@ -41,13 +41,10 @@
 
 .view-diff {
     flex: 1;
-    overflow-x: hidden; 
-    overflow-y: hidden;
 }
 
 .view-container card-group {
     flex: 1;
-    overflow-y: auto;
 }
 
 .d-flex.align-items-center {
@@ -55,158 +52,9 @@
     align-items: center;
 }
 
-#centralLoadingSpinner {
-    margin: 10px;
-    min-width: 16px!important;
-    min-height: 16px!important;
-}
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-   }
-    100% {
-        transform: rotate(360deg);
-   }
-}
-.navbar-nav {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-}
-.navbar-brand {
-    padding-right: 0.5rem;
-}
-.custom-select {
+.form-select {
     min-width: 150px;
 }
-.navbar {
-    min-height: 70px;
-}
-.version-text {
-    white-space: nowrap;
-    min-width: max-content;
-    color: black;
-}
-.comparison-text {
-    white-space: nowrap;
-    color: black;
-}
-
-.ml-auto {
-    display: flex;
-    flex-wrap: nowrap;
-}
-
-body {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-body > header {
-    background-color: var(--dark-background-color);
-    border-bottom: 6px solid var(--op-green-color);
-    height: 84px;
-}
-
-body > nav {
-    margin: 10px;
-    height:42px
-}
-
-body > main {
-    flex: 1;
-    margin: 10px;
-    overflow-y: hidden;
-    max-height: calc(100vh - 84px - 42px - 42px - 44px);
-}
-
-body > footer {
-    height: 42px;
-    background-color: var(--light-background-color);
-    border-top: 1px solid var(--border-color);
-    align-items: center;
-}
-
-#fields-tab-content {
-    overflow-y: hidden;
-    overflow-x: hidden;
-}
-#fields-tab-content > * {
-    flex: 1;
-    padding: 0px 10px;
-}
-.column {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.column > *:nth-child(2) {
-    flex: 1;
-    overflow-y: auto;
-}
-
-#apiStatus {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    z-index: 1050;
-    max-width: 300px;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    max-width: 33vw;
-    width: auto;
-    background-color: white;
-}
-
-.toast-body {
-    max-height: 33vh;
-    overflow-y: auto;
-}
-.toast-body li {
-    margin-bottom: 5px;
-    list-style-type: none;
-}
-
-.toast-body li .detail {
-    color: red;
-    display: block;
-}
-
-/* Legend styling */
-.legend-container {
-    display: flex;
-    align-items: center;
-}
-
-.legend-title {
-    font-weight: bold;
-    margin-right: 10px;
-}
-.legend-item {
-    display: inline-block;
-    padding: 2px 6px;
-    color: white;
-    margin-right: 5px;
-    border-radius: 4px;
-    font-size: 0.875rem;
-}
-.legend-item.added {
-    background-color: var(--added-item-highlight);
-    color: black;
-}
-.legend-item.removed {
-    background-color: var(--removed-item-highlight);
-    color: black;
-}
-.legend-item.modified {
-    background-color: var(--modified-item-highlight);
-    color: black;
-}
-
 .popover-body code {
     font-size: 100%;
     color: blue !important;
@@ -215,11 +63,6 @@ body > footer {
 .popover-body ul {
     margin-left: -20px;
     font-size: 90%;
-}
-
-.tour-button-container {
-    text-align: right;
-    margin-top: 6px;
 }
 
 .tab-pane {
@@ -240,9 +83,10 @@ body > footer {
     display: none !important;
   }
 
+/* The page is the only vertical scroll; each side scrolls horizontally, in step with the other (diff.js). */
 .d2h-code-wrapper {
-    max-height: calc(100vh - 320px); 
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .d2h-file-side-diff {
@@ -250,25 +94,4 @@ body > footer {
     overflow-y: hidden!important;
 }
 
-  .comparison-text::before {
-    content: "";
-    display: inline-block;
-    width: 20px;
-    height: 1px;
-    background: darkgray;
-    vertical-align: middle;
-    margin-right: 0px;
-    margin-left: 6px;;
-}
-
-.comparison-text::after {
-    content: "";
-    display: inline-block;
-    width: 0;
-    height: 0;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 10px solid darkgray;
-    vertical-align: middle;
-}
 

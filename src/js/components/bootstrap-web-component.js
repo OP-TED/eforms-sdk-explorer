@@ -3,6 +3,8 @@
  * https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12 
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence. 
  */
+import { appConfig } from "../config.js";
+
 export class BootstrapWebComponent extends HTMLElement {
 
     constructor(templateName) {
@@ -15,8 +17,13 @@ export class BootstrapWebComponent extends HTMLElement {
         this.render();
     }
 
+    /**
+     * @returns {string[]} The URLs of the stylesheets to load into the shadow root: Bootstrap, then the TED icons and
+     *          theme. The TED tokens are not among them: their custom properties reach the shadow root by
+     *          inheritance, and their @font-face must be declared in the document.
+     */
     requiredCss() {
-        return ['https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'];
+        return [appConfig.stylesheets.bootstrap, appConfig.stylesheets.tedIcons, appConfig.stylesheets.tedTheme];
     }
 
     render() {

@@ -1,0 +1,115 @@
+/* Copied unchanged from the TED Design System (version 1792679212-d421), file project/tokens/icons.css.
+   Do not edit: take a new copy from the design system instead. The gs-icon @font-face is in tokens.css. */
+/*
+ * TED Design System — Iconography
+ *
+ * The OP Global Style icon font, "gs-icon". This is the icon system for
+ * Publications Office sites, inherited from the OP Web Guide's Icons page
+ * (https://op.europa.eu/en/web/webguide/icons).
+ *
+ * 74 glyphs. The font binary was extracted from the OP Web Guide's own
+ * offline distribution, so these are the REAL icons, not a substitution.
+ *
+ * USAGE
+ *   <i class="gs-icon gs-icon-search" aria-hidden="true"></i>
+ * or via the Icon component:
+ *   <Icon name="search" />
+ *
+ * Icons are decorative by default — always aria-hidden unless the icon is
+ * the only content of a control, in which case give the CONTROL an
+ * aria-label rather than the icon.
+ *
+ * SIZE + COLOUR are inherited from the surrounding text (font-size and
+ * currentColor), so an icon in a button matches that button automatically.
+ *
+ * The "-f" suffix denotes a FILLED variant (bookmark vs bookmark-f).
+ */
+
+.gs-icon {
+  font-family: gs-icon !important;
+  speak: none;
+  font-style: normal;
+  font-weight: 400;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.gs-icon-add-plus::before{content:"\e900"}
+.gs-icon-arrow-left::before{content:"\e901"}
+.gs-icon-audio::before{content:"\e902"}
+.gs-icon-backward::before{content:"\e903"}
+.gs-icon-basket::before{content:"\e904"}
+.gs-icon-bell::before{content:"\e905"}
+.gs-icon-bluesky::before{content:"\e948"}
+.gs-icon-bookmark::before{content:"\e906"}
+.gs-icon-bookmark-f::before{content:"\e907"}
+.gs-icon-caret-down::before{content:"\e908"}
+.gs-icon-caret-down-f::before{content:"\e909"}
+.gs-icon-caret-left::before{content:"\e90a"}
+.gs-icon-caret-right::before{content:"\e90b"}
+.gs-icon-caret-sharp-down-f::before{content:"\e90c"}
+.gs-icon-caret-sharp-right-f::before{content:"\e90d"}
+.gs-icon-caret-up::before{content:"\e90e"}
+.gs-icon-chain::before{content:"\e947"}
+.gs-icon-chevron-down::before{content:"\e90f"}
+.gs-icon-chevron-left::before{content:"\e910"}
+.gs-icon-chevron-right::before{content:"\e911"}
+.gs-icon-chevron-up::before{content:"\e912"}
+.gs-icon-close::before{content:"\e913"}
+.gs-icon-delete::before{content:"\e914"}
+.gs-icon-document::before{content:"\e944"}
+.gs-icon-download::before{content:"\e915"}
+.gs-icon-duplicate-copy::before{content:"\e916"}
+.gs-icon-edit::before{content:"\e917"}
+.gs-icon-exclamation::before{content:"\e918"}
+.gs-icon-facebook::before{content:"\e919"}
+.gs-icon-facebook-f::before{content:"\e942"}
+.gs-icon-filters::before{content:"\e91b"}
+.gs-icon-forward::before{content:"\e91c"}
+.gs-icon-global::before{content:"\e91d"}
+.gs-icon-heart::before{content:"\e91e"}
+.gs-icon-help-question::before{content:"\e91f"}
+.gs-icon-help-question-f::before{content:"\e920"}
+.gs-icon-home::before{content:"\e921"}
+.gs-icon-instagram::before{content:"\e922"}
+.gs-icon-link::before{content:"\e923"}
+.gs-icon-link-external::before{content:"\e926"}
+.gs-icon-linkedin::before{content:"\e924"}
+.gs-icon-linkedin-f::before{content:"\e925"}
+.gs-icon-list::before{content:"\e946"}
+.gs-icon-log-in::before{content:"\e928"}
+.gs-icon-logged-in::before{content:"\e927"}
+.gs-icon-mastodon::before{content:"\e949"}
+.gs-icon-menu::before{content:"\e929"}
+.gs-icon-metadata::before{content:"\e92a"}
+.gs-icon-microphone::before{content:"\e92b"}
+.gs-icon-minus::before{content:"\e92c"}
+.gs-icon-person::before{content:"\e92d"}
+.gs-icon-person-f::before{content:"\e92e"}
+.gs-icon-placeholder::before{content:"\e92f"}
+.gs-icon-play::before{content:"\e930"}
+.gs-icon-play-backward::before{content:"\e931"}
+.gs-icon-print::before{content:"\e932"}
+.gs-icon-refresh::before{content:"\e933"}
+.gs-icon-rss::before{content:"\e934"}
+.gs-icon-search::before{content:"\e935"}
+.gs-icon-skip-to-beginning::before{content:"\e936"}
+.gs-icon-skip-to-end::before{content:"\e937"}
+.gs-icon-social-share::before{content:"\e938"}
+.gs-icon-spreadsheet::before{content:"\e945"}
+.gs-icon-sticky-note::before{content:"\e939"}
+.gs-icon-stop::before{content:"\e93a"}
+.gs-icon-stop-fill::before{content:"\e93b"}
+.gs-icon-telephone::before{content:"\e93c"}
+.gs-icon-twitter::before{content:"\e93d"}
+.gs-icon-twitter-bird::before{content:"\e943"}
+.gs-icon-upload::before{content:"\e93e"}
+.gs-icon-vcard::before{content:"\e93f"}
+.gs-icon-video::before{content:"\e940"}
+.gs-icon-world::before{content:"\e941"}
+.gs-icon-youtube::before{content:"\e91a"}

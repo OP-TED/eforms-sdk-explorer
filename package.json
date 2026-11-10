@@ -4,7 +4,7 @@
     "description": "A single-page web application designed to explore and compare the information contained in any two versions of the eForms SDK available on GitHub.",
     "dependencies": {
         "jquery": "^3.6.0",
-        "bootstrap": "^4.6.2",
+        "bootstrap": "^5.3.8",
         "lodash": "^4.17.21",
         "jstree": "^3.3.12",
         "showdown": "^1.9.1",
@@ -17,5 +17,12 @@
     "bugs": {
         "url": "https://github.com/OP-TED/eforms-sdk-explorer/issues"
     },
-    "homepage": "https://github.com/OP-TED/eforms-sdk-explorer#readme"
+    "homepage": "https://github.com/OP-TED/eforms-sdk-explorer#readme",
+    "scripts": {
+        "smoke": "node scripts/smoke.mjs"
+    },
+    "devDependencies": {
+        "http-server": "^14.1.1",
+        "playwright": "^1.63.0"
+    }
 }

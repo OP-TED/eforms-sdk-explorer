@@ -9,8 +9,14 @@ import { Diff } from '../diff.js';
 
 export class PropertyCard extends BootstrapWebComponent {
 
+    /** The format of a property value that is HTML: the formatted JSON of an object, with its text escaped. */
+    static #HTML_FORMAT = 'html';
+
+    /** The format of a property value that is plain text, shown as it is. */
+    static #TEXT_FORMAT = 'text';
+
     static get observedAttributes() {
-        return ['property-name', 'new-property-value', 'old-property-value', 'type-of-change'];
+        return ['property-name', 'new-property-value', 'old-property-value', 'new-property-format', 'old-property-format', 'type-of-change'];
     }
 
     constructor() {
@@ -25,6 +31,8 @@ export class PropertyCard extends BootstrapWebComponent {
             case 'property-name': this.propertyName = newValue; break;
             case 'new-property-value': this.newPropertyValue = newValue === "undefined" ? undefined : newValue; break;
             case 'old-property-value': this.oldPropertyValue = newValue === "undefined" ? undefined : newValue; break;
+            case 'new-property-format': this.newPropertyFormat = newValue; break;
+            case 'old-property-format': this.oldPropertyFormat = newValue; break;
             case 'type-of-change': this.typeOfChange = newValue; break;
         }
 
@@ -60,8 +68,8 @@ export class PropertyCard extends BootstrapWebComponent {
         super.render();
 
         this.shadowRoot.querySelector('#property-name').textContent = this.propertyName; // Show the name
-        this.shadowRoot.querySelector('#new-property-value').innerHTML = this.newPropertyValue; // Show the new value
-        this.shadowRoot.querySelector('#old-property-value').innerHTML = this.oldPropertyValue; // Show the old value
+        PropertyCard.#showValue(this.shadowRoot.querySelector('#new-property-value'), this.newPropertyValue, this.newPropertyFormat); // Show the new value
+        PropertyCard.#showValue(this.shadowRoot.querySelector('#old-property-value'), this.oldPropertyValue, this.oldPropertyFormat); // Show the old value
 
         if (this.oldPropertyValue === undefined && this.newPropertyValue !== undefined) {
             this.shadowRoot.querySelector('#list-item').classList.add('added-property');
@@ -96,16 +104,54 @@ export class PropertyCard extends BootstrapWebComponent {
         component.setAttribute('property-name', propertyName);
         component.setAttribute('new-property-value', PropertyCard.#formatPropertyValue(currentValue));
         component.setAttribute('old-property-value', PropertyCard.#formatPropertyValue(previousValue));
+        component.setAttribute('new-property-format', PropertyCard.#formatOf(currentValue));
+        component.setAttribute('old-property-format', PropertyCard.#formatOf(previousValue));
         component.setAttribute('type-of-change', typeOfChange);
     
         return component;
     }
 
+    /**
+     * @param {*} value
+     * @returns {*} For an object, its indented JSON as HTML, with the JSON text escaped; any other value as it is.
+     */
     static #formatPropertyValue(value) {
-        if (_.isObject(value) || Array.isArray(value)) {
-            return _.isObject(value) ? JSON.stringify(value, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;') : value;
+        if (_.isObject(value)) {
+            return PropertyCard.#escapeHtml(JSON.stringify(value, null, 2)).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
         }
         return value;
+    }
+
+    /**
+     * @param {*} value
+     * @returns {string} The format in which {@link #formatPropertyValue} gives the value.
+     */
+    static #formatOf(value) {
+        return _.isObject(value) ? PropertyCard.#HTML_FORMAT : PropertyCard.#TEXT_FORMAT;
+    }
+
+    /**
+     * Shows a property value in an element: HTML as HTML, and text as text, so that a value containing "<" or "&" is
+     * shown as it is instead of being parsed as HTML.
+     *
+     * @param {HTMLElement} element
+     * @param {string} value
+     * @param {string} format
+     */
+    static #showValue(element, value, format) {
+        if (format === PropertyCard.#HTML_FORMAT) {
+            element.innerHTML = value;
+        } else {
+            element.textContent = value;
+        }
+    }
+
+    /**
+     * @param {string} text
+     * @returns {string} The text with the characters that HTML would interpret replaced by their character references.
+     */
+    static #escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 }
 

@@ -5,16 +5,17 @@
  */
 
 import { appState } from "../state.js";
-import { appConfig } from "../config.js";
-import { Diff, DiffEntry } from "../diff.js";
+import { Diff } from "../diff.js";
 import { TabController } from "./tab-controller.js";
-import { PropertyCard } from "../components/property-card.js";
-import { IndexCard } from "../components/index-card.js";
 import { SdkExplorerApplication } from "../app.js";
 import { AjaxError, CustomError } from "../custom-error.js";
-import { ERROR_FETCHING_DIRECTORY_LISTING, ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE } from "../error-messages.js";
+import { ERROR_GENERATING_OVERVIEW, ERROR_CHECKING_CHANGES, ERROR_GENERATING_DIFF, ERROR_FETCHING_FILE } from "../error-messages.js";
+import { SchematronSource } from "../validation/schematron-source.js";
 
 export class SchematronsTab extends TabController {
+
+    /** @type {SchematronSource} */
+    #source = new SchematronSource(this);
 
     constructor() {
         super('schematrons-tab');
@@ -36,9 +37,30 @@ export class SchematronsTab extends TabController {
         await this.fetchAndRenderOverview();
     }
 
-    deactivated() {
-        super.deactivated();
-        this.#cardGroup().dispose();
+    /**
+     * Overridden to hide the tab while the Validation tab is shown: the Validation tab then offers the schematrons as one of its sources.
+     * 
+     * @returns {Promise<boolean>}
+     */
+    async isApplicable() {
+        return !(await SdkExplorerApplication.instance.tabs.get('validation-tab').isApplicable());
+    }
+
+    /**
+     * Overridden: the Validation tab, shown when this tab is hidden, replaces it, since it offers the schematrons as
+     * one of its sources.
+     *
+     * @returns {string}
+     */
+    replacementTabId() {
+        return 'validation-tab';
+    }
+
+    /**
+     * Overridden to remove the cards and the diff.
+     */
+    clear() {
+        this.#cardGroup().empty();
         this.$diffContainer().empty();
     }
 
@@ -66,8 +88,8 @@ export class SchematronsTab extends TabController {
         try {
 
             const [mainVersionData, baseVersionData] = await Promise.all([
-                this.#fetchIndex(appState.mainVersion),
-                this.#fetchIndex(appState.baseVersion)
+                this.#source.fetchIndex(appState.mainVersion),
+                this.#source.fetchIndex(appState.baseVersion)
             ]);
 
             try {
@@ -78,10 +100,10 @@ export class SchematronsTab extends TabController {
 
                 // Create and add an index-card for each schematron.
                 diff.forEach((entry, index) => {
-                    setTimeout(() => {
-                        const card = this.#createIndexCard(entry);
+                    this.defer(() => {
+                        const card = this.#source.createIndexCard(entry);
                         this.#cardGroup().appendCard(card);
-                    }, 0);
+                    });
                 });
                 this.#switchToOverview();
             } catch (error) {
@@ -92,111 +114,14 @@ export class SchematronsTab extends TabController {
         }
     }
     
-    async #fetchIndex(sdkVersion) {
-        const apiUrl = `${appConfig.contentsFileUrl}/schematrons?ref=${sdkVersion}`;
-        const directoryStructure = await this.#fetchGithubDirectory(apiUrl, '');
-        return this.#buildIndexFromGithubDirectory(directoryStructure);
-    }
-
-    async #fetchGithubDirectory(url, path) {
-
-        const response = await this.ajaxRequest({
-            url: url,
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
-        }).catch(error => {
-            throw new AjaxError(ERROR_FETCHING_DIRECTORY_LISTING, error);
-        });
-
-        let directoryStructure = {};
-        for (const item of response) {
-            if (item.type === 'file') {
-                const extension = item.name.split('.').pop();
-                if (extension === 'sch') {
-                    if (!directoryStructure[path]) {
-                        directoryStructure[path] = [];
-                    }
-                    directoryStructure[path].push(item.name);
-                }
-            } else if (item.type === 'dir') {
-                const subDirStructure = await this.#fetchGithubDirectory(item.url, item.path);
-                directoryStructure = { ...directoryStructure, ...subDirStructure };
-            }
-        }
-        return directoryStructure;
-    }
-
-    #buildIndexFromGithubDirectory(directoryData) {
-        let index = [];
-
-        for (const [path, files] of Object.entries(directoryData)) {
-            const trimmedPath = path.split('/').pop();
-
-            files.forEach(file => {
-                const filenameWithoutExtension = file.replace('.sch', '');
-                let stage = null;
-
-                if (filenameWithoutExtension.startsWith('validation-stage')) {
-                    const parts = filenameWithoutExtension.split('-');
-                    stage = parts[2]; // The stage is the third part of the filename
-                }
-
-                index.push({
-                    name: filenameWithoutExtension,
-                    stage: stage,
-                    folder: trimmedPath,
-                    filename: `${trimmedPath}/${file}`
-                });
-            });
-        }
-
-        return index;
-    }
-
-    
-    /**
-     * Creates an index-card for the specified Schematrons.
-     * 
-     * @param {DiffEntry} diffEntry 
-     * @returns 
-     */
-    #createIndexCard(diffEntry) {
-        const component = IndexCard.create(diffEntry.get('name'), diffEntry.get('folder') ?? '', 'Compare', diffEntry.typeOfChange);
-        component.setActionHandler(async (e) => {
-            await this.fetchAndRenderDiffView(diffEntry.get('filename'));
-        });
-        // If the Schematrons is not new or removed, then we will need to check for changes inside the Schematrons file.
-        if (diffEntry.typeOfChange !== Diff.TypeOfChange.ADDED && diffEntry.typeOfChange !== Diff.TypeOfChange.REMOVED) {
-            component.removeAttribute('status');
-            component.setStatusCheckCallback(() => Promise.resolve(this.#checkForChanges(diffEntry.baseItem.filename)));
-        }
-
-        for (const [key, value] of Object.entries(diffEntry.getItem())) {
-            const mainValue = diffEntry?.mainItem ? diffEntry?.mainItem[key] ?? undefined : undefined;
-            const baseValue = diffEntry?.baseItem ? diffEntry?.baseItem[key] ?? undefined : undefined;
-
-            const card = PropertyCard.create(key, mainValue, baseValue, diffEntry.typeOfChange);
-            component.appendProperty(card);
-        }
-
-        // Handle removed properties (the ones in baseItem that do not exit in mainItem).
-        if (diffEntry.mainItem) {
-            for (const propertyName in diffEntry.baseItem) {
-                if (!diffEntry.mainItem.hasOwnProperty(propertyName)) {
-                    const card = PropertyCard.create(propertyName, undefined, diffEntry.baseItem[propertyName], Diff.TypeOfChange.REMOVED);
-                    component.appendProperty(card);
-                }
-            }
-        }
-
-        return component;
-    }
-
     /**
     * Checks for changes in the Schematrons file.
+    * Called by the index cards of the {@link SchematronSource}.
+    * 
     * @param {string} filename The Schematrons file to check for changes
     * @returns {Promise<Diff.TypeOfChange>} The type of change detected
     */
-    async #checkForChanges(filename) {
+    async checkForChanges(filename) {
         try {
             SdkExplorerApplication.startSpinner();
 
@@ -206,7 +131,8 @@ export class SchematronsTab extends TabController {
             ]);
 
             try {
-                const typeOfChange = mainFile === baseFile ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
+                const typeOfChange = this.#source.normaliseForComparison(mainFile, filename) === this.#source.normaliseForComparison(baseFile, filename)
+                    ? Diff.TypeOfChange.UNCHANGED : Diff.TypeOfChange.MODIFIED;
 
                 // Nullify the two variables holding the file contents to free up memory.
                 mainFile = null;
@@ -222,10 +148,6 @@ export class SchematronsTab extends TabController {
         }
     }
 
-    #getSchematronFileUrl(filename, sdkVersion) {
-        return `${appConfig.rawBaseUrl}/${sdkVersion}/schematrons/${filename}`;
-    }
-    
     /**
      * Fetches both versions of label files and renders the diff view.
      * 
@@ -262,7 +184,7 @@ export class SchematronsTab extends TabController {
     async #fetchSchematronFile(filename, sdkVersion) {
         try {
             return await this.ajaxRequest({
-                url: this.#getSchematronFileUrl(filename, sdkVersion),
+                url: this.#source.fileUrl(filename, sdkVersion),
                 dataType: 'text'
             });
         } catch (error) {
