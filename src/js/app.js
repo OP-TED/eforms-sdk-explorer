@@ -1,22 +1,106 @@
-/* Copyright (c) 2021 European Union 
- * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission – subsequent versions of the EUPL (the “Licence”); You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at: 
- * https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12 
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence. 
+/* Copyright (c) 2021 European Union
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission – subsequent versions of the EUPL (the “Licence”); You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at:
+ * https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an “AS IS” basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing permissions and limitations under the Licence.
  */
 
-import { appConfig } from "./config.js";
 import { appState } from "./state.js";
+import { SdkRepository } from "./sdk-repository.js";
+import { VersionSelection } from "./version-selection.js";
+import { TabBar } from "./tab-bar.js";
+import { ErrorToast } from "./error-toast.js";
 import { HomeTab } from "./tabs/home-tab.js";
 import { FieldsTab } from "./tabs/fields-tab.js";
 import { NoticeTypesTab } from "./tabs/notice-types-tab.js";
 import { CodelistsTab } from "./tabs/codelists-tab.js";
 import { SchemasTab } from "./tabs/schemas-tab.js";
 import { SchematronsTab } from "./tabs/schematrons-tab.js";
+import { ValidationTab } from "./tabs/validation-tab.js";
 import { TranslationsTab } from "./tabs/translations-tab.js";
 import { ViewTemplatesTab } from "./tabs/view-templates-tab.js";
 import { ReleaseNotesTab } from "./tabs/release-notes-tab.js";
-import { TabController } from "./tabs/tab-controller.js";
+import { RELOAD_TO_RETRY } from "./error-messages.js";
 
+/** @typedef {import('./tabs/tab-controller.js').TabController} TabController */
+
+/**
+ * The phases of the application (see {@link SdkExplorerApplication}).
+ */
+const Phase = Object.freeze({
+    /** Start-up, before a pair of versions is selected. */
+    LOADING_VERSIONS: 'loading versions',
+    /** The list of versions could not be used: only a reload starts again. */
+    STOPPED: 'stopped',
+    /** The tabs that apply to the selection are being probed. */
+    CHECKING: 'checking',
+    /** The tabs that apply to the selection are known and shown (a tab whose probe failed is hidden). */
+    READY: 'ready'
+});
+
+/**
+ * One selection of the versions to compare: made at start-up and by every version change. Its identity tells whether
+ * work begun for it still applies: a probe's result, and its errors, are applied only while the application's state
+ * holds the same selection.
+ */
+class Selection {
+
+    /**
+     * @param {string} mainVersion The target version.
+     * @param {string} baseVersion The base version.
+     */
+    constructor(mainVersion, baseVersion) {
+        this.mainVersion = mainVersion;
+        this.baseVersion = baseVersion;
+        Object.freeze(this);
+    }
+}
+
+/**
+ * The state of the application: its phase and, once the versions are selected, the selection it works for.
+ */
+class ApplicationState {
+
+    /**
+     * @param {string} phase One of {@link Phase}.
+     * @param {Selection|null} [selection]
+     */
+    constructor(phase, selection = null) {
+        this.phase = phase;
+        this.selection = selection;
+        Object.freeze(this);
+    }
+
+    /**
+     * @returns {boolean} Whether the tabs have started: from the start-up probe on, unless start-up stopped. Before,
+     *          a tab switch is only recorded, and a tab's own options wait in their controls.
+     */
+    get tabsStarted() {
+        return this.phase !== Phase.LOADING_VERSIONS && this.phase !== Phase.STOPPED;
+    }
+}
+
+/**
+ * The application: the tabs, the selection of the versions to compare, and the decisions about when a tab renders.
+ *
+ * Its state answers three questions:
+ * - Which pair is selected? {@link appState}, also held by the hidden version selects.
+ * - Which pair does the content on screen belong to? The current selection, or none: every change of selection first
+ *   cancels and clears the active tab, every render is for the current selection, and a tab drops the responses of
+ *   its cancelled loads (see TabController).
+ * - Which request may still change the content or the error? A tab's requests, only those of its current load; a
+ *   probe's result and error, only for the current selection; the version list's error, only during start-up.
+ *
+ * Phases, and what a tab switch and a change of a tab's own option (Fields' or Validation's source) do in each:
+ * - Loading versions: start-up, until a pair is selected. A tab switch is recorded; an option change waits in its
+ *   control. Then Checking, or Stopped if the versions cannot be listed.
+ * - Stopped: Home is shown, the other tabs are disabled, and the error stays until the user closes it.
+ * - Checking: the tabs that apply to the selection are probed. Tab switches and option changes render nothing: the
+ *   probe's end renders the active tab. Then Ready, even if some probes failed: a tab whose probe failed is hidden,
+ *   the error is shown, and the other tabs work as usual. The next version change probes it again.
+ * - Ready: a tab switch or an option change renders the active tab at once.
+ * A version change, from Checking or Ready, clears the active tab and starts Checking for the new pair; the work of
+ * the selection it supersedes is dropped.
+ */
 export class SdkExplorerApplication {
 
     /** @type {SdkExplorerApplication} */
@@ -25,24 +109,30 @@ export class SdkExplorerApplication {
     /** @type {Map<string, TabController>} */
     tabs = new Map();
 
-    /** @type {TabController} */
-    #activeTab = null
+    /** @type {TabController} The active tab, known from the start (see {@link initVersions}). */
+    #activeTab = null;
+
+    /** @type {ApplicationState} */
+    #state = new ApplicationState(Phase.LOADING_VERSIONS);
+
+    /** @type {VersionSelection} */
+    #versionSelection = new VersionSelection(new SdkRepository(this));
+
+    /** @type {TabBar} */
+    #tabBar = new TabBar();
+
+    /** @type {ErrorToast} */
+    #errorToast = new ErrorToast();
 
     /** @type {number} */
     #spinnerCounter = 0;
 
-    /** @type {string} */
-    apiStatusMessage = '';
-
-    /** @returns {string} */
-    get newVersion() {
-        return appState.mainVersion;
-    }
-
-    /** @returns {string} */
-    getComparisonVersion() {
-        return appState.baseVersion;
-    }
+    /**
+     * @type {boolean} Whether the next tab switch keeps the error toast: after a probe failed, the toast says why a
+     *       tab is hidden, and the switch that follows (the one replacing that tab, or the one the version dialog
+     *       makes) must not clear it before it has been seen.
+     */
+    #keepToastOnNextSwitch = false;
 
     constructor() {
         if (SdkExplorerApplication.instance) {
@@ -55,96 +145,267 @@ export class SdkExplorerApplication {
         this.#addTab(new CodelistsTab());
         this.#addTab(new SchemasTab());
         this.#addTab(new SchematronsTab());
+        this.#addTab(new ValidationTab());
         this.#addTab(new TranslationsTab());
         this.#addTab(new ViewTemplatesTab());
         this.#addTab(new ReleaseNotesTab());
     }
 
-    static async init() {
-        await SdkExplorerApplication.instance.populateDropdown();
-
-        $('ul.nav-tabs').on('shown.bs.tab', 'li.nav-item > button.nav-link', function (event) {
-            const activeTabId = $(event.target).attr('id');
-            console.log('Active tab changed:', activeTabId);
-            SdkExplorerApplication.instance.activeTabChanged(activeTabId);
-        });
-
-        SdkExplorerApplication.instance.$mainVersionDropdown().change(function () {
-            appState.mainVersion = $(this).val();
-            $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
-        });
-
-        SdkExplorerApplication.instance.$baseVersionDropdown().change(function () {
-            appState.baseVersion = $(this).val();
-            $('#fieldDetailsContent').html('Select an item to see details.');
-            SdkExplorerApplication.instance.versionChanged(appState.mainVersion, appState.baseVersion);
-        });
-    }
-
-    #mainVersionDropdown() {
-        return document.querySelector('#main-version-dropdown');
-    }
-    $mainVersionDropdown() {
-        return $(this.#mainVersionDropdown());
-    }
-
-    #baseVersionDropdown() {
-        return document.querySelector('#base-version-dropdown');
-    }
-
-    $baseVersionDropdown() {
-        return $(this.#baseVersionDropdown());
-    }
-
-    #apiStatus() {
-        return document.querySelector('#apiStatus');
-    }
-
-    $apiStatus() {
-        return $(this.#apiStatus());
-    }
-
-    #toastBody() {
-        return document.querySelector('#apiStatus .toast-body');
+    /**
+     * Starts the version selection: follows the tab bar, fills the two version selects and listens to their changes.
+     * Call {@link initTabs} after it, only if it succeeded.
+     *
+     * @returns {Promise<boolean>} Whether a pair of versions is selected. If not (their list could not be
+     *          downloaded), start-up stops: every tab but Home is disabled, and the error toast says why.
+     */
+    static async initVersions() {
+        const application = SdkExplorerApplication.instance;
+        application.#followTabBar();
+        if (!(await application.#selectVersions())) {
+            application.#stop();
+            return false;
+        }
+        application.#followVersionSelects();
+        return true;
     }
 
     /**
-     * 
-     * @param {TabController} tab 
-     * @returns 
+     * Starts the tabs, after {@link initVersions}: shows the tabs that apply to the selected versions (which probes
+     * some of their files), then renders the active tab.
+     */
+    static async initTabs() {
+        const application = SdkExplorerApplication.instance;
+        application.startSpinner();
+        try {
+            await application.#check(application.#newSelection());
+        }
+        finally {
+            application.stopSpinner();
+        }
+    }
+
+    /**
+     * Knows the active tab from now on, including one the user opens while the versions are loading: until the tabs
+     * have started, a tab switch is only recorded, and the start-up probe's end renders the tab.
+     */
+    #followTabBar() {
+        this.#activeTab = this.tabs.get(this.#tabBar.activeTabId());
+        this.#tabBar.onTabShown(tabId => {
+            console.log('Active tab changed:', tabId);
+            this.activeTabChanged(tabId);
+        });
+    }
+
+    /**
+     * Listens to the version selects, before the tabs are probed, so that a change made meanwhile is not lost.
+     */
+    #followVersionSelects() {
+        $('#main-version-dropdown').on('change', event => {
+            appState.mainVersion = $(event.currentTarget).val();
+            this.#versionChanged();
+        });
+        $('#base-version-dropdown').on('change', event => {
+            appState.baseVersion = $(event.currentTarget).val();
+            this.#versionChanged();
+        });
+    }
+
+    /**
+     * Selects the versions to compare at start-up.
+     *
+     * @returns {Promise<boolean>} Whether a pair is selected: false if the versions could not be listed (the error
+     *          is then shown, and stays).
+     */
+    async #selectVersions() {
+        this.startSpinner();
+        this.clearApiStatus();
+        try {
+            await this.#versionSelection.select();
+            return true;
+        } catch (error) {
+            // Start-up stops here, so the error stays shown, with what to do about it: a reload, which must then
+            // download the list again, whatever made the selection fail.
+            this.#versionSelection.forget();
+            this.#errorToast.show(`${error.message}. ${RELOAD_TO_RETRY}`, error.detail, true);
+            console.error('Error populating dropdowns:', error);
+            return false;
+        } finally {
+            this.stopSpinner();
+        }
+    }
+
+    /**
+     * Stops start-up without versions: shows Home and disables every other tab, so that no tab stays or can be
+     * opened empty, not even one the user opened while the versions were loading. (A tab switch is only recorded in
+     * this phase, so showing Home renders nothing and leaves the error shown. The version chips and Home's buttons
+     * stay disabled, as the page starts them: the version picker never starts.)
+     */
+    #stop() {
+        this.#state = new ApplicationState(Phase.STOPPED);
+        const home = this.tabs.get('home-tab');
+        this.#tabBar.show(home);
+        this.#tabBar.disableAllBut(this.tabs.values(), home);
+    }
+
+    /**
+     * @param {TabController} tab
      */
     #addTab(tab) {
         tab.init();
         this.tabs.set(tab.getId(), tab);
     }
 
+    /**
+     * Called when a tab is shown: deactivates the previous tab and renders the new one (see
+     * {@link #renderActiveTab}); before the tabs have started, only records it.
+     *
+     * @param {string} activeTabId
+     */
     async activeTabChanged(activeTabId) {
+        const tab = this.tabs.get(activeTabId);
+        if (!this.#state.tabsStarted) {
+            this.#activeTab = tab;
+            return;
+        }
         this.startSpinner();
-        this.clearApiStatus();
+        if (this.#keepToastOnNextSwitch) {
+            this.#keepToastOnNextSwitch = false;
+        } else {
+            this.clearApiStatus();
+        }
         try {
-            await this.#activeTab?.deactivated();
-            this.#activeTab = this.tabs.get(activeTabId);
-            await this.#activeTab.activated();
+            await this.#activeTab.deactivated();
+            this.#activeTab = tab;
+            await this.#renderActiveTab();
         } catch (error) {
-            SdkExplorerApplication.updateApiStatus(error.message);
+            SdkExplorerApplication.updateApiStatus(error.message, error.detail);
         }
         finally {
             this.stopSpinner();
         }
     }
 
-    async versionChanged() {
+    /**
+     * Called by the active tab when one of its own options changes (Fields' metadata source, Validation's source),
+     * to render it again with that option (see {@link #renderActiveTab}). The option is held by the tab's control,
+     * so the render that follows, now or at the end of the probe in flight, uses it. Before the tabs have started,
+     * nothing: the start-up probe's end renders the active tab.
+     */
+    async activeTabOptionsChanged() {
+        if (!this.#state.tabsStarted) {
+            return;
+        }
         this.startSpinner();
         this.clearApiStatus();
         try {
-            await this.#activeTab?.versionChanged();
+            this.#activeTab.cancelRequests();
+            this.#activeTab.clear();
+            await this.#renderActiveTab();
         } catch (error) {
-            SdkExplorerApplication.updateApiStatus(error.message);
+            SdkExplorerApplication.updateApiStatus(error.message, error.detail);
         }
         finally {
             this.stopSpinner();
         }
+    }
+
+    /**
+     * Renders the active tab for the selected versions, once the tabs that apply to them are known:
+     * - Checking: nothing; the probe's end renders the active tab, and rendering it here too would load it twice;
+     * - Ready: renders the active tab.
+     */
+    async #renderActiveTab() {
+        if (this.#state.phase === Phase.READY) {
+            await this.#activeTab.activated();
+        }
+    }
+
+    /**
+     * Called when a version select changes: clears the active tab first, so that the previous comparison never stays
+     * under the new selection; then probes the tabs for the new pair.
+     */
+    async #versionChanged() {
+        this.startSpinner();
+        this.clearApiStatus();
+        this.#activeTab.cancelRequests();
+        this.#activeTab.clear();
+        try {
+            await this.#check(this.#newSelection());
+        }
+        finally {
+            this.stopSpinner();
+        }
+    }
+
+    /**
+     * @returns {Selection} A new selection of the versions held by {@link appState}.
+     */
+    #newSelection() {
+        return new Selection(appState.mainVersion, appState.baseVersion);
+    }
+
+    /**
+     * Probes the tabs that apply to a selection, then shows them and renders the active tab, unless a newer
+     * selection is made meanwhile: that newer selection then does all of it, and the result and errors of this one
+     * are dropped. A tab activated while the tabs are probed is rendered here, once the probe has ended (see
+     * {@link #renderActiveTab}). A tab whose probe fails is hidden, and the error is shown; the other tabs are
+     * shown and rendered as usual.
+     *
+     * @param {Selection} selection
+     */
+    async #check(selection) {
+        this.#state = new ApplicationState(Phase.CHECKING, selection);
+        this.#keepToastOnNextSwitch = false;
+        const { applicable, errors } = await this.#probeApplicableTabs();
+        if (this.#state.selection !== selection) {
+            return;
+        }
+        this.#state = new ApplicationState(Phase.READY, selection);
+        const reported = errors.filter(error => error.statusText !== 'abort');
+        reported.forEach(error => SdkExplorerApplication.updateApiStatus(error.message, error.detail));
+        this.#keepToastOnNextSwitch = reported.length > 0;
+        try {
+            if (this.#showApplicableTabs(applicable)) {
+                await this.#activeTab.versionChanged();
+            }
+        } catch (error) {
+            if (this.#state.selection === selection && error.statusText !== 'abort') {
+                SdkExplorerApplication.updateApiStatus(error.message, error.detail);
+            }
+        }
+    }
+
+    /**
+     * Asks every tab whether it applies to the selected versions. A tab whose probe fails does not apply: the others
+     * do not depend on it.
+     *
+     * @returns {Promise<{applicable: Map<TabController, boolean>, errors: Error[]}>} Whether each tab applies, and the
+     *          errors of the probes that failed, each once (two tabs can share a probe).
+     */
+    async #probeApplicableTabs() {
+        const tabs = Array.from(this.tabs.values());
+        const results = await Promise.allSettled(tabs.map(tab => tab.isApplicable()));
+        const applicable = new Map(tabs.map((tab, index) => [tab, results[index].status === 'fulfilled' && results[index].value]));
+        const errors = [...new Set(results.filter(result => result.status === 'rejected').map(result => result.reason))];
+        return { applicable, errors };
+    }
+
+    /**
+     * Shows the tabs that apply and hides the others. If the active tab is hidden, the tab that replaces it (see
+     * {@link TabController#replacementTabId}) is shown instead, if it applies, or else Home; showing a tab activates
+     * it (see {@link activeTabChanged}).
+     *
+     * @param {Map<TabController, boolean>} applicable Whether each tab applies to the selected versions.
+     * @returns {boolean} true if the active tab is still shown, false if another tab is being shown instead.
+     */
+    #showApplicableTabs(applicable) {
+        this.#tabBar.showApplicable(applicable);
+        if (applicable.get(this.#activeTab)) {
+            return true;
+        }
+        const replacement = this.tabs.get(this.#activeTab.replacementTabId());
+        this.#tabBar.show(replacement && applicable.get(replacement) ? replacement : this.tabs.get('home-tab'));
+        return false;
     }
 
     static startSpinner() {
@@ -173,203 +434,34 @@ export class SdkExplorerApplication {
         }
     }
 
+    /**
+     * Removes the messages of the error toast and hides it (see {@link ErrorToast#clear}).
+     */
     clearApiStatus() {
-        // Clear the message inside the toast body
-        SdkExplorerApplication.instance.#toastBody().textContent = '';
-
-        // Hide the toast
-        SdkExplorerApplication.instance.$apiStatus().toast('hide');
-    }
-
-    static updateApiStatus(message) {
-
-        SdkExplorerApplication.instance.apiStatusMessage += '<li>' + message + '</li>';
-        SdkExplorerApplication.instance.#toastBody().innerHTML = SdkExplorerApplication.instance.apiStatusMessage;
-
-        clearTimeout(SdkExplorerApplication.instance.fadeTimeOut);
-
-        setTimeout(() => {
-            // Display the toast
-            SdkExplorerApplication.instance.$apiStatus().toast('show');
-            SdkExplorerApplication.instance.fadeTimeOut = setTimeout(() => {
-                SdkExplorerApplication.instance.$apiStatus().toast('hide');
-                SdkExplorerApplication.instance.apiStatusMessage = '';
-            }, 15000);
-        }, 0);
+        this.#errorToast.clear();
     }
 
     /**
-     * Compares two version numbers but returns the opposite of the result.
-     * 
-     * @param {string} a 
-     * @param {string} b 
-     * @returns {number} -1 if a > b, 1 if a < b, 0 if a === b
+     * Shows a message in the error toast (see {@link ErrorToast#show}).
+     *
+     * @param {string} message
+     * @param {string} [detail] For example why a request failed (see CustomError.detail).
+     * @param {boolean} [staysShown] Whether the toast stays shown until the user closes it, instead of hiding itself
+     *          15 s later: for an error that leaves nothing else to do (start-up without versions).
      */
-    #reverseCompareVersions(a, b) {
-        const aParts = a.split('.').map(Number);
-        const bParts = b.split('.').map(Number);
-
-        for (let i = 0; i < aParts.length; i++) {
-            if (aParts[i] > bParts[i]) {
-                return -1;
-            } else if (aParts[i] < bParts[i]) {
-                return 1;
-            }
-        }
-
-        return 0;
+    static updateApiStatus(message, detail = '', staysShown = false) {
+        SdkExplorerApplication.instance.#errorToast.show(message, detail, staysShown);
     }
 
     /**
-     * Gets the two latest non-pre-release versions.
-     * 
-     * @param {string[]} versions 
-     * @returns 
+     * Performs a request of the application rather than of a tab: the list of versions (by the application's
+     * {@link SdkRepository}) and the probes that decide which tabs apply to the selected versions.
+     * These requests are not tracked, so cancelling a tab's requests never aborts them.
+     *
+     * @param {Object} options The options to pass to $.ajax().
+     * @returns {Promise} A promise that resolves with the AJAX response.
      */
-    #getLastTwoReleasedVersions(versions) {
-
-        // Filter out pre-release versions
-        const releasedVersions = versions.filter(version => version.indexOf('-') === -1);
-
-        releasedVersions.sort(this.#reverseCompareVersions.bind(this));
-
-        const latestVersion = releasedVersions[0];
-
-        // Find the latest patch of the preceding minor version
-        const latestVersionParts = latestVersion.split('.').map(Number);
-        const previousVersion = releasedVersions.find(version => {
-            const versionParts = version.split('.').map(Number);
-            return versionParts[0] === latestVersionParts[0] && versionParts[1] < latestVersionParts[1];
-        });
-
-        return [latestVersion, previousVersion];
-    }
-
-    /**
-     * Gets the previous version of the provided version.
-     * 
-     * @param {string} latestVersion 
-     * @param {string[]} versions 
-     * @returns 
-     */
-    #getPreviousVersion(latestVersion, versions) {
-
-        // Filter out pre-release versions
-        const releasedVersions = versions.filter(version => version.indexOf('-') === -1);
-
-        releasedVersions.sort(this.#reverseCompareVersions.bind(this));
-
-        // Find the latest patch of the preceding minor version
-        const latestVersionParts = latestVersion.split('.').map(Number);
-        const previousVersion = releasedVersions.find(version => {
-            const versionParts = version.split('.').map(Number);
-            return versionParts[0] === latestVersionParts[0] && versionParts[1] < latestVersionParts[1];
-        });
-
-        return previousVersion;
-    }
-
-    /**
-     * Gets the main and base versions from the query string if provided.
-     * 
-     * @returns 
-     */
-    #getVersionsFromQueryString() {
-        // Parse the query string
-        let params = new URLSearchParams(window.location.search);
-        let versionParam = params.get('version');
-        let baseParam = params.get('base');
-
-        if (window.location.search) {
-            // Remove the query string from the URL
-            history.replaceState(null, null, window.location.pathname);
-        }
-
-        return [versionParam, baseParam];
-    }
-
-    async populateDropdown() {
-        this.startSpinner();
-        this.clearApiStatus();
-        try {
-            const response = await $.ajax({
-                url: `${appConfig.eformsBaseUrl}/tags?per_page=100&page=1`,
-                dataType: 'json'
-            });
-
-            let availableVersions = response.map(item => item.name);
-
-            // Filter out versions older than the threshold
-            let listedVersions = availableVersions.filter(version => this.#reverseCompareVersions(version, appConfig.thresholdVersion) <= 0);
-            // Sort versions by version number
-            listedVersions.sort(this.#reverseCompareVersions.bind(this));
-
-            // Filter out pre-releases of released versions
-            const releasedVersions = listedVersions.filter(version => !version.includes('-'));
-            const latestRelease = releasedVersions[0];
-            const preReleasesOfLatestVersion = listedVersions.filter(version => {
-                const baseVersion = version.split('-')[0];
-                return version.includes('-') && baseVersion === latestRelease;
-                });
-            const preReleasesOfUnreleasedVersions = listedVersions.filter(version => {
-                const baseVersion = version.split('-')[0];
-                return version.includes('-') && !releasedVersions.includes(baseVersion);
-            });
-            listedVersions = [...releasedVersions, ...preReleasesOfLatestVersion, ...preReleasesOfUnreleasedVersions];
-
-            // Sort versions by version number
-            listedVersions.sort(this.#reverseCompareVersions.bind(this));
-
-            // Populate the dropdowns
-            this.$mainVersionDropdown().empty();
-            this.$baseVersionDropdown().empty();
-
-            // Add hardcoded "develop" option to the top of the main version dropdown.
-            // This will allow us to compare any version to the develop branch.
-            const developOption = $('<option>', { value: 'develop', text: 'develop' });
-            this.$mainVersionDropdown().prepend(developOption);
-
-
-            listedVersions.forEach(version => {
-                const option = $('<option>', { value: version, text: version });
-                this.$mainVersionDropdown().append(option.clone());
-                this.$baseVersionDropdown().append(option);
-            });
-
-            // Get versions from the query string if provided
-            let [mainVersion, baseVersion] = this.#getVersionsFromQueryString(listedVersions);
-
-            // Validate the versions passed in the query string
-            if (!listedVersions.includes(mainVersion)) {
-                if (availableVersions.includes(mainVersion)) {
-                    const option = $('<option>', { value: mainVersion, text: mainVersion });
-                    this.$mainVersionDropdown().append(option);
-                } else {
-                    mainVersion = latestRelease;
-                }
-            }
-            if (!listedVersions.includes(baseVersion)) {
-                if (availableVersions.includes(baseVersion)) {
-                    const option = $('<option>', { value: baseVersion, text: baseVersion });
-                    this.$baseVersionDropdown().append(option);
-                } else {
-                    baseVersion = this.#getPreviousVersion(mainVersion, availableVersions) ?? mainVersion;
-                    if (!listedVersions.includes(baseVersion)) {
-                        const option = $('<option>', { value: baseVersion, text: baseVersion });
-                        this.$baseVersionDropdown().append(option);
-                    }
-                }
-            }
-            
-            this.$mainVersionDropdown().val(mainVersion);
-            this.$baseVersionDropdown().val(baseVersion);
-            appState.mainVersion = mainVersion;
-            appState.baseVersion = baseVersion;
-        } catch (error) {
-            SdkExplorerApplication.updateApiStatus('API call failed to fetch tags.', false);
-            console.error('Error populating dropdowns:', error);
-        } finally {
-            this.stopSpinner();
-        }
+    ajaxRequest(options) {
+        return $.ajax(options);
     }
 }

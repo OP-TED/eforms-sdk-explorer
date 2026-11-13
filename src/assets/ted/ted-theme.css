@@ -1,0 +1,443 @@
+/* TED design-system theme of the eForms SDK Explorer: the rules the web components use.
+ *
+ * A style layer over Bootstrap 5, built on the tokens of tokens.css (var(--gs-base-...)) and the glyphs of icons.css.
+ * Literals only where the design system itself declares them: the 3px button radius, the card shadow
+ * 0 1px 3px 0 rgba(0, 0, 0, 0.2) and #757575 for the ghost button's focus ring; and, each with a comment naming its
+ * token, the -rgb triplets Bootstrap needs and the colours inside SVG data URIs.
+ *
+ * Loaded by the page (index.html, after icons.css) and into the shadow root of every web component
+ * (appConfig.stylesheets.tedTheme, through BootstrapWebComponent.requiredCss()). So it holds only what the
+ * components use: the foundation (Bootstrap's variables, links, headings, focus rings, buttons, form controls) and the
+ * change markers. The rules for the page alone (the chrome, Home, the breadcrumb, the toolbar, the diff, the states,
+ * the other tabs) are in ted-page.css, which only the page loads.
+ * - Keep it plain ASCII, so that it never needs an @charset rule: with one, Chromium cannot share the parsed sheet
+ *   between the shadow roots, and each of hundreds of cards would parse it again.
+ * - Keep it small, because every shadow root loads it.
+ */
+
+/* Foundation: Bootstrap custom properties, links, headings, focus rings, buttons, form controls. */
+
+/* Bootstrap's own variables, set from the tokens in the document; they reach the shadow roots by inheritance. */
+:root {
+    --bs-body-font-family: var(--font-sans);
+    --bs-body-color: var(--gs-base-color-gray-100);
+    --bs-heading-color: var(--gs-base-color-gray-100);
+    --bs-link-color: var(--gs-base-color-eu-blue-100);
+    --bs-link-color-rgb: 14, 71, 203; /* --gs-base-color-eu-blue-100 (#0E47CB): Bootstrap needs the triplet */
+    --bs-link-hover-color: var(--gs-base-color-eu-blue-100);
+    --bs-link-hover-color-rgb: 14, 71, 203; /* --gs-base-color-eu-blue-100 */
+    --bs-border-color: var(--gs-base-color-gray-20);
+    --bs-border-radius: var(--gs-base-radius-s);
+}
+
+/* Links: underlined; on hover the underline goes and the colour stays. */
+a {
+    text-decoration: underline;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+/* Headings: bold; the page heading 32px. */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+}
+
+h1 {
+    font-size: var(--gs-base-font-size-4xl);
+    line-height: 1.15;
+}
+
+/* Focus rings instead of Bootstrap's glow, on :focus-visible only (the design system's focus rules): 2px wide; links
+   4px out in eu-blue-100, controls 2px out in link-110 unless their variant has its own colour below. A link styled as
+   a button takes the button's ring. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--gs-base-color-link-110);
+    outline-offset: 2px;
+}
+
+a:not(.btn):focus-visible {
+    outline: 2px solid var(--gs-base-color-eu-blue-100);
+    outline-offset: 4px;
+    border-radius: 0.015rem;
+}
+
+.btn:focus-visible,
+.btn-check:focus-visible + .btn,
+.btn-close:focus-visible,
+.nav-link:focus-visible,
+.form-check-input:focus-visible {
+    outline: 2px solid var(--gs-base-color-link-110);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.btn-outline-primary:focus-visible,
+.btn-check:not(:checked):focus-visible + .btn {
+    outline-color: var(--gs-base-color-eu-blue-100);
+}
+
+.btn-link:focus-visible {
+    outline-color: #757575; /* the ghost button's ring: a literal of the design system */
+}
+
+[aria-disabled="true"]:focus-visible {
+    outline: 2px solid var(--gs-base-color-gray-75);
+    outline-offset: 2px;
+}
+
+.form-control:focus-visible {
+    outline: 2px solid var(--gs-base-color-eu-blue-100);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.form-select:focus-visible {
+    outline: 2px solid var(--gs-base-color-eu-blue-100);
+    outline-offset: -1px;
+    box-shadow: none;
+}
+
+.btn-close:focus,
+.nav-link:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    box-shadow: none;
+}
+
+/* Buttons. Shared: 3px radius, 2px border, no shadow, 120ms colour transition; size m by default. */
+.btn {
+    --bs-btn-font-family: var(--font-sans);
+    --bs-btn-font-size: var(--gs-base-font-size-m);
+    --bs-btn-font-weight: 700;
+    --bs-btn-line-height: 1.15;
+    --bs-btn-padding-y: 10px;
+    --bs-btn-padding-x: 18px;
+    --bs-btn-border-width: 2px;
+    --bs-btn-border-radius: 3px;
+    --bs-btn-box-shadow: none;
+    --bs-btn-focus-box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.btn-sm,
+.btn-group-sm > .btn {
+    --bs-btn-font-size: var(--gs-base-font-size-s);
+    --bs-btn-font-weight: 400;
+    --bs-btn-padding-y: 8px;
+    --bs-btn-padding-x: 12px;
+    --bs-btn-border-radius: 3px;
+}
+
+/* Primary. */
+.btn-primary {
+    --bs-btn-color: var(--gs-base-color-white);
+    --bs-btn-bg: var(--gs-base-color-eu-blue-100);
+    --bs-btn-border-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-hover-color: var(--gs-base-color-white);
+    --bs-btn-hover-bg: var(--gs-base-color-eu-blue-110);
+    --bs-btn-hover-border-color: var(--gs-base-color-eu-blue-110);
+    --bs-btn-active-color: var(--gs-base-color-white);
+    --bs-btn-active-bg: var(--gs-base-color-eu-blue-110);
+    --bs-btn-active-border-color: var(--gs-base-color-eu-blue-110);
+}
+
+/* Secondary. */
+.btn-outline-primary {
+    --bs-btn-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-hover-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-hover-bg: var(--gs-base-color-eu-blue-10);
+    --bs-btn-hover-border-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-active-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-active-bg: var(--gs-base-color-eu-blue-10);
+    --bs-btn-active-border-color: var(--gs-base-color-eu-blue-100);
+}
+
+/* Ghost. */
+.btn-link {
+    --bs-btn-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-padding-y: 6px;
+    --bs-btn-padding-x: 8px;
+    text-decoration: none;
+}
+
+/* Disabled: a disabled button, and the outline-secondary buttons (the disabled Compare of the index cards). */
+.btn-outline-secondary,
+.btn:disabled,
+.btn.disabled {
+    --bs-btn-color: var(--gs-base-color-gray-30);
+    --bs-btn-bg: var(--gs-base-color-gray-5);
+    --bs-btn-border-color: var(--gs-base-color-gray-30);
+    --bs-btn-disabled-color: var(--gs-base-color-gray-30);
+    --bs-btn-disabled-bg: var(--gs-base-color-gray-5);
+    --bs-btn-disabled-border-color: var(--gs-base-color-gray-30);
+    --bs-btn-disabled-opacity: 1;
+}
+
+/* Toggle groups (btn-check radios): the selected button primary, the others secondary-filled. */
+.btn-check:checked + .btn {
+    --bs-btn-active-color: var(--gs-base-color-white);
+    --bs-btn-active-bg: var(--gs-base-color-eu-blue-100);
+    --bs-btn-active-border-color: var(--gs-base-color-eu-blue-100);
+}
+
+.btn-check:not(:checked) + .btn {
+    --bs-btn-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-bg: var(--gs-base-color-eu-blue-5);
+    --bs-btn-border-color: var(--gs-base-color-eu-blue-5);
+    --bs-btn-hover-color: var(--gs-base-color-eu-blue-100);
+    --bs-btn-hover-bg: var(--gs-base-color-eu-blue-10);
+    --bs-btn-hover-border-color: var(--gs-base-color-eu-blue-10);
+}
+
+/* Form controls: 44px high, 16px text, gray-60 border, 4px radius, white fill. The small size (below) is 36px. */
+.form-control,
+.form-control-sm,
+.form-select,
+.form-select-sm {
+    min-height: 44px;
+    padding: 10px 14px;
+    font-family: var(--font-sans);
+    font-size: var(--gs-base-font-size-m);
+    line-height: 1.4;
+    color: var(--gs-base-color-gray-100);
+    background-color: var(--gs-base-color-white);
+    border: 1px solid var(--gs-base-color-gray-60);
+    border-radius: var(--gs-base-radius-s);
+}
+
+.form-select,
+.form-select-sm {
+    padding-right: 40px;
+    /* Bootstrap's chevron in --gs-base-color-gray-75 (#666666), 12px from the right. */
+    --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+}
+
+/* The small size, for the toolbars only: 36px high, 14px text; the chevron 10px from the right. */
+.form-control-sm,
+.form-select-sm {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: var(--gs-base-font-size-s);
+}
+
+.form-select-sm {
+    padding-right: 32px;
+    background-position: right 10px center;
+}
+
+/* The open list of a select, where the browser lets CSS style it (appearance: base-select): white, a
+   gray-20 border, a 4px radius and shadow 2, 4px below the control and at least as wide as it; the options in
+   eu-blue-100, the hovered or focused one on eu-blue-10, the chosen one bold in gray-100 on eu-blue-10. Other browsers
+   keep their own list. The closed control keeps its look: its chevron stays the background image above, and
+   base-select's own icon is hidden. */
+@supports (appearance: base-select) {
+    .form-select,
+    .form-select::picker(select) {
+        appearance: base-select;
+    }
+
+    .form-select::picker-icon {
+        display: none;
+    }
+
+    /* The focus ring whenever the control has focus, as with the native select: a base-select one, like a button,
+       would match :focus-visible only after a key press. */
+    .form-select:focus {
+        outline: 2px solid var(--gs-base-color-eu-blue-100);
+        outline-offset: -1px;
+    }
+
+    /* Always below the control (the browser's default takes the side with more room), and never taller than the room
+       there: 100% is the space between the control and the window's bottom, less the margins. */
+    .form-select::picker(select) {
+        position-try-order: normal;
+        min-width: anchor-size(width);
+        max-height: min(60vh, 400px, 100% - 8px);
+        margin: 4px 0;
+        padding: 4px 0;
+        overflow-y: auto;
+        background: var(--gs-base-color-white);
+        border: 1px solid var(--gs-base-color-gray-20);
+        border-radius: var(--gs-base-radius-s);
+        box-shadow: var(--gs-base-shadow-2);
+    }
+
+    .form-select option {
+        padding: 8px 14px;
+        font-size: var(--gs-base-font-size-m);
+        line-height: 1.5;
+        color: var(--gs-base-color-eu-blue-100);
+    }
+
+    .form-select-sm option {
+        font-size: var(--gs-base-font-size-s);
+    }
+
+    .form-select option:hover,
+    .form-select option:focus-visible {
+        outline: none;
+        background: var(--gs-base-color-eu-blue-10);
+    }
+
+    .form-select option:checked {
+        font-weight: 700;
+        color: var(--gs-base-color-gray-100);
+        background: var(--gs-base-color-eu-blue-10);
+    }
+
+    .form-select option::checkmark {
+        display: none;
+    }
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--gs-base-color-gray-60);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--gs-base-color-gray-5);
+}
+
+/* Label above a control: 14px bold, 6px above it; helper text 14px gray-75, 6px below it. */
+.form-label {
+    margin-bottom: 6px;
+    font-size: var(--gs-base-font-size-s);
+    font-weight: 700;
+    color: var(--gs-base-color-gray-100);
+}
+
+.form-text {
+    margin-top: 6px;
+    font-size: var(--gs-base-font-size-s);
+    color: var(--gs-base-color-gray-75);
+}
+
+/* Checkbox (also the compact-view switches, until their markup becomes a checkbox): an 18px box with a 2px radius and
+   a gray-60 border; checked, an eu-blue-100 fill with a white tick. The label 16px gray-100, 0.55rem from the box. */
+.form-check-input[type="checkbox"],
+.form-switch .form-check-input {
+    --bs-form-check-bg-image: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    background-color: var(--gs-base-color-white);
+    background-image: var(--bs-form-check-bg-image);
+    background-position: center;
+    background-size: 14px;
+    border: 1px solid var(--gs-base-color-gray-60);
+    border-radius: var(--gs-base-radius-xs);
+}
+
+.form-check-input[type="checkbox"]:focus,
+.form-switch .form-check-input:focus {
+    border-color: var(--gs-base-color-gray-60);
+}
+
+.form-check,
+.form-switch {
+    padding-left: calc(18px + 0.55rem);
+}
+
+.form-check .form-check-input,
+.form-switch .form-check-input {
+    margin-left: calc(-18px - 0.55rem);
+}
+
+.form-check-label {
+    font-size: var(--gs-base-font-size-m);
+    color: var(--gs-base-color-gray-100);
+}
+
+.form-check-input:disabled ~ .form-check-label {
+    color: var(--gs-base-color-gray-30);
+    opacity: 1;
+}
+
+.form-check-input[type="checkbox"]:checked,
+.form-switch .form-check-input:checked {
+    /* The tick in --gs-base-color-white. */
+    --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M20 6 9 17l-5-5'/%3e%3c/svg%3e");
+    background-color: var(--gs-base-color-eu-blue-100);
+    background-position: center;
+    border-color: var(--gs-base-color-eu-blue-100);
+}
+
+/* In a toolbar, a control with its label before it: the label 14px regular gray-75, 8px from the
+   control. */
+.ted-inline-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ted-inline-field__label {
+    margin: 0;
+    font-size: var(--gs-base-font-size-s);
+    font-weight: 400;
+    color: var(--gs-base-color-gray-75);
+    white-space: nowrap;
+}
+
+/* In a toolbar, a checkbox: its 18px box and its label, 14px gray-100, 8px apart, centred on a 36px row like the
+   small controls. */
+.ted-inline-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    margin: 0;
+    padding-left: 0;
+}
+
+.ted-inline-check .form-check-input {
+    float: none;
+    margin: 0;
+}
+
+.ted-inline-check .form-check-label {
+    font-size: var(--gs-base-font-size-s);
+}
+
+/* Change markers: used by the page and by the index cards. */
+
+/* A change marker: a 16px square in the marker colour with a white 10px glyph (plus, minus) or a 6px dot. */
+.ted-marker {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    color: var(--gs-base-color-white);
+    font-family: "gs-icon";
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.ted-marker--added { background: var(--added-marker-color); }
+.ted-marker--added::before { content: "\e900"; }
+.ted-marker--removed { background: var(--removed-marker-color); }
+.ted-marker--removed::before { content: "\e92c"; }
+.ted-marker--modified { background: var(--modified-marker-color); }
+.ted-marker--modified::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }

@@ -24,8 +24,16 @@ export class TabController {
     /** @type {Array} */
     #listeners = [];
 
-    /** @type {boolean} */
-    aborting = false;
+    /** @type {Set<number>} The timeouts of the work deferred by {@link defer} that has not run yet. */
+    #deferredWork = new Set();
+
+    /**
+     * The generation of the tab's current load: {@link cancelRequests} starts a new one. A request or a piece of
+     * deferred work remembers the generation it was made in, and does nothing for a later one.
+     *
+     * @type {number}
+     */
+    #load = 0;
 
     /**
      * @returns {string}
@@ -49,7 +57,7 @@ export class TabController {
      * No need to override this method.
      */
     async activated() {
-        this.aborting = false;
+        this.clear();
         try {
             await this.fetchAndRender();
         }
@@ -57,7 +65,7 @@ export class TabController {
             if (error.statusText === 'abort') {
                 console.log('Request was aborted');
             } else {
-                this.showErrorMessage(error.message);
+                this.showErrorMessage(error.message, error.detail);
             }
         }
     }
@@ -67,9 +75,8 @@ export class TabController {
      * Override this method to clean up any resources.
      */
     async deactivated() {
-        this.aborting = true;
-        $(this.#id).tab('dispose');
         this.cancelRequests();
+        this.clear();
     }
 
     /**
@@ -77,6 +84,10 @@ export class TabController {
      * No need to override this method.
      */
     async versionChanged() {
+        // Cancel the load of the previous selection, so that none of its responses or deferred work can render
+        // over the new one.
+        this.cancelRequests();
+        this.clear();
         try {
             await this.fetchAndRender();
         }
@@ -84,9 +95,17 @@ export class TabController {
             if (error.statusText === 'abort') {
                 console.log('Request was aborted');
             } else {
-                this.showErrorMessage(error.message);
+                this.showErrorMessage(error.message, error.detail);
             }
         }
+    }
+
+    /**
+     * Override this method to remove what the tab shows (its tree, cards, diff or alerts), so that it shows an empty
+     * pane. Called before the tab fetches and renders again, so that a failed load does not leave the previous
+     * comparison on screen, and when the tab is deactivated, to free memory.
+     */
+    clear() {
     }
 
     /**
@@ -97,11 +116,39 @@ export class TabController {
     }
 
     /**
+     * Called by the SdkExplorerApplication when the selected versions change, to decide whether the tab is shown.
+     * Override this method if the tab applies only to some versions.
+     *
+     * @returns {Promise<boolean>} true if the tab applies to the selected versions.
+     */
+    async isApplicable() {
+        return true;
+    }
+
+    /**
+     * Called by the SdkExplorerApplication when the tab is active and stops applying to the selected versions (see
+     * {@link isApplicable}), to choose the tab that is activated instead.
+     * Override this method if another tab then shows what this tab showed.
+     *
+     * @returns {string|null} The id of the tab that replaces this one, or null: Home is then activated (as it is
+     *          when the replacing tab does not apply either).
+     */
+    replacementTabId() {
+        return null;
+    }
+
+    /**
      * Make an AJAX request and keep track of it.
+     * The response is handed over only if the load the request was made for has not been cancelled since: a
+     * response that arrived just before a cancellation (jQuery hands it over in a later task) is rejected like an
+     * aborted request instead, so that it renders nothing.
+     *
      * @param {Object} options - The options to pass to $.ajax().
-     * @returns {Promise} - A promise that resolves with the AJAX response.
+     * @returns {Promise} - A promise that resolves with the AJAX response, or rejects with the jqXHR of the failed
+     *          request, or with an aborted-request error (statusText 'abort') if the load was cancelled.
      */
     ajaxRequest(options) {
+        const load = this.#load;
         // Track the number of pending requests to indicate progress
         this.#totalRequests++;
 
@@ -124,8 +171,21 @@ export class TabController {
             this.#showProgress();
         });
 
-        // Return the promise
-        return jqXHR;   
+        // Hand the outcome over only to the load that made the request
+        return new Promise((resolve, reject) => {
+            jqXHR.then(
+                response => load === this.#load ? resolve(response) : reject(TabController.#cancelledLoadError()),
+                error => reject(load === this.#load ? error : TabController.#cancelledLoadError())
+            );
+        });
+    }
+
+    /**
+     * @returns {Error} The error with which a request of a cancelled load fails: like an aborted request
+     *          (statusText 'abort'), so that it is not reported to the user.
+     */
+    static #cancelledLoadError() {
+        return Object.assign(new Error('The load this request was made for was cancelled'), { statusText: 'abort' });
     }
 
     /**
@@ -164,18 +224,48 @@ export class TabController {
     }
 
     /**
-     * Cancel all ongoing AJAX requests.
+     * Cancel all ongoing AJAX requests, and the work deferred by {@link defer} that has not run yet, and start a new
+     * load: the requests and deferred work of the cancelled one hand nothing over afterwards.
      */
     cancelRequests() {
+        this.#load++;
+
         this.#ajaxRequests.forEach(jqXHR => {
             if (jqXHR) {
                 jqXHR.abort();
             }
         });
         this.#ajaxRequests = [];
+
+        this.#deferredWork.forEach(timeout => clearTimeout(timeout));
+        this.#deferredWork.clear();
     }
 
-    showErrorMessage(message) {
-        SdkExplorerApplication.updateApiStatus(message);
+    /**
+     * Runs a piece of rendering later (in a timeout), so that rendering many items keeps the page responsive, and
+     * keeps track of it like a request: {@link cancelRequests} drops it if it has not run yet, so that a load that
+     * was cancelled (by a version change, a tab switch or a source switch) cannot render anything afterwards.
+     *
+     * @param {function(): void} work
+     */
+    defer(work) {
+        const load = this.#load;
+        const timeout = setTimeout(() => {
+            this.#deferredWork.delete(timeout);
+            if (load === this.#load) {
+                work();
+            }
+        }, 0);
+        this.#deferredWork.add(timeout);
+    }
+
+    /**
+     * Shows an error in the error toast.
+     *
+     * @param {string} message
+     * @param {string} [detail]
+     */
+    showErrorMessage(message, detail = '') {
+        SdkExplorerApplication.updateApiStatus(message, detail);
     }
 }

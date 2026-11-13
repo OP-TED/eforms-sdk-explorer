@@ -89,6 +89,7 @@ export class IndexCard extends BootstrapWebComponent {
     
         this.shadowRoot.querySelector('#title').textContent = this.title;
         this.shadowRoot.querySelector('#subtitle').textContent = this.subTitle;
+        this.shadowRoot.querySelector('#status-label').textContent = this.status ?? '';  // shown in capitals by the template
         this.shadowRoot.querySelector('#card-header').classList.add(this.status + '-card');
         if (this.status) {
             this.classList.add(this.status + '-card');
@@ -116,7 +117,7 @@ export class IndexCard extends BootstrapWebComponent {
                 try {
                     await this.actionHandler(event);
                 } catch (error) {
-                    SdkExplorerApplication.updateApiStatus(error.message);
+                    SdkExplorerApplication.updateApiStatus(error.message, error.detail);
                 }
             };
             button.style.display = ''; 
@@ -138,7 +139,7 @@ export class IndexCard extends BootstrapWebComponent {
                 this.setAttribute('status', status);    // This will also trigger a re-render
             }).catch(error => {
                 if (error.statusText !== 'abort') {
-                    SdkExplorerApplication.updateApiStatus(error.message);
+                    SdkExplorerApplication.updateApiStatus(error.message, error.detail);
                 }
             });
         }

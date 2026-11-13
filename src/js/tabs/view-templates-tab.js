@@ -39,11 +39,10 @@ export class ViewTemplatesTab extends TabController {
     }
 
     /**
-     * Overridden to dispose of the card group and diff view.
+     * Overridden to remove the cards and the diff.
      */
-    deactivated() { 
-        super.deactivated();
-        this.#cardGroup().dispose();
+    clear() {
+        this.#cardGroup().empty();
         this.$diffContainer().empty();
     }
 
@@ -95,12 +94,10 @@ export class ViewTemplatesTab extends TabController {
 
                 // Create and add an index-card for each view templates.
                 diff.forEach((entry, index) => {
-                    setTimeout(() => {
-                        if (!this.aborting) {
-                            const card = this.#createIndexCard(entry);
-                            this.#cardGroup().appendCard(card);
-                        }
-                    }, 0);
+                    this.defer(() => {
+                        const card = this.#createIndexCard(entry);
+                        this.#cardGroup().appendCard(card);
+                    });
                 });
                 this.#switchToOverview();
             } catch (error) {
@@ -113,14 +110,57 @@ export class ViewTemplatesTab extends TabController {
 
     /**
      * Fetches the view-templates.json index file for the specified SDK version.
+     * The view templates of appConfig.unindexedViewTemplates that the version has but its index does not list are
+     * added to the index, so that they get a card too.
      */
     async #fetchIndexFile(sdkVersion) {
-        return this.ajaxRequest({
+        const indexFile = await this.ajaxRequest({
             url: this.#getIndexFileUrl(sdkVersion),
             dataType: 'json'
         }).catch(error => {
             throw new AjaxError(ERROR_FETCHING_FILE('view-templates.json', sdkVersion), error);
         });
+
+        // An index without its list is reported when the overview is generated.
+        if (!Array.isArray(indexFile.viewTemplates)) {
+            return indexFile;
+        }
+        const unindexedViewTemplates = await this.#fetchUnindexedViewTemplates(indexFile.viewTemplates, sdkVersion);
+        return { ...indexFile, viewTemplates: [...indexFile.viewTemplates, ...unindexedViewTemplates] };
+    }
+
+    /**
+     * Finds the view templates of appConfig.unindexedViewTemplates that the version has but its index does not list.
+     *
+     * @param {Object[]} indexedViewTemplates The view templates listed in view-templates.json.
+     * @param {string} sdkVersion
+     * @returns {Promise<Object[]>} An index item for each of them, with only an id and a filename (the index has nothing else to tell about them).
+     */
+    async #fetchUnindexedViewTemplates(indexedViewTemplates, sdkVersion) {
+        const candidates = appConfig.unindexedViewTemplates.filter(filename => !indexedViewTemplates.some(viewTemplate => viewTemplate.filename === filename));
+        const present = await Promise.all(candidates.map(filename => this.#hasViewTemplateFile(filename, sdkVersion)));
+        return candidates
+            .filter((filename, index) => present[index])
+            .map(filename => ({ id: filename.replace(/\.efx$/, ''), filename: filename }));
+    }
+
+    /**
+     * Tells whether the specified version has a view template file.
+     *
+     * @param {string} filename
+     * @param {string} sdkVersion
+     * @returns {Promise<boolean>} false if the version does not have the file.
+     */
+    async #hasViewTemplateFile(filename, sdkVersion) {
+        try {
+            await this.ajaxRequest({ url: `${appConfig.rawBaseUrl}/${sdkVersion}/view-templates/${filename}`, dataType: 'text' });
+            return true;
+        } catch (error) {
+            if (error.status === 404) {
+                return false;
+            }
+            throw new AjaxError(ERROR_FETCHING_FILE(filename, sdkVersion), error);
+        }
     }
 
     #getIndexFileUrl(sdkVersion) {
@@ -240,7 +280,7 @@ export class ViewTemplatesTab extends TabController {
             ]);
             
             try {
-                Diff.injectTextDiff(mainData, baseData, 'view-template-diff', `${id}.efx`);
+                Diff.injectTextDiff(mainData, baseData, 'view-templates-diff', `${id}.efx`);
                 this.#switchToDiffView();
             } catch (error) {
                 throw new CustomError(ERROR_GENERATING_DIFF(`${id}.efx`), error);

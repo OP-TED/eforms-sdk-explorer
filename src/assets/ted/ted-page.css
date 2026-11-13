@@ -1,0 +1,1054 @@
+/* TED design-system theme of the eForms SDK Explorer: the rules for the page alone.
+ *
+ * Loaded by the page only (index.html, after ted-theme.css), never into the web components' shadow roots: the rules
+ * the components use are in ted-theme.css. Same conventions: tokens of tokens.css, the design system's literals
+ * only (and the europa.eu banner's own colours), plain ASCII.
+ *
+ * One section per part of the explorer.
+ */
+
+/* Chrome: the TED header, the pinned bar with the tabs and the loading indicator, the comparison line,
+   the footer. */
+
+/* The height of the pinned bar, set by script.js; the sticky elements of the work area sit under it. */
+:root {
+    --ted-bar-height: 0px;
+}
+
+/* EU global banner: the europa.eu component's own values. */
+.ted-globan, .ted-globan * { box-sizing: border-box; }
+.ted-globan { position: relative; z-index: 40; display: flex; align-items: center; min-height: 28px; background: #444; color: #fff; }
+.ted-globan, .ted-globan * { font-family: Arial, sans-serif; font-size: 14px; line-height: 22px; }
+.ted-globan__bar { position: relative; display: flex; align-items: center; }
+.ted-globan__flag { display: block; width: 24px; height: 16px; margin: 0 8px 0 16px; border: 1px solid rgba(255, 255, 255, 0.25); }
+.ted-globan__text-short { display: none; }
+.ted-globan__toggle { display: flex; align-items: center; margin: 0 0 0 8px; padding: 0 7px; border: 3px solid #444; border-radius: 0; background: transparent; color: #fff; font-weight: 400; text-decoration: none; white-space: nowrap; cursor: pointer; outline: none; }
+.ted-globan__toggle:hover { border-color: #fff; background: #fff; color: #004494; }
+.ted-globan__toggle[aria-expanded="true"], .ted-globan__toggle:focus-visible { border-color: #ffd617; background: #fff; color: #004494; outline: none; }
+.ted-globan__toggle-text { display: block; }
+.ted-globan__arrow { display: block; flex: none; width: 12px; height: 12px; margin: 0 0 0 8px; transform: rotate(180deg); }
+.ted-globan__arrow path { fill: currentColor; stroke: currentColor; stroke-width: 5px; }
+.ted-globan__toggle[aria-expanded="true"] .ted-globan__arrow { transform: none; }
+.ted-globan__dropdown { position: absolute; top: 100%; right: 0; max-width: 500px; margin: 0; padding: 12px 16px; border: 1px solid #ccc; background: #fff; box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.4); color: #444; }
+.ted-globan__dropdown[hidden] { display: none; }
+.ted-globan__dropdown p { margin: 0; padding: 0; line-height: 1.4; }
+.ted-globan__dropdown p + p { margin-top: 10px; line-height: 22px; }
+.ted-globan__dropdown b { font-weight: 700; }
+.ted-globan__dropdown a { color: #004494; text-decoration: none; }
+.ted-globan__dropdown a:hover { text-decoration: underline; }
+@media (max-width: 767px) {
+    .ted-globan__bar { width: 100%; }
+    .ted-globan__flag { margin: 0 8px; }
+    .ted-globan__text-long { display: none; }
+    .ted-globan__text-short { display: block; }
+    .ted-globan__toggle { margin: 0 0 0 auto; }
+}
+@media (max-width: 480px) {
+    .ted-globan__toggle-text { display: flex; width: 0; overflow: hidden; opacity: 0; }
+    .ted-globan__arrow { margin: 0; }
+}
+
+/* TED header: the EU logo row, then the service row above the 8px green divider. */
+.ted-site-header {
+    background: var(--gs-base-color-white);
+    font-family: var(--font-sans);
+    color: var(--gs-base-color-eu-gray-80);
+    border-bottom: 8px solid var(--gs-base-color-forest-100);
+}
+
+.ted-site-header__logo-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 24px;
+    padding: 16px 0;
+    border-bottom: 2px solid var(--gs-base-color-eu-blue-20);
+}
+
+.ted-site-header__logo {
+    height: 48px;
+}
+
+.ted-site-header__service {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 10px;
+}
+
+.ted-site-header__site-name {
+    margin-bottom: 2px;
+    color: var(--gs-base-color-eu-gray-80);
+    font-size: var(--gs-base-font-size-3xl);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.ted-site-header__service-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.ted-site-header__service-chip {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    padding: var(--gs-base-spacing-xs) var(--gs-base-spacing-s);
+    background: var(--gs-base-color-gray-5);
+    border-radius: var(--gs-base-radius-s);
+    text-decoration: none;
+}
+
+.ted-site-header__stripe {
+    align-self: stretch;
+    width: 6px;
+    min-height: 1em;
+    margin-right: var(--gs-base-spacing-xs);
+    background: var(--gs-base-color-forest-100);
+    border-radius: 6px;
+}
+
+.ted-site-header__service-name {
+    color: var(--gs-base-color-eu-gray-80);
+    font-size: var(--gs-base-font-size-l);
+    font-weight: 700;
+}
+
+.ted-site-header__square {
+    font-size: 10px;
+    vertical-align: middle;
+}
+
+.ted-site-header__description {
+    margin-left: 12px;
+    color: var(--gs-base-color-eu-gray-80);
+    font-size: 15px;
+}
+
+/* Pinned bar: the TED tabs, then the loading indicator; the progress line on its bottom edge. On a narrow screen the
+   tabs wrap inside the bar and the indicator stays at its end. */
+.ted-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 8px 24px;
+    padding: 4px 24px 0;
+    background: var(--gs-base-color-white);
+    border-bottom: 1px solid var(--gs-base-color-gray-20);
+}
+
+.ted-bar .nav-tabs {
+    --bs-nav-tabs-border-width: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0;
+    border-bottom: 1px solid var(--gs-base-color-gray-20);
+}
+
+.ted-bar .nav-tabs .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: -1px;
+    padding: 12px 16px;
+    color: var(--gs-base-color-gray-100);
+    font-size: var(--gs-base-font-size-m);
+    font-weight: 400;
+    background: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+}
+
+.ted-bar .nav-tabs .nav-link.active {
+    font-weight: 700;
+    color: var(--gs-base-color-gray-100);
+    background: none;
+    border-bottom-color: var(--gs-base-color-forest-110);
+}
+
+/* A disabled tab (only when start-up stops without versions: a tab that does not apply is hidden as well): the design
+   system's disabled text colour, unchanged on hover (Bootstrap takes a disabled tab's pointer events away). */
+.ted-bar .nav-tabs .nav-link:disabled {
+    color: var(--gs-base-color-gray-30);
+    cursor: default;
+}
+
+.ted-loading {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    border: 2px solid var(--gs-base-color-gray-20);
+    border-top-color: var(--gs-base-color-forest-110);
+    border-radius: 50%;
+    animation: ted-loading-spin 0.8s linear infinite;
+}
+
+@keyframes ted-loading-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ted-bar .progress {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 3px;
+    background: var(--gs-base-color-gray-20);
+    border-radius: 0;
+}
+
+.ted-bar .progress-bar {
+    background: var(--gs-base-color-forest-110);
+}
+
+/* Work area: white, with the 24px gutter, and 64px before the footer on every tab. */
+.ted-main {
+    padding: 24px 24px 64px;
+    background: var(--gs-base-color-white);
+}
+
+/* Comparison line: "Comparing base > target", the legend at the right; it scrolls with the page. */
+.ted-comparison-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gs-base-color-gray-10);
+    font-size: var(--gs-base-font-size-s);
+    color: var(--gs-base-color-gray-75);
+}
+
+.ted-comparison-line__versions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.ted-comparison-line__separator {
+    font-size: 14px;
+    color: var(--gs-base-color-gray-75);
+}
+
+.ted-comparison-line__spacer {
+    flex: 1 1 auto;
+}
+
+/* The legend of the change markers. */
+.ted-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    list-style: none;
+}
+
+.ted-legend li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* TED footer: the band with the Publications Office lockup and the link columns, then the europa.eu band. */
+.ted-footer {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    padding: var(--gs-base-spacing-l);
+    background: var(--gs-base-color-eu-blue-5);
+    color: var(--gs-base-color-gray-75);
+    font-family: var(--font-sans);
+    font-size: var(--gs-base-font-size-s);
+    line-height: 1.6;
+}
+
+.ted-footer a {
+    color: var(--gs-base-color-eu-blue-100);
+    text-decoration: none;
+    text-underline-offset: 0.15rem;
+}
+
+.ted-footer a:hover {
+    text-decoration: underline;
+}
+
+.ted-footer__band {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    background: var(--gs-base-color-eu-blue-5);
+    border-bottom: 1px solid var(--gs-base-color-eu-blue-20);
+}
+
+.ted-footer__band--europa {
+    border-bottom: none;
+}
+
+.ted-footer__brand {
+    flex: 0 1 30%;
+    min-width: min(22.25rem, 100%);
+    padding: 1rem;
+}
+
+.ted-footer__managed {
+    padding-right: var(--gs-base-spacing-l);
+}
+
+.ted-footer__managed-label {
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+}
+
+.ted-footer__lockup {
+    display: inline-block;
+    flex: 0 0 auto;
+}
+
+.ted-footer__lockup-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.ted-footer__column {
+    flex: 1 1 0;
+    min-width: min(15rem, 100%);
+    padding: 1rem;
+}
+
+.ted-footer__heading {
+    display: block;
+    margin-top: 1.5rem;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    color: var(--gs-base-color-gray-100);
+    font-size: var(--gs-base-font-size-l);
+    font-weight: 400;
+    line-height: var(--gs-base-line-height-s);
+    border-bottom: 1px solid var(--gs-base-color-eu-blue-20);
+}
+
+.ted-footer__links {
+    margin: 0;
+    padding: 0;
+    font-size: var(--gs-base-font-size-s);
+    line-height: 2rem;
+    list-style-type: none;
+}
+
+.ted-footer__social-icon {
+    margin-right: 0.45rem;
+    color: var(--gs-base-color-social-icon);
+    font-size: 1.125rem;
+    vertical-align: -0.15em;
+}
+
+.ted-footer__flag {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ted-footer__flag-image {
+    width: auto;
+    max-height: 54px;
+}
+
+.ted-footer__discover {
+    margin: 1.5rem 0 0;
+    color: var(--gs-base-color-eu-gray-140);
+    font-size: var(--gs-base-font-size-s);
+    line-height: 1.35;
+}
+
+/* Home: the text column and the side card. */
+
+.ted-home {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px 48px;
+    padding: 40px 0 0;
+}
+
+.ted-home__text {
+    display: flex;
+    flex: 1 1 560px;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+    max-width: 48rem;
+}
+
+.ted-home__intro {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ted-home__title {
+    margin: 0;
+}
+
+.ted-home__lead {
+    margin: 0;
+    font-size: var(--gs-base-font-size-xl);
+    line-height: 1.75;
+}
+
+.ted-home__paragraph {
+    margin: 0;
+    font-size: var(--gs-base-font-size-m);
+    line-height: 1.62;
+}
+
+/* The side card: the quick tour, then how to read the comparison. */
+.ted-home__card {
+    display: flex;
+    flex: 1 1 320px;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 440px;
+    padding: 24px;
+    background: var(--gs-base-color-white);
+    border: 1px solid var(--gs-base-color-gray-20);
+    border-radius: var(--gs-base-radius-m);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ted-home__tour {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--gs-base-color-gray-10);
+}
+
+.ted-home__card-heading {
+    margin: 0;
+    font-size: var(--gs-base-font-size-l);
+    line-height: 1.15;
+}
+
+.ted-home__card-text {
+    margin: 0;
+    font-size: var(--gs-base-font-size-s);
+    line-height: 1.5;
+}
+
+.ted-home__markers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    font-size: var(--gs-base-font-size-s);
+    line-height: 1.5;
+    list-style: none;
+}
+
+.ted-home__markers li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ted-home__markers .ted-marker {
+    margin-top: 2px;
+}
+
+/* Tertiary button (Start quick tour): transparent, gray-75 border and text, gray-10 on hover; its focus ring gray-75. */
+.btn-tertiary {
+    --bs-btn-color: var(--gs-base-color-gray-75);
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: var(--gs-base-color-gray-75);
+    --bs-btn-hover-color: var(--gs-base-color-gray-75);
+    --bs-btn-hover-bg: var(--gs-base-color-gray-10);
+    --bs-btn-hover-border-color: var(--gs-base-color-gray-75);
+    --bs-btn-active-color: var(--gs-base-color-gray-75);
+    --bs-btn-active-bg: var(--gs-base-color-gray-10);
+    --bs-btn-active-border-color: var(--gs-base-color-gray-75);
+}
+
+.btn-tertiary:focus-visible {
+    outline-color: var(--gs-base-color-gray-75);
+}
+
+/* Cards: headings and breadcrumbs, the card group's header and filter list, index cards,
+   property rows. */
+
+/* The breadcrumb of the comparison views: 14px, chevron separators in gray-75, the current item #333. (The card group,
+   index card and property card templates style their own parts.) */
+.breadcrumb {
+    --bs-breadcrumb-margin-bottom: 16px;
+    --bs-breadcrumb-font-size: var(--gs-base-font-size-s);
+    --bs-breadcrumb-item-padding-x: 8px;
+    --bs-breadcrumb-divider-color: var(--gs-base-color-gray-75);
+    --bs-breadcrumb-item-active-color: var(--gs-base-color-gray-100);
+    align-items: center;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "\e911";
+    font-family: "gs-icon";
+    font-size: 12px;
+}
+
+/* Tree and detail: the Fields toolbar, the Structure and Details panels, the tree, the details. */
+
+/* A tab's toolbar: its heading at the left, its source selector (a .ted-inline-field, from ted-theme.css) at the right.
+   (The tree/detail-split-view template styles the panels, the tree and the details.) */
+.ted-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: 16px;
+}
+
+.ted-toolbar h1 {
+    margin: 0;
+}
+
+/* The heading slotted into a card group's heading row, without the h1's bottom margin, so that it is centred with
+   the controls. (The card-group template cannot set it: its ::slotted() rules lose to the page's own.) */
+card-group > [slot="heading"] {
+    margin: 0;
+}
+
+/* A source selector slotted into a card group's heading row (Validation's), before Show: a divider after it, 1px
+   gray-20 and 24px high, 20px from the toggle (the field's 8px gap and this margin) and from Show (the row's gap). */
+card-group > .ted-toolbar__source[slot="controls"]::after {
+    content: "";
+    width: 1px;
+    height: 24px;
+    margin-left: 12px;
+    background: var(--gs-base-color-gray-20);
+}
+
+/* A TED Notification: a 4px bar in the status colour on its surface tint. */
+.ted-notification {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    color: var(--gs-base-color-gray-100);
+    font-size: var(--gs-base-font-size-m);
+    line-height: 1.62;
+    border-left: 4px solid;
+}
+
+.ted-notification--warning {
+    background: var(--gs-base-color-warning-surface);
+    border-left-color: var(--gs-base-color-warning);
+}
+
+/* File diff: the Base and Target headings and the diff panel. */
+
+/* diff2html renders in the document, after this sheet: the rules are scoped to the diff containers (.view-diff) to
+   take precedence over diff2html's own. The diff panel: the card look. */
+.view-diff .d2h-file-wrapper {
+    margin-bottom: 0;
+    overflow: clip;
+    background: var(--gs-base-color-white);
+    border: 1px solid var(--gs-base-color-gray-20);
+    border-radius: var(--gs-base-radius-m);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* The file header: the file name in monospace, then diff2html's change tag as a status line. */
+.view-diff .d2h-file-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    height: auto;
+    padding: 14px 16px;
+    font-family: var(--font-sans);
+    background: var(--gs-base-color-white);
+    border-bottom: 1px solid var(--gs-base-color-gray-20);
+}
+
+.view-diff .d2h-file-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: inherit;
+}
+
+.view-diff .d2h-file-name-wrapper .d2h-icon {
+    fill: var(--gs-base-color-gray-75);
+}
+
+.view-diff .d2h-file-name {
+    color: var(--gs-base-color-gray-100);
+    font-family: var(--font-mono);
+    font-size: var(--gs-base-font-size-sp-15);
+    font-weight: 700;
+}
+
+.view-diff .d2h-file-name-wrapper .d2h-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: auto;
+    margin-left: 0;
+    padding: 0;
+    color: var(--gs-base-color-gray-75);
+    font-family: var(--font-sans);
+    font-size: var(--gs-base-font-size-xs);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    border-radius: 0;
+}
+
+.view-diff .d2h-file-name-wrapper .d2h-tag::before {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    color: var(--gs-base-color-white);
+    font-family: "gs-icon";
+    font-size: 10px;
+    line-height: 1;
+    text-transform: none;
+}
+
+.view-diff .d2h-file-name-wrapper .d2h-added::before { content: "\e900"; background: var(--added-marker-color); }
+.view-diff .d2h-file-name-wrapper .d2h-deleted::before { content: "\e92c"; background: var(--removed-marker-color); }
+.view-diff .d2h-file-name-wrapper .d2h-changed::before,
+.view-diff .d2h-file-name-wrapper .d2h-moved::before {
+    content: "";
+    background: radial-gradient(circle, var(--gs-base-color-white) 3px, transparent 3.5px), var(--modified-marker-color);
+}
+
+/* The Base and Target headings above the two sides. */
+.view-diff .d2h-file-side-diff::before {
+    display: block;
+    padding: 8px 12px;
+    content: "Base";
+    font-family: var(--font-sans);
+    font-size: var(--gs-base-font-size-xs);
+    font-weight: 700;
+    background: var(--gs-base-color-gray-5);
+    border-bottom: 1px solid var(--gs-base-color-gray-20);
+}
+
+.view-diff .d2h-file-side-diff + .d2h-file-side-diff::before {
+    content: "Target";
+}
+
+.view-diff .d2h-file-side-diff:first-child {
+    border-right: 1px solid var(--gs-base-color-gray-20);
+}
+
+/* The lines: monospace 13px, 22px high; line numbers gray-75 on gray-5, or on the tint of a changed line. */
+.view-diff .d2h-diff-table {
+    font-family: var(--font-mono);
+    font-size: var(--gs-base-font-size-xs);
+}
+
+.view-diff .d2h-code-side-line,
+.view-diff .d2h-code-side-linenumber {
+    line-height: 22px;
+}
+
+.view-diff .d2h-diff-table .d2h-code-side-linenumber {
+    color: var(--gs-base-color-gray-75);
+    background: var(--gs-base-color-gray-5);
+    border: 0;
+}
+
+.view-diff .d2h-diff-table .d2h-code-side-linenumber.d2h-del {
+    color: var(--gs-base-color-gray-100);
+    background: var(--gs-base-color-error-surface);
+}
+
+.view-diff .d2h-diff-table .d2h-code-side-linenumber.d2h-ins {
+    color: var(--gs-base-color-gray-100);
+    background: var(--gs-base-color-success-surface);
+}
+
+/* The + and - signs in the marker colours. */
+.view-diff .d2h-del .d2h-code-line-prefix {
+    color: var(--removed-marker-color);
+    font-weight: 700;
+}
+
+.view-diff .d2h-ins .d2h-code-line-prefix {
+    color: var(--added-marker-color);
+    font-weight: 700;
+}
+
+/* Changed words: bold, with an inset 2px underline in the marker colour; removed ones struck through too. */
+.view-diff .d2h-code-line del,
+.view-diff .d2h-code-side-line del {
+    font-weight: 700;
+    text-decoration: line-through;
+    text-decoration-color: var(--removed-marker-color);
+    box-shadow: inset 0 -2px 0 var(--removed-marker-color);
+}
+
+.view-diff .d2h-code-line ins,
+.view-diff .d2h-code-side-line ins {
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: inset 0 -2px 0 var(--added-marker-color);
+}
+
+/* Hunk headers on eu-blue-5. */
+.view-diff .d2h-diff-table .d2h-info {
+    color: var(--gs-base-color-gray-75);
+    background: var(--gs-base-color-eu-blue-5);
+    border-color: var(--gs-base-color-gray-10);
+}
+
+/* States: the error toast, the tour popovers and the hover popovers. */
+
+/* The error toast: a TED error Notification, fixed at the bottom right. */
+#apiStatus {
+    --bs-toast-max-width: 420px;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1050;
+    width: auto;
+    max-width: min(420px, calc(100vw - 32px));
+    padding: 14px 16px;
+    color: var(--gs-base-color-gray-100);
+    background: var(--gs-base-color-error-surface);
+    border: 0;
+    border-left: 4px solid var(--gs-base-color-error);
+    border-radius: var(--gs-base-radius-xs);
+    box-shadow: var(--gs-base-shadow-2);
+}
+
+#apiStatus .toast-header {
+    margin-bottom: 4px;
+    padding: 0;
+    color: var(--gs-base-color-gray-100);
+    background: none;
+    border: 0;
+}
+
+#apiStatus .toast-header strong {
+    font-weight: 700;
+}
+
+#apiStatus .btn-close {
+    /* Bootstrap's close glyph in --gs-base-color-gray-75 (#666666). */
+    --bs-btn-close-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666666'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e");
+    --bs-btn-close-opacity: 1;
+    --bs-btn-close-hover-opacity: 1;
+    margin: 0 0 0 auto;
+}
+
+#apiStatus .toast-body {
+    max-height: 33vh;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+}
+
+#apiStatus .toast-body li {
+    margin-bottom: 4px;
+    font-size: var(--gs-base-font-size-m);
+    line-height: 1.62;
+    list-style-type: none;
+}
+
+#apiStatus .toast-body li .detail {
+    display: block;
+    color: var(--gs-base-color-gray-75);
+}
+
+/* Popovers (the quick tour, the hover popovers of the version selects, the search help): white, a gray-20 border,
+   a 4px radius, the shadow-2 elevation; the title 18px bold without a band, the body 14px. When the tour scrolls a
+   step's popover into view (script.js), it ends 8px clear of the pinned bar or of the window's edge. */
+.popover {
+    scroll-margin-top: calc(var(--ted-bar-height) + 8px);
+    scroll-margin-bottom: 8px;
+    --bs-popover-max-width: 420px;
+    --bs-popover-border-color: var(--gs-base-color-gray-20);
+    --bs-popover-border-radius: var(--gs-base-radius-s);
+    --bs-popover-inner-border-radius: calc(var(--gs-base-radius-s) - 1px);
+    --bs-popover-font-size: var(--gs-base-font-size-s);
+    --bs-popover-header-bg: var(--gs-base-color-white);
+    --bs-popover-header-color: var(--gs-base-color-gray-100);
+    --bs-popover-header-font-size: var(--gs-base-font-size-l);
+    --bs-popover-header-padding-x: 20px;
+    --bs-popover-header-padding-y: 20px;
+    --bs-popover-body-color: var(--gs-base-color-gray-100);
+    --bs-popover-body-padding-x: 20px;
+    --bs-popover-body-padding-y: 20px;
+    font-family: var(--font-sans);
+    box-shadow: var(--gs-base-shadow-2);
+}
+
+.popover-header {
+    padding-bottom: 0;
+    font-weight: 700;
+    line-height: 1.15;
+    border-bottom: 0;
+}
+
+.popover-header + .popover-body {
+    padding-top: 12px;
+}
+
+.popover-body {
+    line-height: 1.5;
+}
+
+.popover-body p {
+    margin: 0 0 12px;
+}
+
+/* The tour's buttons, right-aligned: Cancel a ghost button, Next a primary sm button. */
+.tour-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.tour-button-container .cancel-tour,
+.tour-button-container .next-step {
+    --bs-btn-font-size: var(--gs-base-font-size-s);
+    --bs-btn-font-weight: 400;
+}
+
+.tour-button-container .next-step {
+    --bs-btn-padding-y: 8px;
+    --bs-btn-padding-x: 12px;
+}
+
+/* Other tabs: Validation, Schemas, Schematrons, Translations, View templates, Release notes. */
+
+/* Release notes (the CHANGELOG.md of the target version, as HTML): the TED typography, at most 65rem wide. Its last
+   block has no bottom margin: the work area's 64px are the space before the footer. (Validation uses the card group's
+   heading row; the other tabs, the cards and file diff sections.) */
+#release-notes {
+    max-width: 65rem;
+    font-size: var(--gs-base-font-size-m);
+    line-height: 1.62;
+}
+
+#release-notes > :last-child {
+    margin-bottom: 0;
+}
+
+#release-notes h1 {
+    margin: 0 0 16px;
+    font-size: var(--gs-base-font-size-4xl);
+}
+
+#release-notes h2 {
+    margin: 32px 0 12px;
+    font-size: var(--gs-base-font-size-3xl);
+    line-height: 1.2;
+}
+
+#release-notes h3 {
+    margin: 24px 0 8px;
+    font-size: var(--gs-base-font-size-2xl);
+    line-height: 1.25;
+}
+
+#release-notes code {
+    color: var(--gs-base-color-gray-100);
+    font-family: var(--font-mono);
+    font-size: var(--gs-base-font-size-sp-15);
+}
+
+/* Version picker: the version chips and their menus, Home's comparison buttons, the version dialog. */
+
+/* The comparison line is not shown on Home, which has its own buttons. */
+main:has(#home-tab-content.active) .ted-comparison-line {
+    display: none;
+}
+
+/* A version chip: "base:" or "target:" and the version, with a caret. */
+.ted-version-chip .dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    color: var(--gs-base-color-eu-blue-100);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+    background: var(--gs-base-color-eu-blue-10);
+    border: 1px solid var(--gs-base-color-eu-blue-20);
+    border-radius: var(--gs-base-radius-s);
+    transition: background-color 0.12s, border-color 0.12s;
+}
+
+.ted-version-chip .dropdown-toggle:hover {
+    background: var(--gs-base-color-eu-blue-20);
+}
+
+.ted-version-chip .dropdown-toggle::after {
+    margin: 0;
+    content: "\e90c";
+    font-family: "gs-icon";
+    font-size: 9px;
+    font-weight: 400;
+    line-height: 1;
+    border: 0;
+}
+
+.ted-version-chip__role {
+    margin-right: -2px;
+    color: var(--gs-base-color-eu-gray-80);
+    font-family: var(--font-sans);
+    font-weight: 400;
+}
+
+/* A disabled chip (during start-up, until the version picker starts): the design system's disabled look, its label
+   too and its caret, which takes the chip's colour; after the hover rule, so that hovering changes nothing. */
+.ted-version-chip .dropdown-toggle:disabled {
+    color: var(--gs-base-color-gray-30);
+    background: var(--gs-base-color-gray-5);
+    border-color: var(--gs-base-color-gray-20);
+}
+
+.ted-version-chip .dropdown-toggle:disabled .ted-version-chip__role {
+    color: var(--gs-base-color-gray-30);
+}
+
+/* Its menu: sections of versions, the current one highlighted; at most 60vh, scrolling inside when longer. */
+.ted-version-menu {
+    --bs-dropdown-min-width: 220px;
+    --bs-dropdown-padding-y: 4px;
+    --bs-dropdown-spacer: 6px;
+    --bs-dropdown-font-size: var(--gs-base-font-size-m);
+    --bs-dropdown-color: var(--gs-base-color-gray-100);
+    --bs-dropdown-border-color: var(--gs-base-color-gray-20);
+    --bs-dropdown-border-radius: var(--gs-base-radius-s);
+    --bs-dropdown-divider-bg: var(--gs-base-color-gray-10);
+    --bs-dropdown-divider-margin-y: 4px;
+    --bs-dropdown-link-color: var(--gs-base-color-eu-blue-100);
+    --bs-dropdown-link-hover-color: var(--gs-base-color-eu-blue-100);
+    --bs-dropdown-link-hover-bg: var(--gs-base-color-eu-blue-5);
+    --bs-dropdown-link-active-color: var(--gs-base-color-gray-100);
+    --bs-dropdown-link-active-bg: var(--gs-base-color-eu-blue-10);
+    --bs-dropdown-item-padding-x: 14px;
+    --bs-dropdown-item-padding-y: 8px;
+    --bs-dropdown-header-color: var(--gs-base-color-gray-75);
+    --bs-dropdown-header-padding-x: 14px;
+    --bs-dropdown-header-padding-y: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    line-height: 1.62;
+    box-shadow: var(--gs-base-shadow-2);
+}
+
+.ted-version-menu .dropdown-header {
+    padding-bottom: 2px;
+    font-size: var(--gs-base-font-size-xs);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.ted-version-menu .dropdown-item.active {
+    font-weight: 700;
+}
+
+/* Home's comparison buttons, under the text, in one row 12px apart. */
+.ted-home__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+/* The version dialog: the TED Modal over the scrim. */
+.modal-backdrop {
+    --bs-backdrop-bg: var(--gs-base-scrim);
+    --bs-backdrop-opacity: 1;
+}
+
+.ted-version-dialog .modal-dialog {
+    max-width: 600px;
+}
+
+.ted-version-dialog .modal-content {
+    border: 0;
+    border-radius: var(--gs-base-radius-xs);
+    box-shadow: var(--gs-base-shadow-4);
+}
+
+.ted-version-dialog .modal-header {
+    align-items: flex-start;
+    padding: 24px 24px 16px;
+    background: var(--gs-base-color-gray-5);
+    border-bottom: 0;
+}
+
+.ted-version-dialog .modal-title {
+    flex: 1 1 0;
+    padding-right: 24px;
+    font-size: var(--gs-base-font-size-l);
+    line-height: 1.15;
+}
+
+.ted-version-dialog__close {
+    --bs-btn-color: var(--gs-base-color-gray-100);
+    --bs-btn-hover-color: var(--gs-base-color-gray-100);
+    padding: 4px;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.ted-version-dialog .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    line-height: 1.62;
+}
+
+.ted-version-dialog .modal-body p {
+    margin: 0;
+}
+
+.ted-version-dialog__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.ted-version-dialog .form-text {
+    font-size: var(--gs-base-font-size-xs);
+    line-height: 1.5;
+}
+
+.ted-version-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+@media (max-width: 575.98px) {
+    .ted-version-dialog__fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

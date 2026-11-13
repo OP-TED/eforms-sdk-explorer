@@ -5,9 +5,19 @@
  */
 
 export const appConfig = {
-    eformsBaseUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK',
     rawBaseUrl: 'https://raw.githubusercontent.com/OP-TED/eForms-SDK',
-    contentsFileUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK/contents',
+    versionsUrl: 'https://data.jsdelivr.com/v1/package/gh/OP-TED/eForms-SDK',  // jsDelivr data API: the tags, without the GitHub rate limit
+    treesUrl: 'https://api.github.com/repos/OP-TED/eForms-SDK/git/trees',       // GitHub git trees API: a whole folder listing in one request
+    repositoryCacheMinutes: 10,  // how long the list of versions and the file tree of a branch are kept in the browser
     thresholdVersion: '1.3.2',  // versions before this one are not displayed in the dropdown
+    branches: ['develop', 'efx-2'],  // branches offered at the top of the target version dropdown
+    validationFiles: ['rules.efx', 'stage-1a.efx', 'stage-4m.efx', 'stage-5m.efx', 'dependencies.json'],  // files of the validation folder (it has no index file)
+    unindexedViewTemplates: ['summary.efx'],  // view templates that some versions have without listing them in view-templates.json
+    stylesheets: {  // the library stylesheets the web components load into their shadow roots: the same ones index.html loads into the page
+        bootstrap: './src/assets/vendor/bootstrap-5.3.8.min.css',  // served from the repository, without the @charset rule of the CDN file (see the comment at the top of the file)
+        tedIcons: './src/assets/ted/icons.css',  // the TED glyph classes (their @font-face is in tokens.css, which only the page loads: its custom properties reach the shadow roots by inheritance)
+        tedTheme: './src/assets/ted/ted-theme.css',
+        jstreeTheme: 'https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css',
+    },
 };
 
