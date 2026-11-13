@@ -1,6 +1,6 @@
 {
     "name": "eforms-sdk-explorer",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "A single-page web application designed to explore and compare the information contained in any two versions of the eForms SDK available on GitHub.",
     "dependencies": {
         "jquery": "^3.6.0",

@@ -33,16 +33,14 @@ const Phase = Object.freeze({
     STOPPED: 'stopped',
     /** The tabs that apply to the selection are being probed. */
     CHECKING: 'checking',
-    /** The tabs that apply to the selection are known and shown. */
-    READY: 'ready',
-    /** The probe of the tabs that apply to the selection failed. */
-    CHECK_FAILED: 'check failed'
+    /** The tabs that apply to the selection are known and shown (a tab whose probe failed is hidden). */
+    READY: 'ready'
 });
 
 /**
- * One selection of the versions to compare: made at start-up, by every version change, and by every new attempt
- * after a failed probe. Its identity tells whether work begun for it still applies: a probe's result, and its error,
- * are applied only while the application's state holds the same selection.
+ * One selection of the versions to compare: made at start-up and by every version change. Its identity tells whether
+ * work begun for it still applies: a probe's result, and its errors, are applied only while the application's state
+ * holds the same selection.
  */
 class Selection {
 
@@ -97,12 +95,11 @@ class ApplicationState {
  *   control. Then Checking, or Stopped if the versions cannot be listed.
  * - Stopped: Home is shown, the other tabs are disabled, and the error stays until the user closes it.
  * - Checking: the tabs that apply to the selection are probed. Tab switches and option changes render nothing: the
- *   probe's end renders the active tab. Then Ready, or Check failed.
+ *   probe's end renders the active tab. Then Ready, even if some probes failed: a tab whose probe failed is hidden,
+ *   the error is shown, and the other tabs work as usual. The next version change probes it again.
  * - Ready: a tab switch or an option change renders the active tab at once.
- * - Check failed: the error is shown and the active tab is empty; the next tab switch or option change probes again
- *   for the same versions (Checking).
- * A version change, from Checking, Ready or Check failed, clears the active tab and starts Checking for the new pair;
- * the work of the selection it supersedes is dropped.
+ * A version change, from Checking or Ready, clears the active tab and starts Checking for the new pair; the work of
+ * the selection it supersedes is dropped.
  */
 export class SdkExplorerApplication {
 
@@ -129,6 +126,13 @@ export class SdkExplorerApplication {
 
     /** @type {number} */
     #spinnerCounter = 0;
+
+    /**
+     * @type {boolean} Whether the next tab switch keeps the error toast: after a probe failed, the toast says why a
+     *       tab is hidden, and the switch that follows (the one replacing that tab, or the one the version dialog
+     *       makes) must not clear it before it has been seen.
+     */
+    #keepToastOnNextSwitch = false;
 
     constructor() {
         if (SdkExplorerApplication.instance) {
@@ -264,7 +268,11 @@ export class SdkExplorerApplication {
             return;
         }
         this.startSpinner();
-        this.clearApiStatus();
+        if (this.#keepToastOnNextSwitch) {
+            this.#keepToastOnNextSwitch = false;
+        } else {
+            this.clearApiStatus();
+        }
         try {
             await this.#activeTab.deactivated();
             this.#activeTab = tab;
@@ -304,26 +312,17 @@ export class SdkExplorerApplication {
     /**
      * Renders the active tab for the selected versions, once the tabs that apply to them are known:
      * - Checking: nothing; the probe's end renders the active tab, and rendering it here too would load it twice;
-     * - Check failed: probes again (a failed probe is not kept), and renders the active tab if that succeeds, or
-     *   shows the error again if it fails;
      * - Ready: renders the active tab.
      */
     async #renderActiveTab() {
-        switch (this.#state.phase) {
-            case Phase.CHECKING:
-                return;
-            case Phase.CHECK_FAILED:
-                await this.#check(this.#newSelection());
-                return;
-            case Phase.READY:
-                await this.#activeTab.activated();
-                return;
+        if (this.#state.phase === Phase.READY) {
+            await this.#activeTab.activated();
         }
     }
 
     /**
      * Called when a version select changes: clears the active tab first, so that the previous comparison never stays
-     * under the new selection, even when the tabs cannot be probed; then probes the tabs for the new pair.
+     * under the new selection; then probes the tabs for the new pair.
      */
     async #versionChanged() {
         this.startSpinner();
@@ -347,31 +346,24 @@ export class SdkExplorerApplication {
 
     /**
      * Probes the tabs that apply to a selection, then shows them and renders the active tab, unless a newer
-     * selection is made meanwhile: that newer selection then does all of it, and the result and error of this one
+     * selection is made meanwhile: that newer selection then does all of it, and the result and errors of this one
      * are dropped. A tab activated while the tabs are probed is rendered here, once the probe has ended (see
-     * {@link #renderActiveTab}). If the probe fails, the active tab stays empty, with the error in the toast, until
-     * the next request to render a tab tries again.
+     * {@link #renderActiveTab}). A tab whose probe fails is hidden, and the error is shown; the other tabs are
+     * shown and rendered as usual.
      *
      * @param {Selection} selection
      */
     async #check(selection) {
         this.#state = new ApplicationState(Phase.CHECKING, selection);
-        let applicable;
-        try {
-            applicable = await this.#probeApplicableTabs();
-        } catch (error) {
-            if (this.#state.selection === selection) {
-                this.#state = new ApplicationState(Phase.CHECK_FAILED, selection);
-                if (error.statusText !== 'abort') {
-                    SdkExplorerApplication.updateApiStatus(error.message, error.detail);
-                }
-            }
-            return;
-        }
+        this.#keepToastOnNextSwitch = false;
+        const { applicable, errors } = await this.#probeApplicableTabs();
         if (this.#state.selection !== selection) {
             return;
         }
         this.#state = new ApplicationState(Phase.READY, selection);
+        const reported = errors.filter(error => error.statusText !== 'abort');
+        reported.forEach(error => SdkExplorerApplication.updateApiStatus(error.message, error.detail));
+        this.#keepToastOnNextSwitch = reported.length > 0;
         try {
             if (this.#showApplicableTabs(applicable)) {
                 await this.#activeTab.versionChanged();
@@ -384,14 +376,18 @@ export class SdkExplorerApplication {
     }
 
     /**
-     * Asks every tab whether it applies to the selected versions.
+     * Asks every tab whether it applies to the selected versions. A tab whose probe fails does not apply: the others
+     * do not depend on it.
      *
-     * @returns {Promise<Map<TabController, boolean>>}
+     * @returns {Promise<{applicable: Map<TabController, boolean>, errors: Error[]}>} Whether each tab applies, and the
+     *          errors of the probes that failed, each once (two tabs can share a probe).
      */
     async #probeApplicableTabs() {
         const tabs = Array.from(this.tabs.values());
-        const applicable = await Promise.all(tabs.map(tab => tab.isApplicable()));
-        return new Map(tabs.map((tab, index) => [tab, applicable[index]]));
+        const results = await Promise.allSettled(tabs.map(tab => tab.isApplicable()));
+        const applicable = new Map(tabs.map((tab, index) => [tab, results[index].status === 'fulfilled' && results[index].value]));
+        const errors = [...new Set(results.filter(result => result.status === 'rejected').map(result => result.reason))];
+        return { applicable, errors };
     }
 
     /**

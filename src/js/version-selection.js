@@ -7,6 +7,8 @@
 import { appConfig } from "./config.js";
 import { appState } from "./state.js";
 import { SdkVersion } from "./sdk-version.js";
+import { CustomError } from "./custom-error.js";
+import { ERROR_FETCHING_VERSIONS } from "./error-messages.js";
 
 /** @typedef {import('./sdk-repository.js').SdkRepository} SdkRepository */
 
@@ -33,7 +35,8 @@ export class VersionSelection {
      * Lists the versions, fills the selects and selects the pair. The address loses its query string only once the
      * pair is selected, so that a start-up that fails before keeps it for the reload that the error asks for.
      *
-     * @returns {Promise<void>} Rejects if the versions could not be listed, or no pair could be selected from them.
+     * @returns {Promise<void>} Rejects if the versions could not be listed, or hold no release of appConfig.thresholdVersion
+     *          or later, so that no pair can be selected from them.
      */
     async select() {
         // Tags that are not versions are ignored, latest version first
@@ -51,6 +54,10 @@ export class VersionSelection {
         // Filter out pre-releases of released versions
         const recentReleases = recentVersions.filter(version => !version.isPreRelease);
         const latestRelease = recentReleases[0];
+        if (latestRelease === undefined) {
+            // Without a release, there is no default target version, and no release to group the pre-releases under.
+            throw new CustomError(`${ERROR_FETCHING_VERSIONS}: the list has no release of version ${appConfig.thresholdVersion} or later`);
+        }
         const preReleasesOfLatestRelease = recentVersions.filter(version => version.isPreReleaseOf(latestRelease));
         const preReleasesOfUnreleasedVersions = recentVersions.filter(version =>
             version.isPreRelease && !recentReleases.some(release => version.isPreReleaseOf(release)));

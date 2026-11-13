@@ -39,11 +39,16 @@ export class SchematronsTab extends TabController {
 
     /**
      * Overridden to hide the tab while the Validation tab is shown: the Validation tab then offers the schematrons as one of its sources.
-     * 
+     * If the Validation tab's probe fails, that tab is hidden, so this one is shown: the schematrons stay reachable.
+     *
      * @returns {Promise<boolean>}
      */
     async isApplicable() {
-        return !(await SdkExplorerApplication.instance.tabs.get('validation-tab').isApplicable());
+        try {
+            return !(await SdkExplorerApplication.instance.tabs.get('validation-tab').isApplicable());
+        } catch {
+            return true;
+        }
     }
 
     /**

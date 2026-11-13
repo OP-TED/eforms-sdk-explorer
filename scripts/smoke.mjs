@@ -1435,13 +1435,14 @@ class SmokeTest {
                 await this.#explorer.openTab('fields-tab');
                 await this.#assertFieldsJsonTree();
             }],
-            ['when the tabs cannot be probed after a version change, the Fields pane is empty and the toast names the file', async () => {
+            ['when the rules cannot be probed after a version change, Fields still shows its tree, the toast names the file, and Schematrons stays shown', async () => {
                 await this.#explorer.failRequestsDuring('**/1.14.1/validation/rules.efx', async () => {
                     await this.#explorer.startSelectingVersion('base', '1.14.1');
                     await this.#explorer.waitUntilIdle();
                 });
-                assert.equal(await this.#explorer.hasTree('fields-explorer'), false);
+                assert.equal(await this.#explorer.hasTree('fields-explorer'), true);
                 assert.match(await this.#explorer.apiStatus(), /rules\.efx for SDK 1\.14\.1/);
+                await this.#assertTabsShown({ 'validation-tab': false, 'schematrons-tab': true });
             }],
             ['a probe for an older selection that answers late does not change the tab bar of a newer selection', async () => {
                 await this.#explorer.holdRequestsDuring('**/1.14.0/validation/rules.efx', async olderProbe => {
@@ -1928,7 +1929,9 @@ class SmokeTest {
                         await this.#explorer.startOpening('?version=1.15.1&base=1.14.2');
                         await this.#explorer.waitForVersions();
                     });
-                    assert.match(await this.#explorer.apiStatus(), /Reload the page to try again\./);
+                    const toast = await this.#explorer.apiStatus();
+                    assert.match(toast, /^Error fetching the list of SDK versions: the list has no release of version 1\.3\.2 or later\. Reload the page to try again\./);
+                    assert.doesNotMatch(toast, /Cannot read properties/);
                     assert.match(this.#explorer.address(), /\?version=1\.15\.1&base=1\.14\.2$/);
                     firstReloadRequest = this.#explorer.requestedUrls.length;
                     await this.#explorer.reload();
@@ -1953,55 +1956,47 @@ class SmokeTest {
     }
 
     /**
-     * A version change whose tab probe fails (a 500 for the target's rules.efx, a version this page has not probed):
-     * no tab is rendered for a pair whose tabs are not known, and the next request to render one probes again.
+     * A version change whose rules probe fails (a 500 for the target's rules.efx, a version this page has not probed):
+     * only the Validation tab is affected. It is hidden, Schematrons is shown in its place, the other tabs render as
+     * usual, the toast says why, and the next version change probes again.
      */
     async #checkFailedProbe() {
         const requestsSince = (first, suffix) => this.#explorer.requestedUrls.slice(first).filter(url => url.endsWith(suffix));
         const rulesOf = version => `/${version}/validation/rules.efx`;
         await this.#scenario('?version=1.15.1&base=1.14.2', [
-            ['when the dialog\'s tab probe fails before the dialog has closed, Fields shows no tree, the toast names rules.efx, and the next tab probes again and renders', async () => {
+            ['when the dialog\'s rules probe fails, Fields still shows its tree, the toast names rules.efx, Schematrons is shown instead of Validation, and the next version change probes again', async () => {
                 await this.#explorer.openTab('home-tab');
                 const firstRequest = this.#explorer.requestedUrls.length;
                 await this.#explorer.failRequestsDuring(`**${rulesOf('2.0.0-alpha.4')}`, async () => {
                     await this.#explorer.startComparingInDialog('2.0.0-alpha.4', '1.14.2');
                     await this.#explorer.waitUntilIdle();
                     assert.equal(await this.#explorer.activeTab(), 'fields-tab');
-                    // The probe failed before Fields was activated: activating it probed again (and failed again).
-                    assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.4')).length, 2);
-                    assert.equal(await this.#explorer.hasTree('fields-explorer'), false);
-                    // Shown, not only written into the toast: the activation cleared the toast just before the second
-                    // probe failed, and that clearing must not hide the new error.
+                    assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.4')).length, 1);
+                    assert.equal(await this.#explorer.hasTree('fields-explorer'), true);
+                    // Shown, not only written into the toast: the dialog's switch to Fields must not clear it.
                     assert.match(await this.#explorer.apiStatus(), /rules\.efx for SDK 2\.0\.0-alpha\.4/);
-                    assert.deepEqual(requestsSince(firstRequest, '/fields/fields.json'), []);
+                    await this.#assertTabsShown({ 'validation-tab': false, 'schematrons-tab': true });
                 });
-                await this.#explorer.openTab('notice-types-tab');
-                assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.4')).length, 3);
-                await this.#assertTabsShown({ 'validation-tab': true, 'schematrons-tab': false });
-                assert.ok((await this.#explorer.indexCards('notice-types-overview-card-group')).length > 0, 'Notice types has no cards');
-                assert.equal(await this.#explorer.reportedErrors(), '');
-            }],
-            ['when the dialog\'s tab probe fails after Fields has been activated, Fields shows no tree, the toast names rules.efx, and the next tab probes again and renders', async () => {
-                await this.#explorer.openTab('home-tab');
-                const firstRequest = this.#explorer.requestedUrls.length;
-                await this.#explorer.holdRequestsDuring(`**${rulesOf('2.0.0-alpha.3')}`, async probe => {
-                    await this.#explorer.startWaitingForTabShown('fields-tab');
-                    await this.#explorer.startComparingInDialog('2.0.0-alpha.3', '1.14.2');
-                    await probe.requested();
-                    await this.#explorer.tabShown();
-                    await probe.release(500);
-                });
+                await this.#explorer.startSelectingVersion('base', '1.14.1');
                 await this.#explorer.waitUntilIdle();
-                assert.equal(await this.#explorer.activeTab(), 'fields-tab');
-                assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.3')).length, 1);
-                assert.equal(await this.#explorer.hasTree('fields-explorer'), false);
-                assert.match(await this.#explorer.apiStatus(), /rules\.efx for SDK 2\.0\.0-alpha\.3/);
-                assert.deepEqual(requestsSince(firstRequest, '/fields/fields.json'), []);
-                await this.#explorer.openTab('notice-types-tab');
-                assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.3')).length, 2);
+                assert.equal(requestsSince(firstRequest, rulesOf('2.0.0-alpha.4')).length, 2);
                 await this.#assertTabsShown({ 'validation-tab': true, 'schematrons-tab': false });
-                assert.ok((await this.#explorer.indexCards('notice-types-overview-card-group')).length > 0, 'Notice types has no cards');
-                assert.equal(await this.#explorer.reportedErrors(), '');
+            }],
+            ['when the rules probe fails while Validation is active, Schematrons replaces it with its cards, and the toast names rules.efx', async () => {
+                await this.#explorer.openTab('validation-tab');
+                await this.#explorer.failRequestsDuring(`**${rulesOf('2.0.0-alpha.3')}`, async () => {
+                    await this.#explorer.startWaitingForTabShown('schematrons-tab');
+                    await this.#explorer.startSelectingVersion('main', '2.0.0-alpha.3');
+                    await this.#explorer.tabShown();
+                    // Checked as soon as Schematrons is shown: its cards can take longer to load than the toast's 15 s.
+                    assert.match(await this.#explorer.apiStatus(), /rules\.efx for SDK 2\.0\.0-alpha\.3/);
+                    await this.#explorer.waitUntilIdle();
+                });
+                assert.equal(await this.#explorer.activeTab(), 'schematrons-tab');
+                await this.#assertTabsShown({ 'validation-tab': false, 'schematrons-tab': true });
+                assert.ok((await this.#explorer.indexCards('schematrons-overview-card-group')).length > 0, 'Schematrons has no cards');
+                // Not cleared since (it may have hidden itself by now).
+                assert.match(await this.#explorer.reportedErrors(), /rules\.efx for SDK 2\.0\.0-alpha\.3/);
             }],
             ['fwd/ chosen in Fields while the tab probe of a new base is held loads nothing until the probe ends, then fwd/ once for each version of the new pair', async () => {
                 await this.#explorer.openTab('fields-tab');

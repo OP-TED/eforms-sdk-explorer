@@ -111,6 +111,12 @@ This project uses the following open-source libraries:
 - [Showdown](https://github.com/showdownjs/showdown): A bidirectional Markdown to HTML to Markdown converter written in Javascript. 
   Licensed under the [MIT License](https://github.com/showdownjs/showdown/blob/master/license).
 
+The look of the SDK Explorer comes from the TED Design System of the Publications Office of the European Union. The files in `src/assets/ted/` are not open-source libraries and are not covered by the EUPL:
+
+- `tokens.css` and `icons.css` are unchanged copies from the TED Design System, and `ted-theme.css` and `ted-page.css` are built on them. © European Union.
+- `fonts/gs-icon.woff`, the icon font of the Publications Office's websites, comes from the [OP Web Guide](https://op.europa.eu/en/web/webguide/icons). © European Union.
+- `img/` holds the EU emblem, the European Union logo and the logo of the Publications Office. They may be used only as the [rules for the use of the EU emblem](https://european-union.europa.eu/principles-countries-history/symbols/european-flag_en) and of the Publications Office's logo allow, and not reused outside the SDK Explorer.
+
 For development only, the smoke test uses [Playwright](https://playwright.dev/), licensed under the [Apache License 2.0](https://github.com/microsoft/playwright/blob/main/LICENSE), and [http-server](https://github.com/http-party/http-server), licensed under the [MIT License](https://github.com/http-party/http-server/blob/master/LICENSE).
 
 Please see the respective links for license details.
